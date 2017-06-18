@@ -18,14 +18,20 @@
 <menu-config xmlns="http://schemas.haulmont.com/cuba/menu.xsd">
 
     <menu id="administration">
+        <item id="dcScreen1"/>
+        <item id="dcScreen2"/>
+        <item id="dcScreen3"/>
+        <separator/>
         <item id="sec$User.browse"/>
         <item id="sec$Group.browse"/>
         <item id="sec$Role.browse"/>
         <separator/>
         <item id="sys$Category.browse"/>
         <item id="sec$UserSessionEntity.browse"/>
+        <item id="sec$SessionLogEntry.browse"/>
         <item id="sys$LockInfo.browse"/>
         <item id="sys$FileDescriptor.browse"/>
+        <item id="sys$SendingMessage.browse"/>
         <item id="sys$ScheduledTask.browse"/>
         <item id="entityRestore"/>
         <item id="entityInspector.browse"/>

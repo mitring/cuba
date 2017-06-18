@@ -1087,3 +1087,8 @@ def generateClassDirs(Collection projects) {
         sum += current
     }
 }
+
+
+zipProject {
+    excludeFromZip = ['out']
+}

@@ -27,6 +27,8 @@ import com.haulmont.cuba.core.sys.FormatStringsRegistryImpl;
 import mockit.Mocked;
 import mockit.NonStrictExpectations;
 import org.apache.commons.lang.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -92,10 +94,14 @@ public class CubaClientTestCase {
 
     protected TestBeanValidation beanValidation;
 
+    protected TestEntityStates entityStates;
+
     protected ResourcePatternResolver resourcePatternResolver = new PathMatchingResourcePatternResolver();
     protected MetadataReaderFactory metadataReaderFactory = new CachingMetadataReaderFactory(this.resourcePatternResolver);
 
-    public CubaClientTestCase() {
+    private Logger log = LoggerFactory.getLogger(CubaClientTestCase.class);
+
+    static {
         String property = System.getProperty("logback.configurationFile");
         if (StringUtils.isBlank(property)) {
             System.setProperty("logback.configurationFile", "test-logback.xml");
@@ -107,6 +113,8 @@ public class CubaClientTestCase {
      * @param packageName  package FQN, e.g. <code>com.haulmont.cuba.core.entity</code>
      */
     protected void addEntityPackage(String packageName) {
+        log.debug("Adding entity package: " + packageName);
+
         String packagePrefix = packageName.replace(".", "/") + "/**/*.class";
         String packageSearchPath = ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + packagePrefix;
         Resource[] resources;
@@ -156,6 +164,8 @@ public class CubaClientTestCase {
      * once in their @Before method.
      */
     protected void setupInfrastructure() {
+        log.debug("Setting up infrastructure");
+        
         new NonStrictExpectations() {
             {
                 AppContext.getProperty("cuba.confDir"); result = System.getProperty("user.dir");
@@ -183,6 +193,8 @@ public class CubaClientTestCase {
         messageTools = (TestMessageTools) messages.getTools();
 
         beanValidation = new TestBeanValidation();
+
+        entityStates = new TestEntityStates();
 
         ((TestMetadataTools) metadata.getTools()).setMessages(messages);
         ((TestMetadataTools) metadata.getTools()).setUserSessionSource(userSessionSource);
@@ -246,6 +258,10 @@ public class CubaClientTestCase {
                 AppBeans.get(BeanValidation.NAME); result = beanValidation;
                 AppBeans.get(BeanValidation.class); result = beanValidation;
                 AppBeans.get(BeanValidation.NAME, BeanValidation.class); result = beanValidation;
+
+                AppBeans.get(EntityStates.NAME); result = entityStates;
+                AppBeans.get(EntityStates.class); result = entityStates;
+                AppBeans.get(EntityStates.NAME, BeanValidation.class); result = entityStates;
             }
         };
 

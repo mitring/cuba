@@ -36,6 +36,7 @@ public abstract class WebAbstractList<T extends AbstractSelect, E extends Entity
         ListComponent<E> {
 
     protected CollectionDatasource datasource;
+    protected CollectionContainer container;
 
     @Override
     public boolean isMultiSelect() {
@@ -62,7 +63,7 @@ public abstract class WebAbstractList<T extends AbstractSelect, E extends Entity
         if (itemIds != null) {
             Set res = new LinkedHashSet<>();
             for (Object id : itemIds) {
-                Entity item = datasource.getItem(id);
+                Entity item = container != null ? container.getItem(id) : datasource.getItem(id);
                 if (item != null)
                     res.add(item);
             }
@@ -101,8 +102,13 @@ public abstract class WebAbstractList<T extends AbstractSelect, E extends Entity
     public void setSelected(Collection<E> items) {
         Set itemIds = new HashSet();
         for (Entity item : items) {
-            if (!datasource.containsItem(item.getId())) {
-                throw new IllegalStateException("Datasource doesn't contain item to select: " + item);
+            boolean found = true;
+            if (container != null)
+                found = container.getItem(item.getId()) != null;
+            else if (datasource != null)
+                found = datasource.containsItem(item.getId());
+            if (!found) {
+                throw new IllegalStateException("Collection doesn't contain item to select: " + item);
             }
             itemIds.add(item.getId());
         }
