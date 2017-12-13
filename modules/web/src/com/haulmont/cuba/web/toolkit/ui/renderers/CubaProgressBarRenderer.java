@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers;
 
-import com.vaadin.ui.renderers.ProgressBarRenderer;
+import com.vaadin.v7.ui.renderers.ProgressBarRenderer;
 
 public class CubaProgressBarRenderer extends ProgressBarRenderer {
 }

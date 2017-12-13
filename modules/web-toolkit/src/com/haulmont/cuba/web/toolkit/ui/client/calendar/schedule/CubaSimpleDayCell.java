@@ -17,8 +17,8 @@
 package com.haulmont.cuba.web.toolkit.ui.client.calendar.schedule;
 
 import com.google.gwt.user.datepicker.client.CalendarUtil;
-import com.vaadin.client.ui.VCalendar;
-import com.vaadin.client.ui.calendar.schedule.SimpleDayCell;
+import com.vaadin.v7.client.ui.VCalendar;
+import com.vaadin.v7.client.ui.calendar.schedule.SimpleDayCell;
 
 import java.util.Date;
 

@@ -83,7 +83,9 @@ public class CubaMultiUploadConnector extends AbstractComponentConnector impleme
         if (!initialized) {
             initialized = true;
 
-            String appVersion = getConnection().getConfiguration().getApplicationVersion();
+            String appVersion = "0";
+//            vaadin8
+//                    getConnection().getConfiguration().getApplicationVersion();
 
             CubaMultiUploadWidget widget = getWidget();
 

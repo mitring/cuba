@@ -23,9 +23,9 @@ import com.haulmont.cuba.web.toolkit.ui.client.Tools;
 import com.vaadin.client.*;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.VTree;
-import com.vaadin.client.ui.tree.TreeConnector;
 import com.vaadin.shared.ui.Connect;
+import com.vaadin.v7.client.ui.VTree;
+import com.vaadin.v7.client.ui.tree.TreeConnector;
 
 import java.util.Collections;
 import java.util.List;
@@ -36,6 +36,7 @@ public class CubaTreeConnector extends TreeConnector implements HasComponentsCon
     protected boolean contextMenuSelection = false;
 
     public CubaTreeConnector() {
+        //noinspection Convert2Lambda
         registerRpc(CubaTreeClientRpc.class, new CubaTreeClientRpc() {
             @Override
             public void hideContextMenuPopup() {

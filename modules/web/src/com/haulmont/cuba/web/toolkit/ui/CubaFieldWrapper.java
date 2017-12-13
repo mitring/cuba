@@ -18,7 +18,7 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.gui.components.Component;
-import com.vaadin.ui.CustomField;
+import com.vaadin.v7.ui.CustomField;
 
 /**
  * Simple wrapper for Cuba components which does not contain Vaadin Field.

@@ -19,8 +19,8 @@ package com.haulmont.cuba.web.toolkit.data.util;
 import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
 import com.haulmont.cuba.web.toolkit.data.GroupTableContainer;
 import com.haulmont.cuba.web.toolkit.data.TableContainer;
-import com.vaadin.data.Container;
-import com.vaadin.data.util.ContainerOrderedWrapper;
+import com.vaadin.v7.data.Container;
+import com.vaadin.v7.data.util.ContainerOrderedWrapper;
 
 import java.util.Collection;
 import java.util.Map;

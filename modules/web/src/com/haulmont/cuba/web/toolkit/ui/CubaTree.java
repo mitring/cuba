@@ -27,10 +27,11 @@ import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
 import com.vaadin.server.Resource;
+import com.vaadin.shared.Registration;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HasComponents;
 import com.vaadin.ui.Layout;
-import com.vaadin.ui.Tree;
+import com.vaadin.v7.ui.Tree;
 
 import java.util.*;
 
@@ -97,12 +98,14 @@ public class CubaTree extends Tree implements HasComponents {
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener shortcut) {
+    public Registration addShortcutListener(ShortcutListener shortcut) {
         if (shortcutActionManager == null) {
             shortcutActionManager = new ShortcutActionManager(this);
         }
 
         shortcutActionManager.addAction(shortcut);
+
+        return () -> shortcutActionManager.removeAction(shortcut);
     }
 
     @Override

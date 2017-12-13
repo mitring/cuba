@@ -17,8 +17,6 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.core.global.AppBeans;
-import com.haulmont.cuba.core.global.Configuration;
-import com.haulmont.cuba.core.global.ScreenProfilerConfig;
 import com.haulmont.cuba.web.ScreenProfiler;
 import com.haulmont.cuba.web.toolkit.ui.client.profiler.ScreenClientProfilerServerRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.profiler.ScreenClientProfilerState;

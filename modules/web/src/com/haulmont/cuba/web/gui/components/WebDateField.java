@@ -35,8 +35,9 @@ import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.toolkit.ui.CubaDateField;
 import com.haulmont.cuba.web.toolkit.ui.CubaDateFieldWrapper;
 import com.haulmont.cuba.web.toolkit.ui.CubaMaskedTextField;
-import com.vaadin.data.Property;
 import com.vaadin.ui.Layout;
+import com.vaadin.v7.data.Property;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import javax.persistence.TemporalType;
@@ -79,7 +80,6 @@ public class WebDateField extends WebAbstractField<CubaDateFieldWrapper> impleme
 
         dateField = new CubaDateField();
         dateField.setValidationVisible(false);
-        dateField.setImmediate(true);
         dateField.setInvalidAllowed(true);
 
         UserSessionSource sessionSource = AppBeans.get(UserSessionSource.NAME);
@@ -87,12 +87,11 @@ public class WebDateField extends WebAbstractField<CubaDateFieldWrapper> impleme
 
         Locale locale = userSession.getLocale();
         dateField.setDateFormat(Datatypes.getFormatStringsNN(locale).getDateFormat());
-        dateField.setResolution(com.vaadin.shared.ui.datefield.Resolution.DAY);
+        dateField.setResolution(com.vaadin.v7.shared.ui.datefield.Resolution.DAY);
 
         timeField = new WebTimeField();
 
         CubaMaskedTextField vTimeField = (CubaMaskedTextField) timeField.getComponent();
-        vTimeField.setImmediate(true);
         vTimeField.setInvalidAllowed(false);
         vTimeField.setInvalidCommitted(true);
 

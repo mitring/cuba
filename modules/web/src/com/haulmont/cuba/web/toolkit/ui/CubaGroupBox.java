@@ -173,26 +173,6 @@ public class CubaGroupBox extends Panel implements ComponentContainer {
     }
 
     @Override
-    public void addListener(ComponentAttachListener listener) {
-        getContent().addComponentAttachListener(listener);
-    }
-
-    @Override
-    public void removeListener(ComponentAttachListener listener) {
-        getContent().removeComponentAttachListener(listener);
-    }
-
-    @Override
-    public void addListener(ComponentDetachListener listener) {
-        getContent().addComponentDetachListener(listener);
-    }
-
-    @Override
-    public void removeListener(ComponentDetachListener listener) {
-        getContent().removeComponentDetachListener(listener);
-    }
-
-    @Override
     public void beforeClientResponse(boolean initial) {
         super.beforeClientResponse(initial);
 

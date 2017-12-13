@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 
 public class CubaSingleSelectionModel extends Grid.SingleSelectionModel {
 

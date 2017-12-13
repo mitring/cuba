@@ -299,6 +299,7 @@ public class JQueryFileUploadOverlay {
         }, DropEvent.getType());
 
         // CAUTION add compatibility layer with Vaadin DragDropLayouts
+        /* vaadin8 implement
         HTML5Support.setGlobalDragOverHandler(new DragOverHandler() {
             @Override
             public void onDragOver(DragOverEvent event) {
@@ -312,6 +313,7 @@ public class JQueryFileUploadOverlay {
                 globalDocumentDrop(event);
             }
         });
+        */
     }
 
     protected static boolean isUnderOverlay(Element dropZoneElement) {

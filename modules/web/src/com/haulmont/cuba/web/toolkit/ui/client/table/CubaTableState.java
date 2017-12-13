@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.toolkit.ui.client.table;
 
 import com.vaadin.shared.Connector;
 import com.vaadin.shared.annotations.NoLayout;
-import com.vaadin.shared.ui.table.TableState;
+import com.vaadin.v7.shared.ui.table.TableState;
 
 import java.util.Map;
 

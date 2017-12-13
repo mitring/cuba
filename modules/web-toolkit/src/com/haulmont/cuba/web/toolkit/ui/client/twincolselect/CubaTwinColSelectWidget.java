@@ -25,10 +25,9 @@ import com.google.gwt.user.client.ui.HTML;
 import com.google.gwt.user.client.ui.ListBox;
 import com.vaadin.client.UIDL;
 import com.vaadin.client.ui.VButton;
-import com.vaadin.client.ui.VTwinColSelect;
+import com.vaadin.v7.client.ui.VTwinColSelect;
 
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 public class CubaTwinColSelectWidget extends VTwinColSelect {
@@ -73,8 +72,9 @@ public class CubaTwinColSelectWidget extends VTwinColSelect {
         int selectedOptions = 0;
         int availableOptions = 0;
 
-        for (final Iterator<?> i = uidl.getChildIterator(); i.hasNext(); ) {
-            final UIDL optionUidl = (UIDL) i.next();
+        for (Object anUidl : uidl) {
+            UIDL optionUidl = (UIDL) anUidl;
+
             if (optionUidl.hasAttribute("selected")) {
                 selections.addItem(optionUidl.getStringAttribute("caption"),
                         optionUidl.getStringAttribute("key"));

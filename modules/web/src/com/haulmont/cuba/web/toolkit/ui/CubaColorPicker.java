@@ -17,9 +17,9 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.web.toolkit.ui.client.colorpicker.CubaColorPickerState;
-import com.vaadin.shared.ui.colorpicker.Color;
-import com.vaadin.ui.ColorPicker;
 import com.vaadin.ui.Component;
+import com.vaadin.v7.shared.ui.colorpicker.Color;
+import com.vaadin.v7.ui.ColorPicker;
 
 public class CubaColorPicker extends ColorPicker implements Component.Focusable {
 

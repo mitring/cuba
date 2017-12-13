@@ -18,7 +18,7 @@ package com.haulmont.cuba.web.toolkit.ui.client.richtextarea;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaRichTextArea;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.richtextarea.RichTextAreaConnector;
+import com.vaadin.v7.client.ui.richtextarea.RichTextAreaConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(value = CubaRichTextArea.class, loadStyle = Connect.LoadStyle.LAZY)

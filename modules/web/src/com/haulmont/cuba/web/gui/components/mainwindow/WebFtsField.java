@@ -27,11 +27,11 @@ import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.gui.components.WebAbstractComponent;
 import com.haulmont.cuba.web.gui.components.WebComponentsHelper;
 import com.haulmont.cuba.web.toolkit.ui.CubaButton;
+import com.haulmont.cuba.web.toolkit.ui.CubaTextField;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.Sizeable;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.CssLayout;
-import com.vaadin.ui.TextField;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.HashMap;
@@ -41,7 +41,7 @@ public class WebFtsField extends WebAbstractComponent<CssLayout> implements FtsF
 
     public static final String FTS_FIELD_STYLENAME = "c-ftsfield";
 
-    protected TextField searchField;
+    protected CubaTextField searchField;
     protected Button searchBtn;
 
     public WebFtsField() {
@@ -51,7 +51,7 @@ public class WebFtsField extends WebAbstractComponent<CssLayout> implements FtsF
         ComponentsFactory cf = AppBeans.get(ComponentsFactory.NAME);
         com.haulmont.cuba.gui.components.TextField searchFieldComponent =
                 cf.createComponent(com.haulmont.cuba.gui.components.TextField.class);
-        searchField = (TextField) WebComponentsHelper.unwrap(searchFieldComponent);
+        searchField = searchFieldComponent.unwrap(CubaTextField.class);
         searchField.setStyleName("c-ftsfield-text");
 
         AppUI ui = AppUI.getCurrent();

@@ -23,14 +23,12 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.haulmont.cuba.web.toolkit.ui.CubaTable;
-import com.haulmont.cuba.web.toolkit.ui.client.profiler.ScreenClientProfiler;
 import com.haulmont.cuba.web.toolkit.ui.client.tableshared.CubaTableShortcutActionHandler;
 import com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableCellClickListener;
 import com.vaadin.client.*;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.VScrollTable;
-import com.vaadin.client.ui.table.TableConnector;
 import com.vaadin.shared.ui.Connect;
+import com.vaadin.v7.client.ui.table.TableConnector;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -41,8 +39,6 @@ import static com.haulmont.cuba.web.toolkit.ui.client.Tools.findCurrentOrParentT
 public class CubaScrollTableConnector extends TableConnector {
 
     protected HandlerRegistration tooltipHandlerRegistration;
-    protected String profilerMarker;
-    protected long layoutStartTime;
 
     public CubaScrollTableConnector() {
         registerRpc(CubaTableClientRpc.class, new CubaTableClientRpc() {
@@ -265,31 +261,5 @@ public class CubaScrollTableConnector extends TableConnector {
             tooltipHandlerRegistration = null;
         }
         super.onUnregister();
-    }
-
-    @Override
-    public void postLayout() {
-        VScrollTable table = getWidget();
-        if (table.sizeNeedsInit && profilerMarker == null) {
-            profilerMarker = ScreenClientProfiler.getInstance().getProfilerMarker();
-        }
-        super.postLayout();
-    }
-
-    @Override
-    protected void beforeLayout() {
-        if (profilerMarker != null && layoutStartTime == 0) {
-            layoutStartTime = System.currentTimeMillis();
-        }
-    }
-
-    @Override
-    protected void afterLayout() {
-        if (profilerMarker != null) {
-            ScreenClientProfiler.getInstance().registerClientTime(profilerMarker,
-                    (int) (System.currentTimeMillis() - layoutStartTime));
-            profilerMarker = null;
-            layoutStartTime = 0;
-        }
     }
 }

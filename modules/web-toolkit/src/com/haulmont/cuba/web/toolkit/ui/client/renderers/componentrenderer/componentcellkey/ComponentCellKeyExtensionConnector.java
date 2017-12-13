@@ -17,10 +17,10 @@ package com.haulmont.cuba.web.toolkit.ui.client.renderers.componentrenderer.comp
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.ComponentCellKeyExtension;
 import com.vaadin.client.ServerConnector;
-import com.vaadin.client.connectors.GridConnector;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
-import com.vaadin.client.widgets.Grid;
+import com.vaadin.v7.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
+import com.vaadin.v7.client.connectors.GridConnector;
 
 /**
  * An extension which allows to focus components (or its input field) inside a component

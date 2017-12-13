@@ -31,5 +31,5 @@ public interface CubaGridEditorFieldFactory {
      * @return generated component or {@code null}
      */
     @Nullable
-    com.vaadin.ui.Field<?> createField(Object itemId, Object propertyId);
+    com.vaadin.v7.ui.Field<?> createField(Object itemId, Object propertyId);
 }

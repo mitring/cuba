@@ -24,7 +24,7 @@ import com.vaadin.server.AbstractErrorMessage;
 import com.vaadin.server.CompositeErrorMessage;
 import com.vaadin.server.ErrorMessage;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.CustomField;
+import com.vaadin.v7.ui.CustomField;
 import org.apache.commons.lang.StringUtils;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +90,7 @@ public class CubaResizableTextAreaWrapper extends CustomField {
         ErrorMessage superError = super.getErrorMessage();
         if (!textArea.isReadOnly() && isRequired() && textArea.isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }

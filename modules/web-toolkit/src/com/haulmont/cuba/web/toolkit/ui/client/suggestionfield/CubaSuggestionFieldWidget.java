@@ -88,7 +88,6 @@ public class CubaSuggestionFieldWidget extends Composite implements HasEnabled, 
     }
 
     protected void initTextField() {
-        textField.setImmediate(true);
         initWidget(textField);
 
         CubaTextFieldEvents events = new CubaTextFieldEvents();
@@ -384,7 +383,7 @@ public class CubaSuggestionFieldWidget extends Composite implements HasEnabled, 
         this.popupWidth = popupWidth;
     }
 
-    protected class SuggestionPopup extends VOverlay implements PopupPanel.PositionCallback, CloseHandler<PopupPanel> {
+    protected class SuggestionPopup extends VOverlay implements PopupPanel.PositionCallback {
         protected static final int Z_INDEX = 30000;
         protected static final String C_HAS_WIDTH = "c-has-width";
         protected static final String POPUP_PARENT_WIDTH = "parent";
@@ -395,7 +394,7 @@ public class CubaSuggestionFieldWidget extends Composite implements HasEnabled, 
 
         @SuppressWarnings("deprecation")
         public SuggestionPopup(Widget widget) {
-            super(true, true, true);
+            super(true, true);
 
             com.google.gwt.user.client.Element popup = getElement();
             popup.getStyle().setZIndex(Z_INDEX);
@@ -405,7 +404,6 @@ public class CubaSuggestionFieldWidget extends Composite implements HasEnabled, 
             setAutoHideEnabled(true);
 
             setOwner(CubaSuggestionFieldWidget.this);
-            addCloseHandler(this);
 
             setWidget(widget);
         }
@@ -508,6 +506,7 @@ public class CubaSuggestionFieldWidget extends Composite implements HasEnabled, 
     }
 
     protected class CubaTextFieldEvents implements KeyDownHandler, KeyUpHandler, ValueChangeHandler<String>, BlurHandler {
+        @Override
         public void onKeyDown(KeyDownEvent event) {
             switch (event.getNativeKeyCode()) {
                 case KeyCodes.KEY_UP:

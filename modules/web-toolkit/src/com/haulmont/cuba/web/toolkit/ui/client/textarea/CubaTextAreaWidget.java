@@ -17,7 +17,7 @@
 package com.haulmont.cuba.web.toolkit.ui.client.textarea;
 
 import com.google.gwt.dom.client.Element;
-import com.vaadin.client.ui.VTextArea;
+import com.vaadin.v7.client.ui.VTextArea;
 
 public class CubaTextAreaWidget extends VTextArea {
     protected static final String CUBA_DISABLED_OR_READONLY = "c-disabled-or-readonly";

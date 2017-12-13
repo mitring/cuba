@@ -28,9 +28,10 @@ import com.haulmont.cuba.web.gui.components.WebPopupButton;
 import com.haulmont.cuba.web.gui.components.presentations.actions.PresentationActionsBuilder;
 import com.haulmont.cuba.web.toolkit.ui.CubaEnhancedTable;
 import com.haulmont.cuba.web.toolkit.ui.CubaMenuBar;
-import com.vaadin.data.Property;
-import com.vaadin.data.util.AbstractProperty;
 import com.vaadin.ui.*;
+import com.vaadin.v7.data.Property;
+import com.vaadin.v7.data.util.AbstractProperty;
+import com.vaadin.v7.ui.CheckBox;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
 
@@ -198,11 +199,10 @@ public class TablePresentations extends VerticalLayout {
 
         button = new WebPopupButton();
         button.setCaption(messages.getMainMessage("PresentationsPopup.actions"));
-        addComponent(button.<Component>getComponent());
-        setComponentAlignment(button.<Component>getComponent(), Alignment.MIDDLE_CENTER);
+        addComponent(button.getComponent());
+        setComponentAlignment(button.getComponent(), Alignment.MIDDLE_CENTER);
 
         textSelectionCheckBox = new CheckBox();
-        textSelectionCheckBox.setImmediate(true);
         textSelectionCheckBox.setInvalidCommitted(true);
         textSelectionCheckBox.setCaption(messages.getMainMessage("PresentationsPopup.textSelection"));
         addComponent(textSelectionCheckBox);

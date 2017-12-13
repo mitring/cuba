@@ -16,11 +16,12 @@
  */
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.data.Container;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
+import com.vaadin.shared.Registration;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.ComponentContainer;
+import com.vaadin.v7.data.Container;
 
 import java.io.Serializable;
 import java.util.*;
@@ -170,28 +171,9 @@ public class CubaWidgetsTree extends CubaTree implements ComponentContainer {
     }
 
     @Override
-    public void addListener(ComponentAttachListener listener) {
+    public Registration addComponentAttachListener(ComponentAttachListener listener) {
         // do nothing
-    }
-
-    @Override
-    public void removeListener(ComponentAttachListener listener) {
-        // do nothing
-    }
-
-    @Override
-    public void addListener(ComponentDetachListener listener) {
-        // do nothing
-    }
-
-    @Override
-    public void removeListener(ComponentDetachListener listener) {
-        // do nothing
-    }
-
-    @Override
-    public void addComponentAttachListener(ComponentAttachListener listener) {
-        // do nothing
+        return (Registration) () -> {};
     }
 
     @Override
@@ -200,8 +182,9 @@ public class CubaWidgetsTree extends CubaTree implements ComponentContainer {
     }
 
     @Override
-    public void addComponentDetachListener(ComponentDetachListener listener) {
+    public Registration addComponentDetachListener(ComponentDetachListener listener) {
         // do nothing
+        return (Registration) () -> {};
     }
 
     @Override

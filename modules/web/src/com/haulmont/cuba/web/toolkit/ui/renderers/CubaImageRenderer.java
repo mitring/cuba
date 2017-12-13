@@ -21,7 +21,7 @@ import com.vaadin.server.ExternalResource;
 import com.vaadin.server.Resource;
 import com.vaadin.server.ResourceReference;
 import com.vaadin.shared.communication.URLReference;
-import com.vaadin.ui.renderers.ClickableRenderer;
+import com.vaadin.v7.ui.renderers.ClickableRenderer;
 import elemental.json.JsonValue;
 
 import java.net.MalformedURLException;

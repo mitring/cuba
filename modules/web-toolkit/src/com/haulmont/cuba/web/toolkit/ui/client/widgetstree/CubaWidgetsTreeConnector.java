@@ -22,7 +22,7 @@ import com.haulmont.cuba.web.toolkit.ui.client.tree.CubaTreeConnector;
 import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.HasComponentsConnector;
 import com.vaadin.client.UIDL;
-import com.vaadin.client.ui.VTree;
+import com.vaadin.v7.client.ui.VTree;
 import com.vaadin.shared.ui.Connect;
 
 import java.util.Collections;

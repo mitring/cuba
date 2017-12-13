@@ -22,7 +22,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.vaadin.client.ui.VNotification;
 
-import static com.haulmont.cuba.web.toolkit.ui.client.appui.AppUIConnector.CubaNotificationDelegate.CUBA_NOTIFICATION_MODALITY_CURTAIN;
+import static com.haulmont.cuba.web.toolkit.ui.client.appui.AppUIConnector.CUBA_NOTIFICATION_MODALITY_CURTAIN;
 
 public class CubaNotification extends VNotification {
     public static final String TRAY_STYLE = "tray";

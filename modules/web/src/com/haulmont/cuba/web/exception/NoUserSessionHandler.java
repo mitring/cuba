@@ -32,7 +32,10 @@ import com.haulmont.cuba.web.gui.components.WebComponentsHelper;
 import com.haulmont.cuba.web.toolkit.ui.CubaLabel;
 import com.haulmont.cuba.web.toolkit.ui.CubaWindow;
 import com.vaadin.server.Page;
-import com.vaadin.ui.*;
+import com.vaadin.ui.Alignment;
+import com.vaadin.ui.Button;
+import com.vaadin.ui.VerticalLayout;
+import com.vaadin.ui.Window;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,7 +99,7 @@ public class NoUserSessionHandler extends AbstractExceptionHandler {
             dialog.setId(ui.getTestIdManager().getTestId("optionDialog"));
         }
 
-        Label messageLab = new CubaLabel();
+        CubaLabel messageLab = new CubaLabel();
         messageLab.setWidthUndefined();
         messageLab.setValue(messages.getMainMessage("noUserSession.message", locale));
 

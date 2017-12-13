@@ -55,7 +55,7 @@ public class AppFolderEditWindow extends FolderEditWindow {
                         getConstructor(boolean.class, Folder.class, Presentations.class, Runnable.class);
                 return (FolderEditWindow) constructor.newInstance(adding, folder, presentations, commitHandler);
             } catch (Exception e) {
-                throw new RuntimeException(e);
+                throw new RuntimeException("Unable to create FolderEditWindow", e);
             }
         } else
             return isAppFolder ? new AppFolderEditWindow(adding, folder, presentations, commitHandler)
@@ -87,7 +87,7 @@ public class AppFolderEditWindow extends FolderEditWindow {
             layout.addComponent(quantityScriptField, 4);
 
             if (AppUI.getCurrent().isTestMode()) {
-                setCubaId("appFolderEditWindow");
+                this.setCubaId("appFolderEditWindow");
 
                 visibilityScriptField.setCubaId("visibilityScriptField");
                 quantityScriptField.setCubaId("quantityScriptField");

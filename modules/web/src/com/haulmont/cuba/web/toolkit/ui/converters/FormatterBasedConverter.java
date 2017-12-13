@@ -17,7 +17,7 @@
 package com.haulmont.cuba.web.toolkit.ui.converters;
 
 import com.haulmont.cuba.gui.components.Formatter;
-import com.vaadin.data.util.converter.Converter;
+import com.vaadin.v7.data.util.converter.Converter;
 
 import java.util.Locale;
 

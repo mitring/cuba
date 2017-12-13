@@ -68,6 +68,7 @@ public class CubaPopupButtonConnector extends PopupButtonConnector {
         }
     }
 
+    /* vaadin8 implement
     @Override
     public void onPreviewNativeEvent(Event.NativePreviewEvent event) {
         NativeEvent nativeEvent = event.getNativeEvent();
@@ -186,7 +187,7 @@ public class CubaPopupButtonConnector extends PopupButtonConnector {
             }
         }
     }
-
+    */
     private boolean isLastChild(Element target) {
         Widget widget = WidgetUtil.findWidget(target, null);
         Widget widgetParent = widget.getParent();

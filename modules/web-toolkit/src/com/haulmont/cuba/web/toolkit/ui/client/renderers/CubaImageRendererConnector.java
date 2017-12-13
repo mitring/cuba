@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.renderers;
 
-import com.vaadin.client.connectors.ImageRendererConnector;
+import com.vaadin.v7.client.connectors.ImageRendererConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(com.haulmont.cuba.web.toolkit.ui.renderers.CubaImageRenderer.class)

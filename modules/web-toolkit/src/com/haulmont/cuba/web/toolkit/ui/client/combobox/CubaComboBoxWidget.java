@@ -25,7 +25,7 @@ import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.HasEnabled;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.VFilterSelect;
+import com.vaadin.v7.client.ui.VFilterSelect;
 
 import java.util.Iterator;
 import java.util.LinkedList;

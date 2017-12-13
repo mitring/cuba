@@ -17,18 +17,14 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.appui;
 
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Element;
 import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.toolkit.ui.client.button.CubaButtonConnector;
 import com.vaadin.client.ApplicationConnection;
+import com.vaadin.client.ApplicationConnection.RemoveMethodInvocationCallback;
 import com.vaadin.client.ConnectorMap;
 import com.vaadin.client.ServerConnector;
-import com.vaadin.client.ui.NotificationDelegate;
-import com.vaadin.client.ui.VNotification;
 import com.vaadin.client.ui.ui.UIConnector;
 import com.vaadin.shared.communication.LegacyChangeVariablesInvocation;
-import com.vaadin.shared.communication.MethodInvocation;
 import com.vaadin.shared.ui.Connect;
 import com.vaadin.shared.ui.button.ButtonServerRpc;
 import com.vaadin.shared.ui.tabsheet.TabsheetServerRpc;
@@ -36,57 +32,54 @@ import com.vaadin.shared.ui.tabsheet.TabsheetServerRpc;
 @Connect(AppUI.class)
 public class AppUIConnector extends UIConnector {
 
+    public static final String CUBA_NOTIFICATION_MODALITY_CURTAIN = "c-notification-modalitycurtain";
+
     public AppUIConnector() {
-        VNotification.setRelativeZIndex(true);
+//        vaadin8 reimplement
+//        VNotification.setRelativeZIndex(true);
+
+        //noinspection Convert2Lambda
         registerRpc(AppUIClientRpc.class, new AppUIClientRpc() {
             @Override
             public void discardAccumulatedEvents() {
                 // silent time
                 ValidationErrorHolder.onValidationError();
 
-                ApplicationConnection.MethodInvocationFilter filter =
-                        new ApplicationConnection.MethodInvocationFilter() {
-                    @Override
-                    public boolean apply(MethodInvocation mi) {
-                        // use blacklist of invocations
-                        // do not discard all
+                ApplicationConnection.MethodInvocationFilter filter = mi -> {
+                    // use blacklist of invocations
+                    // do not discard all
 
-                        // button click
-                        if (ButtonServerRpc.class.getName().equals(mi.getInterfaceName())
-                                && "click".equals(mi.getMethodName())) {
-                            return true;
-                        }
-
-                        // tabsheet close
-                        if (TabsheetServerRpc.class.getName().equals(mi.getInterfaceName())
-                                && "closeTab".equals(mi.getMethodName())) {
-                            return true;
-                        }
-
-                        // shortcuts && window close
-                        //noinspection RedundantIfStatement
-                        if (mi instanceof LegacyChangeVariablesInvocation) {
-                            LegacyChangeVariablesInvocation invocation = (LegacyChangeVariablesInvocation) mi;
-                            if (invocation.getVariableChanges().containsKey("action")
-                                    || invocation.getVariableChanges().containsKey("actiontarget")
-                                    || invocation.getVariableChanges().containsKey("close")) {
-                                return true;
-                            }
-                        }
-
-                        return false;
+                    // button click
+                    if (ButtonServerRpc.class.getName().equals(mi.getInterfaceName())
+                            && "click".equals(mi.getMethodName())) {
+                        return true;
                     }
+
+                    // tabsheet close
+                    if (TabsheetServerRpc.class.getName().equals(mi.getInterfaceName())
+                            && "closeTab".equals(mi.getMethodName())) {
+                        return true;
+                    }
+
+                    // shortcuts && window close
+                    //noinspection RedundantIfStatement
+                    if (mi instanceof LegacyChangeVariablesInvocation) {
+                        LegacyChangeVariablesInvocation invocation = (LegacyChangeVariablesInvocation) mi;
+                        if (invocation.getVariableChanges().containsKey("action")
+                                || invocation.getVariableChanges().containsKey("actiontarget")
+                                || invocation.getVariableChanges().containsKey("close")) {
+                            return true;
+                        }
+                    }
+
+                    return false;
                 };
 
-                ApplicationConnection.RemoveMethodInvocationCallback callback =
-                        new ApplicationConnection.RemoveMethodInvocationCallback() {
-                    @Override
-                    public void removed(MethodInvocation mi) {
-                        ConnectorMap connectorMap = getConnection().getConnectorMap();
-                        ServerConnector connector = connectorMap.getConnector(mi.getConnectorId());
-                        if (connector instanceof CubaButtonConnector) {
-                            ((CubaButtonConnector) connector).stopResponsePending();
-                        }
+                RemoveMethodInvocationCallback callback = mi -> {
+                    ConnectorMap connectorMap = getConnection().getConnectorMap();
+                    ServerConnector connector = connectorMap.getConnector(mi.getConnectorId());
+                    if (connector instanceof CubaButtonConnector) {
+                        ((CubaButtonConnector) connector).stopResponsePending();
                     }
                 };
 
@@ -95,14 +88,13 @@ public class AppUIConnector extends UIConnector {
         });
     }
 
+    /* vaadin8 reimplement
     @Override
     protected NotificationDelegate getDelegate() {
         return new CubaNotificationDelegate();
     }
 
     public class CubaNotificationDelegate implements NotificationDelegate {
-
-        public static final String CUBA_NOTIFICATION_MODALITY_CURTAIN = "c-notification-modalitycurtain";
 
         private Element modalityCurtain;
 
@@ -143,4 +135,5 @@ public class AppUIConnector extends UIConnector {
             }
         }
     }
+    */
 }

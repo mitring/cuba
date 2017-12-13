@@ -16,11 +16,10 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.shared.ui.colorpicker.Color;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.CustomField;
-
-import java.util.Objects;
+import com.vaadin.v7.shared.ui.colorpicker.Color;
+import com.vaadin.v7.ui.CustomField;
+import org.apache.commons.lang.ObjectUtils;
 
 public class CubaColorPickerWrapper extends CustomField {
 

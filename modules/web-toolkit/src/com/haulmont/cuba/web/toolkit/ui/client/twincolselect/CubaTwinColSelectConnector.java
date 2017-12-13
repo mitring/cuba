@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.toolkit.ui.client.twincolselect;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaTwinColSelect;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.twincolselect.TwinColSelectConnector;
+import com.vaadin.v7.client.ui.twincolselect.TwinColSelectConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaTwinColSelect.class)

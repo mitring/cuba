@@ -18,19 +18,21 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.web.toolkit.ui.client.datefield.CubaDateFieldState;
-import com.vaadin.data.util.converter.Converter;
 import com.vaadin.event.Action;
 import com.vaadin.event.ActionManager;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
+import com.vaadin.shared.Registration;
+import com.vaadin.v7.data.util.converter.Converter;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.Date;
 import java.util.Map;
 import java.util.Objects;
 
-public class CubaDateField extends com.vaadin.ui.DateField implements Action.Container {
+public class CubaDateField extends com.vaadin.v7.ui.DateField implements Action.Container {
 
     /**
      * Keeps track of the Actions added to this component, and manages the
@@ -123,8 +125,9 @@ public class CubaDateField extends com.vaadin.ui.DateField implements Action.Con
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener listener) {
+    public Registration addShortcutListener(ShortcutListener listener) {
         getActionManager().addAction(listener);
+        return () -> getActionManager().removeAction(listener);
     }
 
     @Override

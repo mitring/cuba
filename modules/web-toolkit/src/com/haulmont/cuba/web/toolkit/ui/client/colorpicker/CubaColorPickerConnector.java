@@ -18,7 +18,7 @@ package com.haulmont.cuba.web.toolkit.ui.client.colorpicker;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaColorPicker;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.colorpicker.ColorPickerConnector;
+import com.vaadin.v7.client.ui.colorpicker.ColorPickerConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaColorPicker.class)

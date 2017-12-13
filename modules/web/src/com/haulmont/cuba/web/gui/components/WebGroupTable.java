@@ -38,7 +38,7 @@ import com.haulmont.cuba.web.gui.data.SortableCollectionDsWrapper;
 import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
 import com.haulmont.cuba.web.toolkit.data.GroupTableContainer;
 import com.haulmont.cuba.web.toolkit.ui.CubaGroupTable;
-import com.vaadin.data.Item;
+import com.vaadin.v7.data.Item;
 import com.vaadin.server.Resource;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang.StringUtils;
@@ -75,12 +75,14 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
                 return WebGroupTable.this.getItemIcon(itemId);
             }
 
+            /* vaadin8 reimplement
             @Override
             protected boolean changeVariables(Map<String, Object> variables) {
                 boolean b = super.changeVariables(variables);
                 b = handleSpecificVariables(variables) || b;
                 return b;
             }
+            */
 
             @Override
             public void groupBy(Object[] properties) {
@@ -98,7 +100,7 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
     protected StyleGeneratorAdapter createStyleGenerator() {
         return new StyleGeneratorAdapter(){
             @Override
-            public String getStyle(com.vaadin.ui.Table source, Object itemId, Object propertyId) {
+            public String getStyle(com.vaadin.v7.ui.Table source, Object itemId, Object propertyId) {
                 if (!component.getGroupProperties().contains(propertyId)) {
                     return super.getStyle(source, itemId, propertyId);
                 }

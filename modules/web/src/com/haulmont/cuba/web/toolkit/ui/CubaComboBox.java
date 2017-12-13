@@ -17,13 +17,14 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.data.Container;
-import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.event.Action;
 import com.vaadin.event.ActionManager;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.*;
-import com.vaadin.ui.ComboBox;
+import com.vaadin.shared.Registration;
+import com.vaadin.v7.data.Container;
+import com.vaadin.v7.data.util.IndexedContainer;
+import com.vaadin.v7.ui.ComboBox;
 
 import java.util.Map;
 import java.util.function.BiFunction;
@@ -51,7 +52,7 @@ public class CubaComboBox extends ComboBox implements Action.Container {
         if (!isReadOnly() && isRequired() && isEmpty()) {
 
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }
@@ -168,8 +169,9 @@ public class CubaComboBox extends ComboBox implements Action.Container {
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener listener) {
+    public Registration addShortcutListener(ShortcutListener listener) {
         getActionManager().addAction(listener);
+        return () -> getActionManager().removeAction(listener);
     }
 
     @Override
@@ -209,7 +211,6 @@ public class CubaComboBox extends ComboBox implements Action.Container {
     }
 
     public interface OptionIconProvider {
-
         Resource getItemIcon(Object item);
     }
 }

@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers;
 
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 import elemental.json.JsonValue;
 import org.apache.commons.lang.BooleanUtils;
 

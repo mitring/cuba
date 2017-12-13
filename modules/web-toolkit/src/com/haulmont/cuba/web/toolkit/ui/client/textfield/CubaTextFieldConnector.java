@@ -22,7 +22,7 @@ import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.UIDL;
 import com.vaadin.client.annotations.OnStateChange;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.textfield.TextFieldConnector;
+import com.vaadin.v7.client.ui.textfield.TextFieldConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaTextField.class)

@@ -358,8 +358,8 @@ public class WebAppMenu extends WebAbstractComponent<CubaMenuBar> implements App
 
             MenuBar.MenuItem delegateItem = this.getDelegateItem();
 
-            // The only place where the parent is set
             childItem.setParent(delegateItem);
+
             delegateItem.getChildren().add(childItem);
             menu.registerMenuItem(menuItem);
 
@@ -375,8 +375,8 @@ public class WebAppMenu extends WebAbstractComponent<CubaMenuBar> implements App
 
             MenuBar.MenuItem delegateItem = this.getDelegateItem();
 
-            // The only place where the parent is set
             childItem.setParent(delegateItem);
+
             delegateItem.getChildren().add(index, childItem);
             menu.registerMenuItem(menuItem);
 

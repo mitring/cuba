@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.toolkit.ui.client.treetable;
 
 import com.vaadin.shared.Connector;
 import com.vaadin.shared.annotations.NoLayout;
-import com.vaadin.shared.ui.treetable.TreeTableState;
+import com.vaadin.v7.shared.ui.treetable.TreeTableState;
 
 import java.util.Map;
 

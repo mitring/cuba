@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.suggestionfield;
 
-import com.vaadin.shared.AbstractFieldState;
+import com.vaadin.v7.shared.AbstractFieldState;
 
 import java.util.List;
 

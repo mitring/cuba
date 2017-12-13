@@ -35,13 +35,13 @@ import com.haulmont.cuba.web.toolkit.ui.CubaLabel;
 import com.haulmont.cuba.web.toolkit.ui.converters.StringToDatatypeConverter;
 import com.haulmont.cuba.web.toolkit.ui.converters.StringToEntityConverter;
 import com.haulmont.cuba.web.toolkit.ui.converters.StringToEnumConverter;
-import com.vaadin.shared.ui.label.ContentMode;
+import com.vaadin.v7.shared.ui.label.ContentMode;
 
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Objects;
 
-public class WebLabel extends WebAbstractComponent<com.vaadin.ui.Label> implements Label {
+public class WebLabel extends WebAbstractComponent<com.vaadin.v7.ui.Label> implements Label {
 
     protected Datasource<Entity> datasource;
     protected MetaProperty metaProperty;

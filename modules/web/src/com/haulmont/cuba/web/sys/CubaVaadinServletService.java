@@ -152,10 +152,12 @@ public class CubaVaadinServletService extends VaadinServletService {
         return webConfig.getAppWindowTheme();
     }
 
+/*  vaadin8 implement
     @Override
     public String getApplicationVersion() {
         return webResourceTimestamp;
     }
+*/
 
     @Override
     protected List<RequestHandler> createRequestHandlers() throws ServiceException {
@@ -166,12 +168,15 @@ public class CubaVaadinServletService extends VaadinServletService {
         for (RequestHandler handler : requestHandlers) {
             if (handler instanceof UidlRequestHandler) {
                 // replace UidlRequestHandler with CubaUidlRequestHandler
+                cubaRequestHandlers.add(new UidlRequestHandler());
+                /* vaadin8 reimplement
                 cubaRequestHandlers.add(new UidlRequestHandler() {
                     @Override
                     protected UidlWriter createUidlWriter() {
                         return new CubaUidlWriter();
                     }
                 });
+                */
             } else if (handler instanceof PublishedFileHandler) {
                 // replace PublishedFileHandler with CubaPublishedFileHandler
                 // for support resources from VAADIN directory

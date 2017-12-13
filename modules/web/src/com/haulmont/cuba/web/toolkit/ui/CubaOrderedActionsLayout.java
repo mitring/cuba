@@ -21,6 +21,7 @@ import com.vaadin.event.ActionManager;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
+import com.vaadin.shared.Registration;
 import com.vaadin.ui.AbstractOrderedLayout;
 import com.vaadin.ui.LegacyComponent;
 
@@ -53,8 +54,9 @@ public class CubaOrderedActionsLayout extends AbstractOrderedLayout implements A
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener listener) {
+    public Registration addShortcutListener(ShortcutListener listener) {
         getActionManager().addAction(listener);
+        return () -> getActionManager().removeAction(listener);
     }
 
     @Override

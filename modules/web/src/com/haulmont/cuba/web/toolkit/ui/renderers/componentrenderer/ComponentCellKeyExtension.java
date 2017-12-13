@@ -14,7 +14,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer;
 
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 
 /**
  * An extension which allows to focus components (or its input field) inside a component

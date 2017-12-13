@@ -22,7 +22,7 @@ import com.haulmont.cuba.web.toolkit.ui.converters.StringToDatatypeConverter;
 import com.vaadin.server.*;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.CssLayout;
-import com.vaadin.ui.CustomField;
+import com.vaadin.v7.ui.CustomField;
 import org.apache.commons.lang.StringUtils;
 
 import java.text.ParseException;
@@ -73,7 +73,6 @@ public class CubaCurrencyField extends CustomField {
         textField.setValidationVisible(false);
         textField.setShowBufferedSourceException(false);
         textField.setShowErrorForDisabledState(false);
-        textField.setImmediate(true);
         textField.setNullRepresentation(StringUtils.EMPTY);
         textField.setConverter(new StringToDatatypeConverter(datatype));
 
@@ -225,7 +224,7 @@ public class CubaCurrencyField extends CustomField {
         ErrorMessage superError = super.getErrorMessage();
         if (!textField.isReadOnly() && textField.isRequired() && textField.isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }

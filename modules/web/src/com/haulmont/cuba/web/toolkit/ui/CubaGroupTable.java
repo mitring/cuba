@@ -23,13 +23,12 @@ import com.haulmont.cuba.web.gui.data.PropertyValueStringify;
 import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
 import com.haulmont.cuba.web.toolkit.data.GroupTableContainer;
 import com.haulmont.cuba.web.toolkit.data.util.GroupTableContainerWrapper;
-import com.vaadin.data.Container;
-import com.vaadin.data.Property;
-import com.vaadin.data.util.IndexedContainer;
 import com.vaadin.server.KeyMapper;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
-import com.vaadin.ui.Table;
+import com.vaadin.v7.data.Container;
+import com.vaadin.v7.data.Property;
+import com.vaadin.v7.data.util.IndexedContainer;
 import org.apache.commons.collections4.CollectionUtils;
 
 import javax.annotation.Nullable;
@@ -99,7 +98,7 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
 
             int index = 0;
             for (final Object groupColumnId : groupProperties) {
-                groupColumns[index++] = columnIdMap.key(groupColumnId);
+                groupColumns[index++] = _columnIdMap().key(groupColumnId);
             }
             target.addVariable(this, "groupColumns", groupColumns);
         }
@@ -122,15 +121,15 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
             final Object[] ids = (Object[]) variables.get("groupedcolumns");
             final Object[] groupProperties = new Object[ids.length];
             for (int i = 0; i < ids.length; i++) {
-                groupProperties[i] = columnIdMap.get(ids[i].toString());
+                groupProperties[i] = _columnIdMap().get(ids[i].toString());
             }
             newGroupProperties = groupProperties;
             // Deny group by generated columns
-            if (!columnGenerators.isEmpty()) {
+            if (!_columnGenerators().isEmpty()) {
                 List<Object> notGeneratedProperties = new ArrayList<>();
                 for (Object id : newGroupProperties) {
                     // todo support grouping by generated columns with Printable
-                    if (!columnGenerators.containsKey(id) || (id instanceof MetaPropertyPath)) {
+                    if (!_columnGenerators().containsKey(id) || (id instanceof MetaPropertyPath)) {
                         notGeneratedProperties.add(id);
                     }
                 }
@@ -143,7 +142,7 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
                     .get("collapsedcolumns");
             Set<Object> idSet = new HashSet<>();
             for (Object id : ids) {
-                idSet.add(columnIdMap.get(id.toString()));
+                idSet.add(_columnIdMap().get(id.toString()));
             }
 
             boolean needToRegroup = false;
@@ -271,7 +270,7 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
         boolean hasGroups = hasGroups();
         if (hasGroups) {
             if (isGroup(itemId)) {
-                target.addAttribute("colKey", columnIdMap.key(getGroupProperty(itemId)));
+                target.addAttribute("colKey", _columnIdMap().key(getGroupProperty(itemId)));
                 target.addAttribute("groupKey", groupIdMap.key(itemId));
                 if (isExpanded(itemId))
                     target.addAttribute("expanded", true);
@@ -307,7 +306,7 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
         final Collection groupProperties = getGroupProperties();
         final Object groupProperty = getGroupProperty(groupId);
 
-        for (final Object columnId : visibleColumns) {
+        for (final Object columnId : _visibleColumns()) {
             if (columnId == null || isColumnCollapsed(columnId)) {
                 continue;
             }
@@ -322,7 +321,7 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
             if (getCellStyleGenerator() != null) {
                 String cellStyle = getCellStyleGenerator().getStyle(this, null, columnId);
                 if (cellStyle != null && !cellStyle.equals("")) {
-                    target.addAttribute("style-" + columnIdMap.key(columnId), cellStyle + "-ag");
+                    target.addAttribute("style-" + _columnIdMap().key(columnId), cellStyle + "-ag");
                 }
             }
 
@@ -453,10 +452,10 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
     public Collection<?> getGroupProperties() {
         Collection<?> groupProperties = ((GroupTableContainer) items).getGroupProperties();
         // Deny group by generated columns
-        if (!columnGenerators.isEmpty()) {
+        if (!_columnGenerators().isEmpty()) {
             List<Object> notGeneratedGroupProps = new ArrayList<>();
             for (Object id : groupProperties) {
-                if (!columnGenerators.containsKey(id) || (id instanceof MetaPropertyPath))
+                if (!_columnGenerators().containsKey(id) || (id instanceof MetaPropertyPath))
                     notGeneratedGroupProps.add(id);
             }
             return notGeneratedGroupProps;
@@ -584,7 +583,7 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
             int i = 0;
             for (Object columnId : cellClickListeners.keySet()) {
                 if (!groupProperties.contains(columnId)) {
-                    clickableColumnKeys[i] = columnIdMap.key(columnId);
+                    clickableColumnKeys[i] = _columnIdMap().key(columnId);
                     i++;
                 }
             }

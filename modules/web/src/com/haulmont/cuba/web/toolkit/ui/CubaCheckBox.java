@@ -18,7 +18,7 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.web.toolkit.ui.client.checkbox.CubaCheckBoxState;
-import com.vaadin.ui.CheckBox;
+import com.vaadin.v7.ui.CheckBox;
 
 public class CubaCheckBox extends CheckBox {
 

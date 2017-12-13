@@ -23,21 +23,21 @@ import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.security.entity.ConstraintOperationType;
 import com.haulmont.cuba.security.entity.EntityOp;
 import com.haulmont.cuba.web.toolkit.ui.client.grid.CubaGridState;
-import com.vaadin.data.Container;
-import com.vaadin.data.Validatable;
-import com.vaadin.data.Validator;
-import com.vaadin.data.fieldgroup.FieldGroup;
 import com.vaadin.event.Action;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.Field;
-import com.vaadin.ui.Grid;
 import com.vaadin.util.ReflectTools;
+import com.vaadin.v7.data.Container;
+import com.vaadin.v7.data.Validatable;
+import com.vaadin.v7.data.Validator;
+import com.vaadin.v7.data.fieldgroup.FieldGroup;
+import com.vaadin.v7.ui.Field;
+import com.vaadin.v7.ui.Grid;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
-import static com.haulmont.cuba.web.toolkit.ui.CubaGrid.EditorCloseListener.EDITOR_CLOSE_METHOD;
 import static com.haulmont.cuba.web.toolkit.ui.CubaGrid.BeforeEditorOpenListener.EDITOR_OPEN_METHOD;
+import static com.haulmont.cuba.web.toolkit.ui.CubaGrid.EditorCloseListener.EDITOR_CLOSE_METHOD;
 import static com.haulmont.cuba.web.toolkit.ui.CubaGrid.EditorPostCommitListener.EDITOR_POST_COMMIT_METHOD;
 import static com.haulmont.cuba.web.toolkit.ui.CubaGrid.EditorPreCommitListener.EDITOR_PRE_COMMIT_METHOD;
 
@@ -266,7 +266,7 @@ public class CubaGrid extends Grid implements Action.ShortcutNotifier {
         fireEvent(new BeforeEditorOpenEvent(this, editedItemId, columnFieldMap));
     }
 
-    public class BeforeEditorOpenEvent extends EditorEvent {
+    public class BeforeEditorOpenEvent extends com.vaadin.v7.ui.Grid.EditorEvent {
         Map<Column, Field> columnFieldMap;
 
         protected BeforeEditorOpenEvent(Grid source, Object itemID, Map<Column, Field> columnFieldMap) {

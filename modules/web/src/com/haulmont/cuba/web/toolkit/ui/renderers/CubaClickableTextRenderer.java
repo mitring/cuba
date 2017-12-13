@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers;
 
-import com.vaadin.ui.renderers.ClickableRenderer;
+import com.vaadin.v7.ui.renderers.ClickableRenderer;
 
 public class CubaClickableTextRenderer extends ClickableRenderer<String> {
 

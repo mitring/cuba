@@ -29,7 +29,7 @@ import com.haulmont.cuba.web.toolkit.ui.client.Tools;
 import com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidget;
 import com.vaadin.client.BrowserInfo;
 import com.vaadin.client.UIDL;
-import com.vaadin.client.ui.VScrollTable;
+import com.vaadin.v7.client.ui.VScrollTable;
 
 import java.util.Collections;
 import java.util.Iterator;

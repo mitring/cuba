@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.renderers;
 
-import com.vaadin.client.connectors.ProgressBarRendererConnector;
+import com.vaadin.v7.client.connectors.ProgressBarRendererConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(com.haulmont.cuba.web.toolkit.ui.renderers.CubaProgressBarRenderer.class)

@@ -21,7 +21,7 @@ import com.haulmont.cuba.web.toolkit.ui.client.textarea.CubaTextAreaState;
 import com.vaadin.server.AbstractErrorMessage;
 import com.vaadin.server.CompositeErrorMessage;
 import com.vaadin.server.ErrorMessage;
-import com.vaadin.ui.TextArea;
+import com.vaadin.v7.ui.TextArea;
 
 import java.util.Objects;
 
@@ -47,7 +47,7 @@ public class CubaTextArea extends TextArea {
         ErrorMessage superError = super.getErrorMessage();
         if (!isReadOnly() && isRequired() && isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }

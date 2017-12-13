@@ -22,7 +22,7 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.EventListener;
 import com.vaadin.client.ComputedStyle;
-import com.vaadin.client.ui.VCustomField;
+import com.vaadin.v7.client.ui.VCustomField;
 
 public class CubaResizableTextAreaWrapperWidget extends VCustomField {
 

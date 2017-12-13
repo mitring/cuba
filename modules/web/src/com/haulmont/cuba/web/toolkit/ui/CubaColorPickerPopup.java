@@ -17,11 +17,11 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.vaadin.shared.ui.MarginInfo;
-import com.vaadin.shared.ui.colorpicker.Color;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.TabSheet;
 import com.vaadin.ui.VerticalLayout;
-import com.vaadin.ui.components.colorpicker.ColorPickerPopup;
+import com.vaadin.v7.shared.ui.colorpicker.Color;
+import com.vaadin.v7.ui.components.colorpicker.ColorPickerPopup;
 
 public class CubaColorPickerPopup extends ColorPickerPopup {
 

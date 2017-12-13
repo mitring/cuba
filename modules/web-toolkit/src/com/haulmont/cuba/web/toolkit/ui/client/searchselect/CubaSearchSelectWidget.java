@@ -23,7 +23,7 @@ import com.google.gwt.event.dom.client.KeyCodes;
 import com.google.gwt.event.dom.client.KeyDownEvent;
 import com.google.gwt.event.dom.client.KeyUpEvent;
 import com.google.gwt.user.client.DOM;
-import com.vaadin.client.ui.VFilterSelect;
+import com.vaadin.v7.client.ui.VFilterSelect;
 import com.vaadin.client.ui.menubar.MenuItem;
 
 public class CubaSearchSelectWidget extends VFilterSelect {

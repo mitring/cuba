@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.web.toolkit.ui.client.optiongroup.CubaOptionGroupState;
 import com.haulmont.cuba.web.toolkit.ui.client.optiongroup.OptionGroupOrientation;
-import com.vaadin.ui.OptionGroup;
+import com.vaadin.v7.ui.OptionGroup;
 
 public class CubaOptionGroup extends OptionGroup {
     public CubaOptionGroup() {

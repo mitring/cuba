@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.gui.components.renderers;
 import com.haulmont.cuba.gui.components.DataGrid;
 import com.haulmont.cuba.web.gui.components.WebDataGrid;
 import com.haulmont.cuba.web.toolkit.ui.renderers.CubaCheckBoxRenderer;
-import com.vaadin.ui.renderers.Renderer;
+import com.vaadin.v7.ui.renderers.Renderer;
 
 /**
  * A renderer that represents a boolean values as a graphical check box icons.

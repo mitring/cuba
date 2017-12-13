@@ -22,7 +22,7 @@ import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.UIDL;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.datefield.PopupDateFieldConnector;
+import com.vaadin.v7.client.ui.datefield.PopupDateFieldConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaDateField.class)

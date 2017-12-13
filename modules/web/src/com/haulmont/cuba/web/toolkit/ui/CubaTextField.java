@@ -22,7 +22,8 @@ import com.vaadin.event.Action;
 import com.vaadin.event.ActionManager;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.*;
-import com.vaadin.ui.TextField;
+import com.vaadin.shared.Registration;
+import com.vaadin.v7.ui.TextField;
 
 import java.util.Map;
 import java.util.Objects;
@@ -46,7 +47,7 @@ public class CubaTextField extends TextField implements Action.Container {
         ErrorMessage superError = super.getErrorMessage();
         if (!isReadOnly() && isRequired() && isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }
@@ -82,8 +83,9 @@ public class CubaTextField extends TextField implements Action.Container {
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener listener) {
+    public Registration addShortcutListener(ShortcutListener listener) {
         getActionManager().addAction(listener);
+        return () -> getActionManager().removeAction(listener);
     }
 
     @Override

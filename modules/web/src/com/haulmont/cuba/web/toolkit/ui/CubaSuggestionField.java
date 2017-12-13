@@ -20,9 +20,12 @@ import com.google.common.base.Strings;
 import com.haulmont.cuba.web.toolkit.ui.client.suggestionfield.CubaSuggestionFieldClientRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.suggestionfield.CubaSuggestionFieldServerRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.suggestionfield.CubaSuggestionFieldState;
-import com.vaadin.event.FieldEvents;
 import com.vaadin.server.*;
-import com.vaadin.ui.AbstractField;
+import com.vaadin.server.AbstractErrorMessage;
+import com.vaadin.server.CompositeErrorMessage;
+import com.vaadin.server.ErrorMessage;
+import com.vaadin.server.KeyMapper;
+import com.vaadin.v7.ui.AbstractField;
 import elemental.json.Json;
 import elemental.json.JsonArray;
 import elemental.json.JsonObject;
@@ -50,7 +53,7 @@ public class CubaSuggestionField extends AbstractField<Object> {
 
     protected KeyMapper keyMapper = new KeyMapper<>();
 
-    protected FieldEvents.FocusAndBlurServerRpcImpl focusBlurRpc;
+    protected com.vaadin.event.FieldEvents.FocusAndBlurServerRpcImpl focusBlurRpc;
     protected CubaSuggestionFieldServerRpc serverRpc;
 
     protected Function<Object, String> textViewConverter;
@@ -96,7 +99,7 @@ public class CubaSuggestionField extends AbstractField<Object> {
         };
         registerRpc(serverRpc);
 
-        focusBlurRpc = new FieldEvents.FocusAndBlurServerRpcImpl(this) {
+        focusBlurRpc = new com.vaadin.event.FieldEvents.FocusAndBlurServerRpcImpl(this) {
             private static final long serialVersionUID = -780524775769549747L;
 
             @Override
@@ -127,7 +130,7 @@ public class CubaSuggestionField extends AbstractField<Object> {
         ErrorMessage superError = super.getErrorMessage();
         if (!isReadOnly() && isRequired() && isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }

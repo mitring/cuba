@@ -22,6 +22,7 @@ import com.vaadin.event.ActionManager;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
+import com.vaadin.shared.Registration;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.CssLayout;
 import com.vaadin.ui.Layout;
@@ -56,8 +57,9 @@ public class CubaCssActionsLayout extends CssLayout implements Action.Container,
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener listener) {
+    public Registration addShortcutListener(ShortcutListener listener) {
         getActionManager().addAction(listener);
+        return () -> getActionManager().removeAction(listener);
     }
 
     @Override

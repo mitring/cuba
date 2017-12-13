@@ -18,7 +18,7 @@ package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.web.toolkit.ui.client.grid.selection.CubaMultiSelectionModelServerRpc;
 import com.vaadin.server.AbstractClientConnector;
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 
 import java.util.Collection;
 import java.util.stream.Collectors;

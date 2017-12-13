@@ -24,7 +24,6 @@ import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.haulmont.cuba.web.toolkit.ui.CubaTreeTable;
 import com.haulmont.cuba.web.toolkit.ui.client.aggregation.TableAggregationRow;
-import com.haulmont.cuba.web.toolkit.ui.client.profiler.ScreenClientProfiler;
 import com.haulmont.cuba.web.toolkit.ui.client.table.CubaTableClientRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.table.CubaTableServerRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.tableshared.CubaTableShortcutActionHandler;
@@ -32,9 +31,8 @@ import com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableCellClickListene
 import com.vaadin.client.*;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.FocusableScrollPanel;
-import com.vaadin.client.ui.VScrollTable;
-import com.vaadin.client.ui.treetable.TreeTableConnector;
 import com.vaadin.shared.ui.Connect;
+import com.vaadin.v7.client.ui.treetable.TreeTableConnector;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -45,8 +43,6 @@ import static com.haulmont.cuba.web.toolkit.ui.client.Tools.findCurrentOrParentT
 public class CubaTreeTableConnector extends TreeTableConnector {
 
     protected HandlerRegistration tooltipHandlerRegistration;
-    protected String profilerMarker;
-    protected double layoutStartTime;
 
     public CubaTreeTableConnector() {
         registerRpc(CubaTableClientRpc.class, new CubaTableClientRpc() {
@@ -280,31 +276,5 @@ public class CubaTreeTableConnector extends TreeTableConnector {
             tooltipHandlerRegistration = null;
         }
         super.onUnregister();
-    }
-
-    @Override
-    public void postLayout() {
-        VScrollTable table = getWidget();
-        if (table.sizeNeedsInit && profilerMarker == null) {
-            profilerMarker = ScreenClientProfiler.getInstance().getProfilerMarker();
-        }
-        super.postLayout();
-    }
-
-    @Override
-    protected void beforeLayout() {
-        if (profilerMarker != null && layoutStartTime == 0) {
-            layoutStartTime = System.currentTimeMillis();
-        }
-    }
-
-    @Override
-    protected void afterLayout() {
-        if (profilerMarker != null) {
-            ScreenClientProfiler.getInstance().registerClientTime(profilerMarker,
-                    (int) (System.currentTimeMillis() - layoutStartTime));
-            profilerMarker = null;
-            layoutStartTime = 0;
-        }
     }
 }

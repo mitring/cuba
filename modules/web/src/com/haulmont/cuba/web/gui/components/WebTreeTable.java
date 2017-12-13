@@ -35,7 +35,7 @@ import com.haulmont.cuba.web.gui.data.PropertyWrapper;
 import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
 import com.haulmont.cuba.web.toolkit.data.TreeTableContainer;
 import com.haulmont.cuba.web.toolkit.ui.CubaTreeTable;
-import com.vaadin.data.Item;
+import com.vaadin.v7.data.Item;
 import com.vaadin.server.Resource;
 
 import java.util.*;
@@ -224,7 +224,7 @@ public class WebTreeTable<E extends Entity> extends WebAbstractTable<CubaTreeTab
 
     protected class TreeTableDsWrapper
             extends HierarchicalDsWrapper
-            implements TreeTableContainer, com.vaadin.data.Container.Sortable, AggregationContainer {
+            implements TreeTableContainer, com.vaadin.v7.data.Container.Sortable, AggregationContainer {
 
         protected boolean treeTableDatasource;
 

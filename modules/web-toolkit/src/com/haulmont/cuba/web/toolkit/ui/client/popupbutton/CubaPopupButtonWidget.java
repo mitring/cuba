@@ -17,17 +17,6 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.popupbutton;
 
-import com.google.gwt.event.dom.client.FocusEvent;
-import com.google.gwt.event.dom.client.FocusHandler;
-import com.google.gwt.event.dom.client.KeyCodes;
-import com.google.gwt.user.client.DOM;
-import com.google.gwt.user.client.Event;
-import com.google.gwt.user.client.ui.Widget;
-import com.haulmont.cuba.web.toolkit.ui.client.jqueryfileupload.CubaFileUploadWidget;
-import com.vaadin.client.ui.VButton;
-import com.vaadin.client.ui.VUpload;
-import com.vaadin.client.ui.orderedlayout.Slot;
-import com.vaadin.client.ui.orderedlayout.VAbstractOrderedLayout;
 import org.vaadin.hene.popupbutton.widgetset.client.ui.VPopupButton;
 
 public class CubaPopupButtonWidget extends VPopupButton {
@@ -35,7 +24,7 @@ public class CubaPopupButtonWidget extends VPopupButton {
     public static final String SELECTED_ITEM_STYLE = "c-cm-button-selected";
 
     protected boolean customLayout = false;
-
+    /* vaadin8 implement
     @Override
     protected void onPopupOpened() {
         super.onPopupOpened();
@@ -203,4 +192,5 @@ public class CubaPopupButtonWidget extends VPopupButton {
     protected boolean isShortcut(Event event) {
         return event.getShiftKey() || event.getAltKey() || event.getCtrlKey() || event.getMetaKey();
     }
+*/
 }

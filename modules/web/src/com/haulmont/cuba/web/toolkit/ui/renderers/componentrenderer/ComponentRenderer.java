@@ -14,11 +14,11 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer;
 
-import com.vaadin.data.Item;
+import com.vaadin.v7.data.Item;
 import com.vaadin.server.ClientConnector;
-import com.vaadin.server.communication.data.DataGenerator;
+import com.vaadin.v7.server.communication.data.DataGenerator;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 import com.vaadin.ui.UI;
 import elemental.json.Json;
 import elemental.json.JsonObject;

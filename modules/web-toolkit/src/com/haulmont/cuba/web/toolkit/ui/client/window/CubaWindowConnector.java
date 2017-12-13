@@ -38,6 +38,7 @@ public class CubaWindowConnector extends WindowConnector {
     protected int lastContextMenuY = -1;
 
     public CubaWindowConnector() {
+        //noinspection Convert2Lambda
         registerRpc(CubaWindowClientRpc.class, new CubaWindowClientRpc() {
             @Override
             public void showTabContextMenu(ClientAction[] actions) {
@@ -82,18 +83,15 @@ public class CubaWindowConnector extends WindowConnector {
     protected void init() {
         super.init();
 
-        getWidget().contextMenuHandler = new CubaWindowWidget.ContextMenuHandler() {
-            @Override
-            public void onContextMenu(Event event) {
-                lastContextMenuX = WidgetUtil.getTouchOrMouseClientX(event);
-                lastContextMenuY = WidgetUtil.getTouchOrMouseClientY(event);
+        getWidget().contextMenuHandler = event -> {
+            lastContextMenuX = WidgetUtil.getTouchOrMouseClientX(event);
+            lastContextMenuY = WidgetUtil.getTouchOrMouseClientY(event);
 
-                if (getState().hasContextActionHandlers) {
-                    rpc.onWindowContextMenu();
+            if (getState().hasContextActionHandlers) {
+                rpc.onWindowContextMenu();
 
-                    event.stopPropagation();
-                    event.preventDefault();
-                }
+                event.stopPropagation();
+                event.preventDefault();
             }
         };
         getWidget().clickOnModalityCurtain = () -> rpc.performCloseAction();

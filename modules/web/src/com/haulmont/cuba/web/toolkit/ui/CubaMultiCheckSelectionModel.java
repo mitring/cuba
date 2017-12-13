@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 
 import java.util.Collection;
 import java.util.stream.Collectors;

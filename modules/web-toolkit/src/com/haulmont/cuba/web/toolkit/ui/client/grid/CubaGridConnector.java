@@ -17,10 +17,10 @@
 package com.haulmont.cuba.web.toolkit.ui.client.grid;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaGrid;
-import com.vaadin.client.connectors.GridConnector;
-import com.vaadin.client.widgets.Grid;
+import com.vaadin.v7.client.connectors.GridConnector;
+import com.vaadin.v7.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
-import com.vaadin.shared.ui.grid.GridColumnState;
+import com.vaadin.v7.shared.ui.grid.GridColumnState;
 import elemental.json.JsonObject;
 
 @Connect(CubaGrid.class)

@@ -20,17 +20,21 @@ package com.haulmont.cuba.web.toolkit.ui;
 import com.haulmont.cuba.gui.components.PickerField;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.web.App;
-import com.vaadin.data.util.converter.Converter;
 import com.vaadin.event.Action;
 import com.vaadin.server.*;
-import com.vaadin.ui.*;
+import com.vaadin.ui.Button;
+import com.vaadin.ui.Component;
+import com.vaadin.ui.CssLayout;
+import com.vaadin.ui.TextField;
+import com.vaadin.v7.data.util.converter.Converter;
+import com.vaadin.v7.ui.Field;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-public class CubaPickerField extends com.vaadin.ui.CustomField implements Action.Container {
+public class CubaPickerField extends com.vaadin.v7.ui.CustomField implements Action.Container {
 
     protected Field field;
     protected Converter captionFormatter;
@@ -54,7 +58,7 @@ public class CubaPickerField extends com.vaadin.ui.CustomField implements Action
         initLayout();
     }
 
-    public CubaPickerField(com.vaadin.ui.AbstractField field) {
+    public CubaPickerField(com.vaadin.v7.ui.AbstractField field) {
         init();
 
         this.field = field;
@@ -115,7 +119,6 @@ public class CubaPickerField extends com.vaadin.ui.CustomField implements Action
         field.setStyleName("c-pickerfield-text");
         field.setReadOnlyFocusable(true);
 
-        field.setImmediate(true);
         field.setReadOnly(true);
         field.setNullRepresentation("");
 
@@ -210,7 +213,8 @@ public class CubaPickerField extends com.vaadin.ui.CustomField implements Action
 
         suppressTextChangeListener = true;
 
-        textField.setValueIgnoreReadOnly(getStringRepresentation());
+        String value = getStringRepresentation();
+        textField.setValue(value != null ? value : "");
 
         suppressTextChangeListener = false;
     }
@@ -289,7 +293,7 @@ public class CubaPickerField extends com.vaadin.ui.CustomField implements Action
         ErrorMessage superError = super.getErrorMessage();
         if (!isReadOnly() && isRequired() && isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }
@@ -321,10 +325,12 @@ public class CubaPickerField extends com.vaadin.ui.CustomField implements Action
         return field.getTabIndex();
     }
 
+/*  vaadin8 implement
     @Override
     protected boolean fieldValueEquals(Object value1, Object value2) {
         // only if instance the same,
         // we can set instance of entity with the same id but different property values
         return value1 == value2;
     }
+    */
 }

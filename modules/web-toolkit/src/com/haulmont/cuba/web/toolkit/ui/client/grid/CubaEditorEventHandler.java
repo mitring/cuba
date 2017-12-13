@@ -16,8 +16,8 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.grid;
 
-import com.vaadin.client.widget.grid.DefaultEditorEventHandler;
-import com.vaadin.client.widgets.Grid;
+import com.vaadin.v7.client.widget.grid.DefaultEditorEventHandler;
+import com.vaadin.v7.client.widgets.Grid;
 
 public class CubaEditorEventHandler<T> extends DefaultEditorEventHandler<T> {
     @Override

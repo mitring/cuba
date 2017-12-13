@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class WebSourceCodeEditor extends WebAbstractField<CubaSourceCodeEditor> implements SourceCodeEditor {
+public class WebSourceCodeEditor extends WebV8AbstractField<CubaSourceCodeEditor> implements SourceCodeEditor {
 
     protected Mode mode = Mode.Text;
     protected Suggester suggester;
@@ -44,10 +44,10 @@ public class WebSourceCodeEditor extends WebAbstractField<CubaSourceCodeEditor> 
         component = createCubaSourceCodeEditor();
 
         component.setMode(AceMode.text);
-        component.setImmediate(true);
-        component.setInvalidCommitted(true);
-        component.setInvalidAllowed(false);
-        component.setBuffered(false);
+//        vaadin8
+//        component.setInvalidCommitted(true);
+//        component.setInvalidAllowed(false);
+//        component.setBuffered(false);
 
         autoCompleteSupport = new AutoCompleteSupport() {
             @Override

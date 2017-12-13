@@ -17,7 +17,7 @@
 
 package com.haulmont.cuba.web.toolkit.data;
 
-import com.vaadin.data.Container;
+import com.vaadin.v7.data.Container;
 
 public interface TableContainer extends Container.Sortable {
 

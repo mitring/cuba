@@ -19,8 +19,9 @@ package com.haulmont.cuba.web.toolkit.ui.client.suggestionfield;
 import com.haulmont.cuba.web.toolkit.ui.CubaSuggestionField;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.AbstractFieldConnector;
+import com.vaadin.v7.client.ui.AbstractFieldConnector;
 import com.vaadin.shared.ui.Connect;
+import elemental.json.JsonArray;
 
 @Connect(CubaSuggestionField.class)
 public class CubaSuggestionFieldConnector extends AbstractFieldConnector {
@@ -28,8 +29,13 @@ public class CubaSuggestionFieldConnector extends AbstractFieldConnector {
     protected CubaSuggestionFieldServerRpc serverRpc = RpcProxy.create(CubaSuggestionFieldServerRpc.class, this);
 
     public CubaSuggestionFieldConnector() {
-        registerRpc(CubaSuggestionFieldClientRpc.class, suggestions ->
-                getWidget().showSuggestions(suggestions));
+        //noinspection Convert2Lambda
+        registerRpc(CubaSuggestionFieldClientRpc.class, new CubaSuggestionFieldClientRpc() {
+            @Override
+            public void showSuggestions(JsonArray suggestions) {
+                getWidget().showSuggestions(suggestions);
+            }
+        });
     }
 
     @Override

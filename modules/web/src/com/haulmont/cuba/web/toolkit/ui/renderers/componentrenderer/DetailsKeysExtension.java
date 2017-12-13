@@ -15,7 +15,7 @@
 package com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer;
 
 import com.haulmont.cuba.web.toolkit.ui.client.renderers.componentrenderer.detailskeys.DetailsOpenCloseServerRpc;
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 
 /**
  * Handles the expansion and collapsing of the detailsrow with STRG+DOWN (expand) and STRG+UP (collapse).

@@ -20,11 +20,11 @@ import com.google.gwt.event.shared.HandlerRegistration;
 import com.haulmont.cuba.web.toolkit.ui.CubaMultiSelectionModel;
 import com.haulmont.cuba.web.toolkit.ui.client.Tools;
 import com.vaadin.client.ServerConnector;
-import com.vaadin.client.connectors.MultiSelectionModelConnector;
-import com.vaadin.client.renderers.ComplexRenderer;
-import com.vaadin.client.widget.grid.events.BodyClickHandler;
-import com.vaadin.client.widget.grid.selection.SelectionModel;
-import com.vaadin.client.widgets.Grid;
+import com.vaadin.v7.client.connectors.MultiSelectionModelConnector;
+import com.vaadin.v7.client.renderers.ComplexRenderer;
+import com.vaadin.v7.client.widget.grid.events.BodyClickHandler;
+import com.vaadin.v7.client.widget.grid.selection.SelectionModel;
+import com.vaadin.v7.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 import elemental.json.JsonObject;
 

@@ -36,7 +36,6 @@ public class WebSuggestionPickerField extends WebSuggestionField implements Sugg
     protected boolean updateComponentValue = false;
 
     public WebSuggestionPickerField() {
-        component.setImmediate(true);
         component.setInvalidAllowed(false);
         component.setInvalidCommitted(true);
 

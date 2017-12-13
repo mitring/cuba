@@ -28,26 +28,26 @@ import com.haulmont.cuba.web.toolkit.data.TableContainer;
 import com.haulmont.cuba.web.toolkit.ui.client.table.CubaTableClientRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.table.CubaTableServerRpc;
 import com.haulmont.cuba.web.toolkit.ui.client.table.CubaTableState;
-import com.vaadin.data.Container;
-import com.vaadin.data.Property;
-import com.vaadin.data.util.ContainerOrderedWrapper;
 import com.vaadin.event.Action;
 import com.vaadin.event.ActionManager;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.Page;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
+import com.vaadin.shared.Registration;
 import com.vaadin.ui.AbstractComponent;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.Field;
 import com.vaadin.ui.Layout;
-import org.apache.commons.lang.StringUtils;
+import com.vaadin.v7.data.Container;
+import com.vaadin.v7.data.Property;
+import com.vaadin.v7.data.util.ContainerOrderedWrapper;
+import com.vaadin.v7.ui.Field;
 
 import java.util.*;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-public class CubaTable extends com.vaadin.ui.Table implements TableContainer, CubaEnhancedTable {
+public class CubaTable extends com.vaadin.v7.ui.Table implements TableContainer, CubaEnhancedTable {
 
     protected LinkedList<Object> editableColumns;
 
@@ -76,10 +76,11 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
     protected Runnable beforePaintListener;
 
     public CubaTable() {
+        //noinspection Convert2Lambda
         registerRpc(new CubaTableServerRpc() {
             @Override
             public void onClick(String columnKey, String rowKey) {
-                Object columnId = columnIdMap.get(columnKey);
+                Object columnId = _columnIdMap().get(columnKey);
                 Object itemId = itemIdMapper.get(rowKey);
                 // itemId could be null if rendering in process
                 // If itemId is null it causes NPE
@@ -183,13 +184,13 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
     @Override
     protected Object getPropertyValue(Object rowId, Object colId,
                                       Property property) {
-        if (isColumnEditable(colId, isEditable()) && fieldFactory != null) {
-            final Field<?> f = fieldFactory.createField(
+        if (isColumnEditable(colId, isEditable()) && _fieldFactory() != null) {
+            final Field<?> f = _fieldFactory().createField(
                     getContainerDataSource(), rowId, colId, this);
             if (f != null) {
                 // Remember that we have made this association so we can remove
                 // it when the component is removed
-                associatedProperties.put(f, property);
+                _associatedProperties().put(f, property);
                 if (autowirePropertyDsForFields) {
                     bindPropertyToField(rowId, colId, property, f);
                 }
@@ -254,12 +255,6 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
         if (shortcutActionManager != null) {
             shortcutActionManager.handleActions(variables, this);
         }
-
-        String profilerMarker = (String) variables.get("profilerMarker");
-        if (StringUtils.isNotEmpty(profilerMarker)) {
-            AppUI ui = AppUI.getCurrent();
-            ui.setProfilerMarker(profilerMarker);
-        }
     }
 
     @Override
@@ -285,7 +280,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
             if (editableColumn == null) {
                 throw new IllegalStateException("Ids must be non-nulls");
             } else if (!properties.contains(editableColumn)
-                    || columnGenerators.containsKey(editableColumn)) {
+                    || _columnGenerators().containsKey(editableColumn)) {
                 throw new IllegalArgumentException(
                         "Ids must exist in the Container and it must be not a generated column, incorrect id: "
                                 + editableColumn);
@@ -313,7 +308,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
             throw new IllegalArgumentException(
                     "Can not add null as a GeneratedColumn");
         }
-        if (columnGenerators.containsKey(id)) {
+        if (_columnGenerators().containsKey(id)) {
             throw new IllegalArgumentException(
                     "Can not add the same GeneratedColumn twice, id:" + id);
         } else {
@@ -324,13 +319,13 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
                 }
             }
 
-            columnGenerators.put(id, generatedColumn);
+            _columnGenerators().put(id, generatedColumn);
             /*
              * add to visible column list unless already there (overriding
              * column from DS)
              */
-            if (!visibleColumns.contains(id)) {
-                visibleColumns.add(id);
+            if (!_visibleColumns().contains(id)) {
+                _visibleColumns().add(id);
             }
 
             if (editableColumns != null) {
@@ -353,12 +348,13 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
     }
 
     @Override
-    public void addShortcutListener(ShortcutListener shortcut) {
+    public Registration addShortcutListener(ShortcutListener shortcut) {
         if (shortcutActionManager == null) {
             shortcutActionManager = new ShortcutActionManager(this);
         }
 
         shortcutActionManager.addAction(shortcut);
+        return () -> getActionManager().removeAction(shortcut);
     }
 
     @Override
@@ -424,8 +420,8 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
 
         if (additionalConnectors == null) {
             return super.iterator();
-        } else if (visibleComponents != null) {
-            return Iterables.concat(visibleComponents, additionalConnectors).iterator();
+        } else if (_visibleComponents() != null) {
+            return Iterables.concat(_visibleComponents(), additionalConnectors).iterator();
         } else {
             return additionalConnectors.iterator();
         }
@@ -551,7 +547,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
         AppUI current = AppUI.getCurrent();
         if (current != null && current.isTestMode()) {
             ArrayList<String> visibleColOrder = new ArrayList<>();
-            for (Object columnId : visibleColumns) {
+            for (Object columnId : _visibleColumns()) {
                 if (!isColumnCollapsed(columnId)) {
                     visibleColOrder.add(columnId.toString());
                 }
@@ -566,7 +562,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
 
     protected void paintAggregationRow(PaintTarget target, Map<Object, Object> aggregations) throws PaintException {
         target.startTag("arow");
-        for (final Object columnId : visibleColumns) {
+        for (final Object columnId : _visibleColumns()) {
             if (columnId == null || isColumnCollapsed(columnId)) {
                 continue;
             }
@@ -575,7 +571,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
                 String cellStyle = getCellStyleGenerator().getStyle(this, null, columnId);
                 if (cellStyle != null && !cellStyle.equals("")) {
                     target.addAttribute("style-"
-                            + columnIdMap.key(columnId), cellStyle + "-ag");
+                            + _columnIdMap().key(columnId), cellStyle + "-ag");
                 }
             }
 
@@ -627,7 +623,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
             throw new IllegalArgumentException("Item doesn't exists");
         }
 
-        if (!visibleColumns.contains(columnId)) {
+        if (!_visibleColumns().contains(columnId)) {
             throw new IllegalArgumentException("Column doesn't exists or not visible");
         }
 
@@ -662,7 +658,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
 
         if (focusColumn != null) {
             setCurrentPageFirstItemId(focusItem);
-            getRpcProxy(CubaTableClientRpc.class).requestFocus(itemIdMapper.key(focusItem), columnIdMap.key(focusColumn));
+            getRpcProxy(CubaTableClientRpc.class).requestFocus(itemIdMapper.key(focusItem), _columnIdMap().key(focusColumn));
 
             focusColumn = null;
             focusItem = null;
@@ -675,7 +671,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
         }
         Context context = new Context(getAggregationItemIds());
         Map<Object, Object> aggregations = ((AggregationContainer) items).aggregate(context);
-        for (final Object columnId : visibleColumns) {
+        for (final Object columnId : _visibleColumns()) {
             if (columnId == null || isColumnCollapsed(columnId) || !aggregations.containsKey(columnId)) {
                 continue;
             }
@@ -690,7 +686,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
             String[] clickableColumnKeys = new String[cellClickListeners.size()];
             int i = 0;
             for (Object columnId : cellClickListeners.keySet()) {
-                clickableColumnKeys[i] = columnIdMap.key(columnId);
+                clickableColumnKeys[i] = _columnIdMap().key(columnId);
                 i++;
             }
 
@@ -777,7 +773,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
         if (columnDescriptions != null) {
             Map<String, String> columnDescriptionsByKey = new HashMap<>();
             for (Map.Entry<Object, String> columnEntry : columnDescriptions.entrySet()) {
-                columnDescriptionsByKey.put(columnIdMap.key(columnEntry.getKey()), columnEntry.getValue());
+                columnDescriptionsByKey.put(_columnIdMap().key(columnEntry.getKey()), columnEntry.getValue());
             }
             getState().columnDescriptions = columnDescriptionsByKey;
         }
@@ -787,7 +783,7 @@ public class CubaTable extends com.vaadin.ui.Table implements TableContainer, Cu
         if (aggregationTooltips != null) {
             Map<String, String> aggregationTooltipsByKey = new HashMap<>();
             for (Map.Entry<Object, String> columnEntry : aggregationTooltips.entrySet()) {
-                aggregationTooltipsByKey.put(columnIdMap.key(columnEntry.getKey()), columnEntry.getValue());
+                aggregationTooltipsByKey.put(_columnIdMap().key(columnEntry.getKey()), columnEntry.getValue());
             }
             getState().aggregationDescriptions = aggregationTooltipsByKey;
         }

@@ -65,12 +65,10 @@ public class CubaOrderedActionsLayoutWidget extends VAbstractOrderedLayout {
     }
 
     @Override
-    public Slot getSlot(Widget widget) {
-        Slot slot = widgetToSlot.get(widget);
-        if (slot == null) {
-            slot = new CubaOrderedLayoutSlot(this, widget);
-            widgetToSlot.put(widget, slot);
-        }
+    protected Slot createSlot(Widget widget) {
+        Slot slot = new CubaOrderedLayoutSlot(this, widget);
+        slot.setLayout(this);
+        slot.setWidget(widget);
         return slot;
     }
 }

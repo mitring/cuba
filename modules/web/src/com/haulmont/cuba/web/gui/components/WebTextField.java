@@ -21,7 +21,7 @@ import com.haulmont.chile.core.datatypes.Datatypes;
 import com.haulmont.cuba.gui.components.Formatter;
 import com.haulmont.cuba.gui.components.TextField;
 import com.haulmont.cuba.web.toolkit.ui.CubaTextField;
-import com.vaadin.event.FieldEvents;
+import com.vaadin.v7.event.FieldEvents;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.event.ShortcutListener;
 

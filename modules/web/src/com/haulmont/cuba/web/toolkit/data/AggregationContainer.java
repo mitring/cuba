@@ -16,7 +16,7 @@
  */
 package com.haulmont.cuba.web.toolkit.data;
 
-import com.vaadin.data.Container;
+import com.vaadin.v7.data.Container;
 
 import java.util.Map;
 import java.util.Collection;

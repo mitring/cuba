@@ -37,12 +37,22 @@ import com.haulmont.cuba.web.toolkit.ui.client.profiler.ScreenClientProfiler;
 import com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidget;
 import com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidgetDelegate;
 import com.vaadin.client.*;
-import com.vaadin.client.ui.*;
+import com.vaadin.client.ui.ShortcutActionHandler;
+import com.vaadin.client.ui.VEmbedded;
+import com.vaadin.v7.client.ui.VLabel;
+import com.vaadin.v7.client.ui.VTextField;
+import com.vaadin.v7.client.ui.VTreeTable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import static com.haulmont.cuba.web.toolkit.ui.client.Tools.isAnyModifierKeyPressed;
-import static com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidgetDelegate.*;
+import static com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidgetDelegate.CUBA_TABLE_CLICKABLE_CELL_STYLE;
+import static com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidgetDelegate.CUBA_TABLE_CLICKABLE_TEXT_STYLE;
+import static com.haulmont.cuba.web.toolkit.ui.client.tableshared.TableWidgetDelegate.WIDGET_CELL_CLASSNAME;
 
 public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
 
@@ -53,13 +63,6 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
         DOM.sinkEvents(getElement(), Event.ONKEYDOWN);
 
         hideColumnControlAfterClick = false;
-        rowRequestHandler = new RowRequestHandler() {
-            @Override
-            protected void updateVariables() {
-                client.updateVariable(paintableId, "profilerMarker", _delegate.profilerMarker, false);
-                _delegate.profilerMarker = null;
-            }
-        };
     }
 
     @Override
@@ -472,8 +475,7 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
                 scrollBodyPanel.setScrollPosition(0);
                 firstvisible = 0;
                 rowRequestHandler.setReqFirstRow(0);
-                rowRequestHandler.setReqRows((int) (2 * pageLength
-                        * cache_rate + pageLength));
+                rowRequestHandler.setReqRows((int) (2 * pageLength * cacheRate + pageLength));
                 rowRequestHandler.deferRowFetch(); // some validation +
                 // defer 250ms
                 rowRequestHandler.cancel(); // instead of waiting
@@ -503,7 +505,7 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
                 super(uidl, aligns);
             }
 
-            public ArrayList<Widget> getChildWidgets() {
+            public List<Widget> getChildWidgets() {
                 return childWidgets;
             }
 
@@ -522,7 +524,7 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
 
             protected void recursiveAddFocusHandler(final Widget w, final Widget topWidget) {
                 if (w instanceof HasWidgets) {
-                    for (Widget child: (HasWidgets)w) {
+                    for (Widget child : (HasWidgets) w) {
                         recursiveAddFocusHandler(child, topWidget);
                     }
                 }
@@ -774,7 +776,7 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
             super.renderInitialRows(rowData, firstIndex, rows);
         }
 
-        public LinkedList<Widget> getRenderedRows() {
+        public List<Widget> getRenderedRows() {
             return renderedRows;
         }
     }
@@ -789,7 +791,7 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
 
     @Override
     protected boolean isColumnCollapsingEnabled() {
-        return visibleColOrder.length > 1;
+        return getVisibleColOrder().length > 1;
     }
 
     @Override
@@ -819,7 +821,8 @@ public class CubaTreeTableWidget extends VTreeTable implements TableWidget {
                     }
                 }
             } catch (Exception e) {
-                VConsole.error("Unable to init cuba-ids for columns " + e.getMessage());
+                Logger.getLogger("CubaTreeTableWidget").log(Level.SEVERE,
+                        "Unable to init cuba-ids for columns " + e.getMessage());
             }
         }
     }

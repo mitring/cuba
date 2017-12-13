@@ -149,7 +149,7 @@ public class CubaTabSheet extends DDTabSheet implements Action.Container, HasTab
     public Component getPreviousTab(Component tab) {
         if ((!openedComponents.empty()) && (getSelectedTab().equals(tab))) {
             Component c = openedComponents.pop();
-            while (!components.contains(c) && !openedComponents.isEmpty()) {
+            while (!_components().contains(c) && !openedComponents.isEmpty()) {
                 c = openedComponents.pop();
             }
             return c;
@@ -161,9 +161,9 @@ public class CubaTabSheet extends DDTabSheet implements Action.Container, HasTab
         while (openedComponents.removeElement(tab)) {
             openedComponents.removeElement(tab);
         }
-        if ((!openedComponents.empty()) && (selected.equals(tab))) {
+        if ((!openedComponents.empty()) && (_selected().equals(tab))) {
             Component c = openedComponents.pop();
-            while (!components.contains(c) && !openedComponents.isEmpty()) {
+            while (!_components().contains(c) && !openedComponents.isEmpty()) {
                 c = openedComponents.pop();
             }
             setSelectedTab(c);
@@ -172,7 +172,7 @@ public class CubaTabSheet extends DDTabSheet implements Action.Container, HasTab
 
     @Override
     public void setSelectedTab(Component c) {
-        if (c != null && components.contains(c) && !c.equals(selected)) {
+        if (c != null && _components().contains(c) && !c.equals(_selected())) {
             openedComponents.push(c);
             super.setSelectedTab(c);
         }
@@ -188,8 +188,8 @@ public class CubaTabSheet extends DDTabSheet implements Action.Container, HasTab
     }
 
     public void closeTab(Component tab) {
-        if (closeHandler != null) {
-            closeHandler.onTabClose(this, tab);
+        if (_closeHandler() != null) {
+            _closeHandler().onTabClose(this, tab);
         }
     }
 
@@ -210,7 +210,7 @@ public class CubaTabSheet extends DDTabSheet implements Action.Container, HasTab
 
     @Override
     public void removeComponent(Component c) {
-        Tab tab = tabs.get(c);
+        Tab tab = _tabs().get(c);
 
         super.removeComponent(c);
 
@@ -226,11 +226,11 @@ public class CubaTabSheet extends DDTabSheet implements Action.Container, HasTab
 
     @Override
     public void replaceComponent(Component oldComponent, Component newComponent) {
-        Tab oldTab = tabs.get(oldComponent);
+        Tab oldTab = _tabs().get(oldComponent);
 
         super.replaceComponent(oldComponent, newComponent);
 
-        Tab newTab = tabs.get(newComponent);
+        Tab newTab = _tabs().get(newComponent);
 
         String oldTabId = tabIds.inverse().get(oldTab);
         String newTabId = tabIds.inverse().get(newTab);

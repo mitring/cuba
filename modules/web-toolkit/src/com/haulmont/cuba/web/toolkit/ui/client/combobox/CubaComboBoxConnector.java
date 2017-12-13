@@ -21,7 +21,7 @@ import com.haulmont.cuba.web.toolkit.ui.CubaComboBox;
 import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.UIDL;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.combobox.ComboBoxConnector;
+import com.vaadin.v7.client.ui.combobox.ComboBoxConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(value = CubaComboBox.class, loadStyle = Connect.LoadStyle.EAGER)

@@ -24,7 +24,7 @@ import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.TooltipInfo;
 import com.vaadin.client.UIDL;
 import com.vaadin.client.WidgetUtil;
-import com.vaadin.client.ui.VScrollTable;
+import com.vaadin.v7.client.ui.VScrollTable;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaGroupTable.class)

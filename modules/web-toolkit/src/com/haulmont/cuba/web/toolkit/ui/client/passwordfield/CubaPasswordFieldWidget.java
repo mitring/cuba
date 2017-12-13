@@ -18,7 +18,7 @@
 package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
 
 import com.vaadin.client.BrowserInfo;
-import com.vaadin.client.ui.VPasswordField;
+import com.vaadin.v7.client.ui.VPasswordField;
 
 public class CubaPasswordFieldWidget extends VPasswordField {
 

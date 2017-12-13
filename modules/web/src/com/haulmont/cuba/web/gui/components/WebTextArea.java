@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.gui.components;
 
 import com.haulmont.chile.core.datatypes.Datatype;
 import com.haulmont.cuba.web.toolkit.ui.CubaTextArea;
-import com.vaadin.event.FieldEvents;
+import com.vaadin.v7.event.FieldEvents;
 
 public class WebTextArea extends WebAbstractTextArea<CubaTextArea> implements com.haulmont.cuba.gui.components.TextArea {
 

@@ -17,11 +17,10 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.ui.Label;
+import com.vaadin.v7.ui.Label;
 
 /**
- * Label widget which supports multiline strings in {@link com.vaadin.shared.ui.label.ContentMode#TEXT} mode
- *
+ * Label widget which supports multiline strings in {@link com.vaadin.v7.shared.ui.label.ContentMode#TEXT} mode
  */
 public class CubaLabel extends Label {
 }

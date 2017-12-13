@@ -48,7 +48,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class WebFileMultiUploadField extends WebAbstractUploadComponent<CubaAbstractUploadComponent> implements FileMultiUploadField {
+public class WebFileMultiUploadField extends WebAbstractUploadComponent<CubaAbstractUploadComponent>
+        implements FileMultiUploadField {
 
     protected final Map<UUID, String> files = new LinkedHashMap<>();
 

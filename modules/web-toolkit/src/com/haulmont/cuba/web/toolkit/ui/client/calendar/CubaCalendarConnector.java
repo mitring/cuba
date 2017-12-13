@@ -17,7 +17,7 @@
 package com.haulmont.cuba.web.toolkit.ui.client.calendar;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaCalendar;
-import com.vaadin.client.ui.calendar.CalendarConnector;
+import com.vaadin.v7.client.ui.calendar.CalendarConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(value = CubaCalendar.class, loadStyle = Connect.LoadStyle.LAZY)

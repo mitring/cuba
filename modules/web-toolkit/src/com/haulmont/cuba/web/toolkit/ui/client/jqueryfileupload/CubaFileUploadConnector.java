@@ -31,6 +31,7 @@ import com.vaadin.shared.ui.Connect;
 public class CubaFileUploadConnector extends AbstractComponentConnector implements Paintable {
 
     public CubaFileUploadConnector() {
+        //noinspection Convert2Lambda
         registerRpc(CubaFileUploadClientRpc.class, new CubaFileUploadClientRpc() {
             @Override
             public void continueUploading() {
@@ -189,7 +190,7 @@ public class CubaFileUploadConnector extends AbstractComponentConnector implemen
             getWidget().setPasteZone(pasteZone != null ? pasteZone.getWidget() : null);
         }
 
-        if (!isEnabled() || isReadOnly()) {
+        if (!isEnabled()) {
             getWidget().disableUpload();
         } else {
             getWidget().enableUpload();

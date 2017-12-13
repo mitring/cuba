@@ -19,7 +19,7 @@ package com.haulmont.cuba.web.toolkit.ui;
 import com.haulmont.cuba.web.gui.components.WebComponentsHelper;
 import com.vaadin.shared.ui.MarginInfo;
 import com.vaadin.ui.*;
-import com.vaadin.ui.themes.BaseTheme;
+import com.vaadin.v7.ui.themes.BaseTheme;
 
 public class CubaRowsCount extends CustomComponent {
 

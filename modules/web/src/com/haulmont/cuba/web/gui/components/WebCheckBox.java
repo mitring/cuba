@@ -29,10 +29,9 @@ import com.haulmont.cuba.web.toolkit.ui.CubaCheckBox;
 
 import java.util.Collection;
 
-public class WebCheckBox extends WebAbstractField<com.vaadin.ui.CheckBox> implements CheckBox {
+public class WebCheckBox extends WebAbstractField<com.vaadin.v7.ui.CheckBox> implements CheckBox {
     public WebCheckBox() {
         this.component = new CubaCheckBox();
-        component.setImmediate(true);
         component.setInvalidCommitted(true);
 
         attachListener(component);

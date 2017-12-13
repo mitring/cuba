@@ -19,8 +19,8 @@ package com.haulmont.cuba.web.toolkit.ui;
 import com.haulmont.cuba.web.toolkit.ui.client.twincolselect.CubaTwinColSelectState;
 import com.vaadin.server.PaintException;
 import com.vaadin.server.PaintTarget;
-import com.vaadin.ui.AbstractSelect;
-import com.vaadin.ui.TwinColSelect;
+import com.vaadin.v7.ui.TwinColSelect;
+import com.vaadin.v7.ui.AbstractSelect;
 import org.apache.commons.lang.StringUtils;
 
 @SuppressWarnings("serial")

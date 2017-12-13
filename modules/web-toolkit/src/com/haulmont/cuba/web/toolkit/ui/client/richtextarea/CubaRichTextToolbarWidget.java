@@ -18,7 +18,7 @@ package com.haulmont.cuba.web.toolkit.ui.client.richtextarea;
 
 import com.google.gwt.user.client.ui.RichTextArea;
 import com.google.gwt.user.client.ui.UIObject;
-import com.vaadin.client.ui.richtextarea.VRichTextToolbar;
+import com.vaadin.v7.client.ui.richtextarea.VRichTextToolbar;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +29,7 @@ public class CubaRichTextToolbarWidget extends VRichTextToolbar{
     }
 
     public void setLocaleMap(Map<String,String> localeMap) {
-        Map<String, UIObject> locales = new HashMap<String, UIObject>();
+        Map<String, UIObject> locales = new HashMap<>();
         locales.put(CubaRichTextAreaState.RICH_TEXT_AREA_BOLD_LABEL, bold);
         locales.put(CubaRichTextAreaState.RICH_TEXT_AREA_ITALIC_LABEL, italic);
         locales.put(CubaRichTextAreaState.RICH_TEXT_AREA_UNDERLINE_LABEL, underline);

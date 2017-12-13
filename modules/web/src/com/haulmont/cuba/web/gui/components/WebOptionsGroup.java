@@ -21,8 +21,8 @@ import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.web.toolkit.ui.CubaOptionGroup;
 import com.haulmont.cuba.web.toolkit.ui.client.optiongroup.OptionGroupOrientation;
 import com.haulmont.cuba.web.toolkit.ui.converters.SetToListConverter;
-import com.vaadin.data.Property;
-import com.vaadin.data.util.converter.Converter;
+import com.vaadin.v7.data.Property;
+import com.vaadin.v7.data.util.converter.Converter;
 
 import java.util.ArrayList;
 import java.util.Collection;

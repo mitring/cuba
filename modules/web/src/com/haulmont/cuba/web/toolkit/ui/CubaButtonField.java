@@ -17,11 +17,11 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.data.util.converter.Converter;
+import com.vaadin.v7.data.util.converter.Converter;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Component;
-import com.vaadin.ui.CustomField;
-import com.vaadin.ui.themes.BaseTheme;
+import com.vaadin.v7.ui.CustomField;
+import com.vaadin.v7.ui.themes.BaseTheme;
 
 public class CubaButtonField extends CustomField {
     protected Converter captionFormatter;

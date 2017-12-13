@@ -21,7 +21,7 @@ import com.google.gwt.user.client.ui.HasWidgets;
 import com.google.gwt.user.client.ui.Widget;
 import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.VScrollTable;
+import com.vaadin.v7.client.ui.VScrollTable;
 
 import java.util.List;
 

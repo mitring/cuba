@@ -14,9 +14,9 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.grid;
 
-import com.vaadin.data.util.BeanItemContainer;
-import com.vaadin.data.util.GeneratedPropertyContainer;
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.data.util.BeanItemContainer;
+import com.vaadin.v7.data.util.GeneratedPropertyContainer;
+import com.vaadin.v7.ui.Grid;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.FocusPreserveExtension;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.grid.header.ComponentHeaderGenerator;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.grid.header.HtmlHeaderGenerator;

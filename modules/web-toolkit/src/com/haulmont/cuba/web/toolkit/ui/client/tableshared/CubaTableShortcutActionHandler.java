@@ -20,7 +20,7 @@ import com.google.gwt.dom.client.Element;
 import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.ui.ShortcutActionHandler;
-import com.vaadin.client.ui.table.TableConnector;
+import com.vaadin.v7.client.ui.table.TableConnector;
 
 public class CubaTableShortcutActionHandler extends ShortcutActionHandler {
 

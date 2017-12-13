@@ -33,8 +33,8 @@ import com.haulmont.cuba.gui.data.impl.WeakItemPropertyChangeListener;
 import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.toolkit.ui.CubaPickerField;
 import com.haulmont.cuba.web.toolkit.ui.converters.StringToEntityConverter;
-import com.vaadin.data.Property;
-import com.vaadin.ui.AbstractField;
+import com.vaadin.v7.data.Property;
+import com.vaadin.v7.ui.AbstractField;
 import com.vaadin.ui.Button;
 import org.apache.commons.lang.StringUtils;
 
@@ -69,7 +69,7 @@ public class WebPickerField extends WebAbstractField<CubaPickerField>
 
     public WebPickerField() {
         component = new Picker(this);
-        component.setImmediate(true);
+
         component.setInvalidAllowed(false);
         component.setInvalidCommitted(true);
         component.setCaptionFormatter(new StringToEntityConverter() {
@@ -320,7 +320,8 @@ public class WebPickerField extends WebAbstractField<CubaPickerField>
         }
 
         if (StringUtils.isNotEmpty(getDebugId())) {
-            pButton.setDebugId(AppUI.getCurrent().getTestIdManager().getTestId(getDebugId() + "_" + action.getId()));
+            TestIdManager testIdManager = AppUI.getCurrent().getTestIdManager();
+            pButton.setDebugId(testIdManager.getTestId(getDebugId() + "_" + action.getId()));
         }
 
         actionsPermissions.apply(action);

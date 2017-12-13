@@ -70,12 +70,9 @@ public class CubaHorizontalSplitPanelWidget extends VSplitPanelHorizontal {
             dockButton = new CubaPlaceHolderWidget();
             dockButton.setStyleName(SP_DOCK_BUTTON);
             dockButton.addStyleName(SP_DOCK_BUTTON_LEFT);
-            dockButton.addDomHandler(new ClickHandler() {
-                @Override
-                public void onClick(ClickEvent event) {
-                    onDockButtonClick();
-                }
-            }, ClickEvent.getType());
+            dockButton.addDomHandler(
+                    event -> onDockButtonClick(),
+                    ClickEvent.getType());
 
             dockButtonContainer = new VOverlay();
             dockButtonContainer.addStyleName(SP_DOCK_OVERLAY);

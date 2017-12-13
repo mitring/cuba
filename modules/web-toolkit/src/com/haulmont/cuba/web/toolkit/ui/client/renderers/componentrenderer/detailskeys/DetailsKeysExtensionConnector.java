@@ -16,9 +16,9 @@ package com.haulmont.cuba.web.toolkit.ui.client.renderers.componentrenderer.deta
 
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.DetailsKeysExtension;
 import com.vaadin.client.ServerConnector;
-import com.vaadin.client.connectors.GridConnector;
+import com.vaadin.v7.client.connectors.GridConnector;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
-import com.vaadin.client.widgets.Grid;
+import com.vaadin.v7.client.widgets.Grid;
 import com.vaadin.shared.ui.Connect;
 
 /**

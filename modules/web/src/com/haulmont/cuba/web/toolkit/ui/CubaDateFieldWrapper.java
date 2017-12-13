@@ -21,16 +21,16 @@ import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.gui.components.WebDateField;
 import com.haulmont.cuba.web.toolkit.ui.converters.ObjectToObjectConverter;
-import com.vaadin.data.util.converter.Converter;
 import com.vaadin.server.AbstractErrorMessage;
 import com.vaadin.server.CompositeErrorMessage;
 import com.vaadin.server.ErrorMessage;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.Layout;
+import com.vaadin.v7.data.util.converter.Converter;
 
 import java.util.Date;
 
-public class CubaDateFieldWrapper extends com.vaadin.ui.CustomField {
+public class CubaDateFieldWrapper extends com.vaadin.v7.ui.CustomField {
 
     protected final Layout composition;
     protected final WebDateField dateField;
@@ -152,7 +152,7 @@ public class CubaDateFieldWrapper extends com.vaadin.ui.CustomField {
         ErrorMessage superError = super.getErrorMessage();
         if (!isReadOnly() && isRequired() && isEmpty()) {
             ErrorMessage error = AbstractErrorMessage.getErrorMessageForException(
-                    new com.vaadin.data.Validator.EmptyValueException(getRequiredError()));
+                    new com.vaadin.v7.data.Validator.EmptyValueException(getRequiredError()));
             if (error != null) {
                 return new CompositeErrorMessage(superError, error);
             }

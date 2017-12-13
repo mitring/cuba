@@ -17,7 +17,6 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.tabsheet;
 
-import com.google.gwt.event.dom.client.ContextMenuEvent;
 import com.haulmont.cuba.web.toolkit.ui.CubaTabSheet;
 import com.haulmont.cuba.web.toolkit.ui.client.action.RemoteAction;
 import com.haulmont.cuba.web.toolkit.ui.client.action.StaticActionOwner;
@@ -37,6 +36,7 @@ public class CubaTabSheetConnector extends DDTabsheetConnector {
     protected int lastContextMenuY = -1;
 
     public CubaTabSheetConnector() {
+        //noinspection Convert2Lambda
         registerRpc(CubaTabSheetClientRpc.class, new CubaTabSheetClientRpc() {
             @Override
             public void showTabContextMenu(final int tabIndex, ClientAction[] actions) {
@@ -76,18 +76,15 @@ public class CubaTabSheetConnector extends DDTabsheetConnector {
     protected void init() {
         super.init();
 
-        getWidget().tabContextMenuHandler = new CubaTabSheetWidget.TabContextMenuHandler() {
-            @Override
-            public void onContextMenu(int tabIndex, ContextMenuEvent event) {
-                lastContextMenuX = WidgetUtil.getTouchOrMouseClientX(event.getNativeEvent());
-                lastContextMenuY = WidgetUtil.getTouchOrMouseClientY(event.getNativeEvent());
+        getWidget().tabContextMenuHandler = (tabIndex, event) -> {
+            lastContextMenuX = WidgetUtil.getTouchOrMouseClientX(event.getNativeEvent());
+            lastContextMenuY = WidgetUtil.getTouchOrMouseClientY(event.getNativeEvent());
 
-                if (getState().hasActionsHandlers) {
-                    rpc.onTabContextMenu(tabIndex);
+            if (getState().hasActionsHandlers) {
+                rpc.onTabContextMenu(tabIndex);
 
-                    event.stopPropagation();
-                    event.preventDefault();
-                }
+                event.stopPropagation();
+                event.preventDefault();
             }
         };
     }

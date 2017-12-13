@@ -15,7 +15,7 @@
 package com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer;
 
 import com.haulmont.cuba.web.toolkit.ui.client.renderers.componentrenderer.focuspreserve.FocusPreservingRefreshClientRpc;
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.ui.Grid;
 
 /**
  * Provides rpc-methods to save and restore the current focus of the grid. This

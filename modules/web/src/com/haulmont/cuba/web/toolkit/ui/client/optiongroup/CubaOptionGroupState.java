@@ -17,7 +17,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.optiongroup;
 
-import com.vaadin.shared.ui.optiongroup.OptionGroupState;
+import com.vaadin.v7.shared.ui.optiongroup.OptionGroupState;
 
 public class CubaOptionGroupState extends OptionGroupState {
 

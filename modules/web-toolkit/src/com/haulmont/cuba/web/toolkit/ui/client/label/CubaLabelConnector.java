@@ -24,7 +24,7 @@ import com.vaadin.client.Profiler;
 import com.vaadin.client.WidgetUtil;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.Icon;
-import com.vaadin.client.ui.label.LabelConnector;
+import com.vaadin.v7.client.ui.label.LabelConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(value = CubaLabel.class, loadStyle = Connect.LoadStyle.EAGER)

@@ -26,7 +26,11 @@ import com.haulmont.cuba.web.toolkit.ui.client.Tools;
 import com.haulmont.cuba.web.toolkit.ui.client.aggregation.TableAggregationRow;
 import com.vaadin.client.*;
 import com.vaadin.client.Focusable;
-import com.vaadin.client.ui.*;
+import com.vaadin.client.ui.AbstractLayoutConnector;
+import com.vaadin.client.ui.ManagedLayout;
+import com.vaadin.client.ui.ShortcutActionHandler;
+import com.vaadin.client.ui.VOverlay;
+import com.vaadin.v7.client.ui.VScrollTable;
 
 import java.util.Arrays;
 import java.util.Set;

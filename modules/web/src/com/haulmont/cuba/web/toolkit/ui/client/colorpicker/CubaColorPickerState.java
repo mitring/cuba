@@ -17,7 +17,7 @@
 package com.haulmont.cuba.web.toolkit.ui.client.colorpicker;
 
 import com.vaadin.shared.annotations.NoLayout;
-import com.vaadin.shared.ui.colorpicker.ColorPickerState;
+import com.vaadin.v7.shared.ui.colorpicker.ColorPickerState;
 
 public class CubaColorPickerState extends ColorPickerState {
     @NoLayout

@@ -191,8 +191,6 @@ public class WebFileUploadField extends WebAbstractUploadField<CubaFileUploadWra
             }
             return outputStream;
         });
-        // Set single click upload functional
-        impl.setImmediate(true);
 
         impl.addStartedListener(event -> {
             if (event.getContentLength() > getActualFileSizeLimit()) {

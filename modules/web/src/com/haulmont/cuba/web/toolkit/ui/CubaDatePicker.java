@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.ui.InlineDateField;
+import com.vaadin.v7.ui.InlineDateField;
 
 public class CubaDatePicker extends InlineDateField {
 

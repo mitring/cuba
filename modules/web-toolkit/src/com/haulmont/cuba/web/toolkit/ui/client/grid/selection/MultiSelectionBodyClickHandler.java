@@ -18,14 +18,14 @@ package com.haulmont.cuba.web.toolkit.ui.client.grid.selection;
 
 import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
-import com.vaadin.client.widget.grid.CellReference;
-import com.vaadin.client.widget.grid.DataAvailableEvent;
-import com.vaadin.client.widget.grid.DataAvailableHandler;
-import com.vaadin.client.widget.grid.events.BodyClickHandler;
-import com.vaadin.client.widget.grid.events.GridClickEvent;
-import com.vaadin.client.widget.grid.selection.SelectionModel;
-import com.vaadin.client.widgets.Grid;
-import com.vaadin.shared.ui.grid.Range;
+import com.vaadin.shared.Range;
+import com.vaadin.v7.client.widget.grid.CellReference;
+import com.vaadin.v7.client.widget.grid.DataAvailableEvent;
+import com.vaadin.v7.client.widget.grid.DataAvailableHandler;
+import com.vaadin.v7.client.widget.grid.events.BodyClickHandler;
+import com.vaadin.v7.client.widget.grid.events.GridClickEvent;
+import com.vaadin.v7.client.widget.grid.selection.SelectionModel;
+import com.vaadin.v7.client.widgets.Grid;
 import elemental.json.JsonObject;
 
 public class MultiSelectionBodyClickHandler implements BodyClickHandler {

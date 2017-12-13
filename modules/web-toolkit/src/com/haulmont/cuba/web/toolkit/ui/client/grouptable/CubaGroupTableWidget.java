@@ -27,7 +27,7 @@ import com.google.gwt.user.client.ui.Widget;
 import com.haulmont.cuba.web.toolkit.ui.client.aggregation.TableAggregationRow;
 import com.haulmont.cuba.web.toolkit.ui.client.table.CubaScrollTableWidget;
 import com.vaadin.client.*;
-import com.vaadin.shared.ui.table.TableConstants;
+import com.vaadin.v7.shared.ui.table.TableConstants;
 
 import java.util.HashSet;
 import java.util.Iterator;
@@ -50,8 +50,8 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
 
     @Override
     public void setColWidth(int colIndex, int w, boolean isDefinedWidth) {
-        if (GROUP_DIVIDER_COLUMN_KEY.equals(visibleColOrder[colIndex])) {
-            w = 15;
+        if (GROUP_DIVIDER_COLUMN_KEY.equals(getVisibleColOrder()[colIndex])) {
+            w = 0;
             isDefinedWidth = true;
         }
 
@@ -73,7 +73,7 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
         }
     }
 
-    private boolean isGroupColumn(String cid) {
+    protected boolean isGroupColumn(String cid) {
         return groupColumns != null && groupColumns.contains(cid);
     }
 
@@ -439,9 +439,10 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
                 }
 
                 int currentColIndex = colIndex;
-                if (currentColIndex < visibleColOrder.length) {
+                if (currentColIndex < getVisibleColOrder().length) {
                     String colKey = uidl.getStringAttribute("colKey");
-                    while (currentColIndex < visibleColOrder.length && !visibleColOrder[currentColIndex].equals(colKey)) {
+                    while (currentColIndex < getVisibleColOrder().length
+                            && !getVisibleColOrder()[currentColIndex].equals(colKey)) {
                         //draw empty cells
                         Element td = DOM.createTD();
 
@@ -467,8 +468,8 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
 
                 if (uidl.getChildCount() > 0) {
                     Iterator cells = uidl.getChildIterator();
-                    while (currentColIndex < visibleColOrder.length) {
-                        String columnId = visibleColOrder[currentColIndex];
+                    while (currentColIndex < getVisibleColOrder().length) {
+                        String columnId = getVisibleColOrder()[currentColIndex];
 
                         if (GROUP_DIVIDER_COLUMN_KEY.equals(columnId)) { //paint cell for columns group divider
                             addDividerCell(aligns[currentColIndex]);
@@ -583,11 +584,11 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
 
                 if (BrowserInfo.get().isWebkit()
                         || BrowserInfo.get().isOpera10()) {
-                            /*
-                             * Some versions of Webkit and Opera ignore the width
-                             * definition of zero width table cells. Instead, use 1px
-                             * and compensate with a negative margin.
-                             */
+                    /*
+                     * Some versions of Webkit and Opera ignore the width
+                     * definition of zero width table cells. Instead, use 1px
+                     * and compensate with a negative margin.
+                     */
                     if (totalSpannedWidth == 0) {
                         wrapperWidth = 1;
                         wrapperStyle.setMarginRight(-1, Style.Unit.PX);

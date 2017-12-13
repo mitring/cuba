@@ -21,8 +21,8 @@ import com.google.gwt.core.client.Scheduler;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.event.dom.client.*;
 import com.vaadin.client.BrowserInfo;
-import com.vaadin.client.ui.VTextField;
 import com.vaadin.shared.EventId;
+import com.vaadin.v7.client.ui.VTextField;
 
 import java.util.ArrayList;
 import java.util.HashMap;

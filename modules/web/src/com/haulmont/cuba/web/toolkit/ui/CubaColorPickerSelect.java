@@ -16,14 +16,13 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.ui.AbstractSelect.ItemCaptionMode;
-import com.vaadin.ui.components.colorpicker.ColorPickerSelect;
+import com.vaadin.v7.ui.AbstractSelect;
+import com.vaadin.v7.ui.components.colorpicker.ColorPickerSelect;
 
 public class CubaColorPickerSelect extends ColorPickerSelect {
 
     public CubaColorPickerSelect() {
-        super();
-        range.setItemCaptionMode(ItemCaptionMode.EXPLICIT_DEFAULTS_ID);
+        range.setItemCaptionMode(AbstractSelect.ItemCaptionMode.EXPLICIT_DEFAULTS_ID);
         range.setTextInputAllowed(false);
     }
 

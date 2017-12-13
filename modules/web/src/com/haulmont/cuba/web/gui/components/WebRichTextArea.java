@@ -33,7 +33,6 @@ public class WebRichTextArea extends WebAbstractField<CubaRichTextArea> implemen
         component = new CubaRichTextArea();
         attachListener(component);
 
-        component.setImmediate(true);
         component.setNullRepresentation("");
         component.setInvalidAllowed(false);
         component.setInvalidCommitted(true);

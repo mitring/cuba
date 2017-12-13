@@ -17,10 +17,8 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.tokenlistlabel;
 
-import com.google.gwt.event.dom.client.ClickEvent;
-import com.google.gwt.event.dom.client.ClickHandler;
-import com.google.gwt.user.client.DOM;
 import com.google.gwt.dom.client.Element;
+import com.google.gwt.user.client.DOM;
 import com.google.gwt.user.client.Event;
 import com.google.gwt.user.client.ui.Label;
 import com.vaadin.client.ui.VPanel;
@@ -41,12 +39,9 @@ public class CubaTokenListLabelWidget extends VPanel {
         setStyleName(CLASSNAME);
         add(label);
         label.setStyleName("content");
-        label.addClickHandler(new ClickHandler() {
-            @Override
-            public void onClick(ClickEvent event) {
-                if (canOpen) {
-                    handler.click();
-                }
+        label.addClickHandler(event -> {
+            if (canOpen) {
+                handler.click();
             }
         });
 

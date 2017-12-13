@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui;
 
-import com.vaadin.ui.Calendar;
+import com.vaadin.v7.ui.Calendar;
 
 public class CubaCalendar extends Calendar {
     protected String[] dayNamesShort;

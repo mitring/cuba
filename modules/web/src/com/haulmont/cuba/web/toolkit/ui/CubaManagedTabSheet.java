@@ -25,10 +25,10 @@ import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.WebWindowManager;
 import com.haulmont.cuba.web.gui.components.mainwindow.WebAppWorkArea;
 import com.vaadin.event.Action;
-import com.vaadin.event.FieldEvents;
 import com.vaadin.server.ErrorMessage;
 import com.vaadin.server.Resource;
 import com.vaadin.ui.*;
+import com.vaadin.v7.event.FieldEvents;
 import fi.jasoft.dragdroplayouts.client.ui.LayoutDragMode;
 
 import java.io.Serializable;
@@ -84,7 +84,6 @@ public class CubaManagedTabSheet extends CssLayout
     public CubaManagedTabSheet() {
         setPrimaryStyleName(MANAGED_TABSHEET_STYLENAME);
         setSizeFull();
-        setImmediate(true);
 
         tabSheetMode = AppBeans.get(Configuration.class)
                 .getConfig(WebConfig.class)
@@ -343,49 +342,26 @@ public class CubaManagedTabSheet extends CssLayout
     }
 
     @Override
-    public void addBlurListener(FieldEvents.BlurListener listener) {
-        addListener(FieldEvents.BlurEvent.EVENT_ID, FieldEvents.BlurEvent.class, listener,
-                FieldEvents.BlurListener.blurMethod);
+    public void addBlurListener(com.vaadin.event.FieldEvents.BlurListener listener) {
+        addListener(com.vaadin.event.FieldEvents.BlurEvent.EVENT_ID,
+                com.vaadin.event.FieldEvents.BlurEvent.class, listener,
+                com.vaadin.event.FieldEvents.BlurListener.blurMethod);
     }
 
     @Override
-    @Deprecated
-    public void addListener(FieldEvents.BlurListener listener) {
-        addBlurListener(listener);
+    public void removeBlurListener(com.vaadin.event.FieldEvents.BlurListener listener) {
+        removeListener(com.vaadin.event.FieldEvents.BlurEvent.EVENT_ID, com.vaadin.event.FieldEvents.BlurEvent.class, listener);
     }
 
     @Override
-    public void removeBlurListener(FieldEvents.BlurListener listener) {
-        removeListener(FieldEvents.BlurEvent.EVENT_ID, FieldEvents.BlurEvent.class, listener);
+    public void addFocusListener(com.vaadin.event.FieldEvents.FocusListener listener) {
+        addListener(com.vaadin.event.FieldEvents.FocusEvent.EVENT_ID, com.vaadin.event.FieldEvents.FocusEvent.class, listener,
+                com.vaadin.event.FieldEvents.FocusListener.focusMethod);
     }
 
     @Override
-    @Deprecated
-    public void removeListener(FieldEvents.BlurListener listener) {
-        removeBlurListener(listener);
-    }
-
-    @Override
-    public void addFocusListener(FieldEvents.FocusListener listener) {
-        addListener(FieldEvents.FocusEvent.EVENT_ID, FieldEvents.FocusEvent.class, listener,
-                FieldEvents.FocusListener.focusMethod);
-    }
-
-    @Override
-    @Deprecated
-    public void addListener(FieldEvents.FocusListener listener) {
-        addFocusListener(listener);
-    }
-
-    @Override
-    public void removeFocusListener(FieldEvents.FocusListener listener) {
-        removeListener(FieldEvents.FocusEvent.EVENT_ID, FieldEvents.FocusEvent.class, listener);
-    }
-
-    @Override
-    @Deprecated
-    public void removeListener(FieldEvents.FocusListener listener) {
-        removeFocusListener(listener);
+    public void removeFocusListener(com.vaadin.event.FieldEvents.FocusListener listener) {
+        removeListener(com.vaadin.event.FieldEvents.FocusEvent.EVENT_ID, com.vaadin.event.FieldEvents.FocusEvent.class, listener);
     }
 
     @Override

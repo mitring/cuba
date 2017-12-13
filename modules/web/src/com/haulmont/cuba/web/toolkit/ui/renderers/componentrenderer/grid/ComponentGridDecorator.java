@@ -14,11 +14,11 @@
 
 package com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.grid;
 
-import com.vaadin.data.util.BeanItemContainer;
-import com.vaadin.data.util.GeneratedPropertyContainer;
+import com.vaadin.v7.data.util.BeanItemContainer;
+import com.vaadin.v7.data.util.GeneratedPropertyContainer;
 import com.vaadin.server.Extension;
-import com.vaadin.server.communication.data.RpcDataProviderExtension;
-import com.vaadin.ui.Grid;
+import com.vaadin.v7.server.communication.data.RpcDataProviderExtension;
+import com.vaadin.v7.ui.Grid;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.ComponentCellKeyExtension;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.ComponentRenderer;
 import com.haulmont.cuba.web.toolkit.ui.renderers.componentrenderer.DetailsKeysExtension;
@@ -203,6 +203,4 @@ public class ComponentGridDecorator<T> implements Serializable {
         }
         return this;
     }
-
-
 }

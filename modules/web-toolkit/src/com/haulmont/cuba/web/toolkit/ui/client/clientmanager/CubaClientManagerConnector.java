@@ -30,6 +30,7 @@ import java.util.Map;
 public class CubaClientManagerConnector extends AbstractExtensionConnector {
 
     public CubaClientManagerConnector() {
+        //noinspection Convert2Lambda
         registerRpc(CubaClientManagerClientRpc.class, new CubaClientManagerClientRpc() {
             @Override
             public void updateSystemMessagesLocale(Map<String, String> localeMap) {
