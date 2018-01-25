@@ -24,7 +24,7 @@ import com.haulmont.cuba.gui.components.Tree;
 import com.haulmont.cuba.security.entity.Group;
 import com.haulmont.cuba.security.entity.User;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaTree;
+import com.haulmont.cuba.web.widgets.CubaTree;
 import com.vaadin.v7.data.Item;
 import com.vaadin.v7.event.DataBoundTransferable;
 import com.vaadin.event.dd.DragAndDropEvent;

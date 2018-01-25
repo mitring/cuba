@@ -56,11 +56,11 @@ import com.haulmont.cuba.web.gui.components.presentations.TablePresentations;
 import com.haulmont.cuba.web.gui.data.CollectionDsWrapper;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.data.PropertyWrapper;
-import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
-import com.haulmont.cuba.web.toolkit.ui.CubaEnhancedTable;
-import com.haulmont.cuba.web.toolkit.ui.CubaResizableTextAreaWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaTextArea;
-import com.haulmont.cuba.web.toolkit.ui.client.resizabletextarea.ResizeDirection;
+import com.haulmont.cuba.web.widgets.CubaEnhancedTable;
+import com.haulmont.cuba.web.widgets.CubaResizableTextAreaWrapper;
+import com.haulmont.cuba.web.widgets.CubaTextArea;
+import com.haulmont.cuba.web.widgets.client.resizabletextarea.ResizeDirection;
+import com.haulmont.cuba.web.widgets.data.AggregationContainer;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.Resource;
 import com.vaadin.ui.*;
@@ -575,12 +575,12 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
 
     @Override
     public void setAggregationStyle(AggregationStyle aggregationStyle) {
-        component.setAggregationStyle(aggregationStyle);
+        component.setAggregationStyle(CubaEnhancedTable.AggregationStyle.valueOf(aggregationStyle.name()));
     }
 
     @Override
     public AggregationStyle getAggregationStyle() {
-        return component.getAggregationStyle();
+        return AggregationStyle.valueOf(component.getAggregationStyle().name());
     }
 
     @Override
@@ -1383,7 +1383,7 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
             component.setTextSelectionEnabled(Boolean.parseBoolean(textSelection));
 
             if (component.getPresentations() != null) {
-                component.getPresentations().updateTextSelection();
+                ((TablePresentations) component.getPresentations()).updateTextSelection();
             }
         }
 

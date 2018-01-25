@@ -23,8 +23,8 @@ import com.haulmont.cuba.gui.TestIdManager;
 import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.web.AppUI;
-import com.haulmont.cuba.web.toolkit.ui.CubaPopupButton;
-import com.haulmont.cuba.web.toolkit.ui.CubaPopupButtonLayout;
+import com.haulmont.cuba.web.widgets.CubaPopupButton;
+import com.haulmont.cuba.web.widgets.CubaPopupButtonLayout;
 import com.vaadin.ui.Button;
 import org.apache.commons.lang.StringUtils;
 

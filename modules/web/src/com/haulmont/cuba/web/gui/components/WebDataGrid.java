@@ -36,17 +36,19 @@ import com.haulmont.cuba.gui.data.DsBuilder;
 import com.haulmont.cuba.gui.data.PropertyDatasource;
 import com.haulmont.cuba.gui.data.impl.*;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
+import com.haulmont.cuba.security.entity.ConstraintOperationType;
+import com.haulmont.cuba.security.entity.EntityOp;
 import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.AppUI;
+import com.haulmont.cuba.web.gui.components.converters.FormatterBasedConverter;
+import com.haulmont.cuba.web.gui.components.converters.ObjectToObjectConverter;
+import com.haulmont.cuba.web.gui.components.converters.StringToObjectConverter;
+import com.haulmont.cuba.web.gui.components.converters.YesNoIconConverter;
 import com.haulmont.cuba.web.gui.components.renderers.*;
 import com.haulmont.cuba.web.gui.data.DataGridIndexedCollectionDsWrapper;
 import com.haulmont.cuba.web.gui.data.SortableDataGridIndexedCollectionDsWrapper;
-import com.haulmont.cuba.web.toolkit.data.DataGridContainer;
-import com.haulmont.cuba.web.toolkit.ui.*;
-import com.haulmont.cuba.web.toolkit.ui.converters.FormatterBasedConverter;
-import com.haulmont.cuba.web.toolkit.ui.converters.ObjectToObjectConverter;
-import com.haulmont.cuba.web.toolkit.ui.converters.StringToObjectConverter;
-import com.haulmont.cuba.web.toolkit.ui.converters.YesNoIconConverter;
+import com.haulmont.cuba.web.widgets.*;
+import com.haulmont.cuba.web.widgets.data.DataGridContainer;
 import com.vaadin.contextmenu.Menu;
 import com.vaadin.contextmenu.MenuItem;
 import com.vaadin.event.ShortcutAction.KeyCode;
@@ -199,7 +201,20 @@ public class WebDataGrid<E extends Entity> extends WebAbstractComponent<CubaGrid
             }
         };
 
-        component = new CubaGrid(createEditorFieldFactory());
+        component = new CubaGrid(createEditorFieldFactory()) {
+            @Override
+            protected boolean isEditingPermitted(Object id) {
+                CollectionDatasource collectionDatasource = WebDataGrid.this.datasource;
+
+                if (collectionDatasource != null) {
+                    //noinspection unchecked
+                    Entity entity = collectionDatasource.getItem(id);
+                    return security.isEntityOpPermitted(collectionDatasource.getMetaClass(), EntityOp.UPDATE) &&
+                            (entity != null && security.isPermitted(entity, ConstraintOperationType.UPDATE));
+                }
+                return true;
+            }
+        };
         initComponent(component);
 
         initContextMenu();
@@ -768,8 +783,6 @@ public class WebDataGrid<E extends Entity> extends WebAbstractComponent<CubaGrid
         }
 
         assignAutoDebugId();
-
-        component.setCollectionDatasource(datasource);
     }
 
     protected void addInitialColumns(CollectionDatasource datasource) {

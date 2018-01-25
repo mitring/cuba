@@ -59,7 +59,7 @@ import com.haulmont.cuba.web.gui.WebWindow;
 import com.haulmont.cuba.web.gui.components.*;
 import com.haulmont.cuba.web.gui.components.mainwindow.WebAppWorkArea;
 import com.haulmont.cuba.web.sys.WindowBreadCrumbs;
-import com.haulmont.cuba.web.toolkit.ui.*;
+import com.haulmont.cuba.web.widgets.*;
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.Page;
@@ -738,7 +738,8 @@ public class WebWindowManager extends WindowManager {
         );
 
         Map<com.vaadin.event.Action, Runnable> actions = singletonMap(exitAction, () -> {
-            if (openType.getOpenMode() != OpenMode.DIALOG || BooleanUtils.isNotFalse(window.getDialogOptions().getCloseable())) {
+            if (openType.getOpenMode() != OpenMode.DIALOG
+                    || BooleanUtils.isNotFalse(window.getDialogOptions().getCloseable())) {
                 if (isCloseWithShortcutPrevented(window)) {
                     return;
                 }

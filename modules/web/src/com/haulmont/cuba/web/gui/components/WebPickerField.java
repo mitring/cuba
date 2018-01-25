@@ -31,11 +31,12 @@ import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.impl.WeakItemChangeListener;
 import com.haulmont.cuba.gui.data.impl.WeakItemPropertyChangeListener;
 import com.haulmont.cuba.web.AppUI;
-import com.haulmont.cuba.web.toolkit.ui.CubaPickerField;
-import com.haulmont.cuba.web.toolkit.ui.converters.StringToEntityConverter;
+import com.haulmont.cuba.web.gui.components.converters.StringToEntityConverter;
+import com.haulmont.cuba.web.widgets.CubaPickerField;
+import com.vaadin.ui.Button;
 import com.vaadin.v7.data.Property;
 import com.vaadin.v7.ui.AbstractField;
-import com.vaadin.ui.Button;
+import org.apache.commons.lang.ObjectUtils;
 import org.apache.commons.lang.StringUtils;
 
 import javax.annotation.Nullable;
@@ -378,7 +379,7 @@ public class WebPickerField extends WebAbstractField<CubaPickerField>
 
     @Override
     public void addFieldListener(FieldListener listener) {
-        component.addFieldListener(listener);
+        component.addFieldListener(listener::actionPerformed);
     }
 
     @Override

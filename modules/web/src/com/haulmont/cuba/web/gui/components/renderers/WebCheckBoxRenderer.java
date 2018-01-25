@@ -18,7 +18,7 @@ package com.haulmont.cuba.web.gui.components.renderers;
 
 import com.haulmont.cuba.gui.components.DataGrid;
 import com.haulmont.cuba.web.gui.components.WebDataGrid;
-import com.haulmont.cuba.web.toolkit.ui.renderers.CubaCheckBoxRenderer;
+import com.haulmont.cuba.web.widgets.renderers.CubaCheckBoxRenderer;
 import com.vaadin.v7.ui.renderers.Renderer;
 
 /**

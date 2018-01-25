@@ -33,7 +33,7 @@ import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.actions.ChangeSubstUserAction;
 import com.haulmont.cuba.web.actions.DoNotChangeSubstUserAction;
 import com.haulmont.cuba.web.gui.components.WebAbstractComponent;
-import com.haulmont.cuba.web.toolkit.ui.CubaComboBox;
+import com.haulmont.cuba.web.widgets.CubaComboBox;
 import com.vaadin.v7.data.Property;
 import com.vaadin.v7.shared.ui.combobox.FilteringMode;
 import com.vaadin.v7.ui.Field;

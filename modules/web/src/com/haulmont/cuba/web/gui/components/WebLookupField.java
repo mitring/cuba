@@ -34,7 +34,7 @@ import com.haulmont.cuba.web.gui.data.EnumerationContainer;
 import com.haulmont.cuba.web.gui.data.ObjectContainer;
 import com.haulmont.cuba.web.gui.data.OptionsDsWrapper;
 import com.haulmont.cuba.web.gui.data.UnsubscribableDsWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaComboBox;
+import com.haulmont.cuba.web.widgets.CubaComboBox;
 import com.vaadin.event.ShortcutListener;
 import com.vaadin.server.ErrorMessage;
 import com.vaadin.v7.data.Item;

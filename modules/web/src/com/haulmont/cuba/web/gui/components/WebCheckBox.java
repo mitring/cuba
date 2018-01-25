@@ -25,7 +25,7 @@ import com.haulmont.cuba.gui.components.FieldGroup;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.data.PropertyWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaCheckBox;
+import com.haulmont.cuba.web.widgets.CubaCheckBox;
 
 import java.util.Collection;
 

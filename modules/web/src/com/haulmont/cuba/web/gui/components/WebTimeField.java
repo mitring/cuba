@@ -28,7 +28,7 @@ import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.data.PropertyWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaMaskedTextField;
+import com.haulmont.cuba.web.widgets.CubaMaskedTextField;
 import com.vaadin.v7.data.util.converter.Converter;
 import com.vaadin.server.UserError;
 import org.apache.commons.lang.StringUtils;

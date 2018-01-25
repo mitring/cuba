@@ -27,7 +27,7 @@ import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.impl.CollectionDsHelper;
 import com.haulmont.cuba.web.gui.components.calendar.CalendarEventProviderWrapper;
 import com.haulmont.cuba.web.gui.components.calendar.CalendarEventWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaCalendar;
+import com.haulmont.cuba.web.widgets.CubaCalendar;
 import com.vaadin.v7.ui.components.calendar.CalendarComponentEvents;
 import org.apache.commons.collections4.CollectionUtils;
 

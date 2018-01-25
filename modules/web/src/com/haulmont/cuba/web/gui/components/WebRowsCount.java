@@ -26,7 +26,7 @@ import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.CollectionDatasource.Operation;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.impl.WeakCollectionChangeListener;
-import com.haulmont.cuba.web.toolkit.ui.CubaRowsCount;
+import com.haulmont.cuba.web.widgets.CubaRowsCount;
 import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
@@ -54,6 +54,11 @@ public class WebRowsCount extends WebAbstractComponent<CubaRowsCount> implements
     public WebRowsCount() {
         component = new CubaRowsCount();
         component.setStyleName(TABLE_ROWS_COUNT_STYLENAME);
+
+        component.getFirstButton().setIcon(WebComponentsHelper.getIcon("icons/rows-count-first.png"));
+        component.getPrevButton().setIcon(WebComponentsHelper.getIcon("icons/rows-count-prev.png"));
+        component.getNextButton().setIcon(WebComponentsHelper.getIcon("icons/rows-count-next.png"));
+        component.getLastButton().setIcon(WebComponentsHelper.getIcon("icons/rows-count-last.png"));
     }
 
     @Override

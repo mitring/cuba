@@ -20,7 +20,7 @@ import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.gui.components.Component.Alignment;
 import com.haulmont.cuba.gui.components.DataGrid.DataGridStaticCellType;
 import com.haulmont.cuba.gui.components.LookupField.FilterMode;
-import com.haulmont.cuba.web.toolkit.ui.client.resizabletextarea.ResizeDirection;
+import com.haulmont.cuba.web.widgets.client.resizabletextarea.ResizeDirection;
 import com.vaadin.event.MouseEvents;
 import com.vaadin.server.Sizeable;
 import com.vaadin.v7.shared.ui.combobox.FilteringMode;

@@ -30,9 +30,7 @@ public class CalendarEventWrapper implements com.vaadin.v7.ui.components.calenda
     public CalendarEventWrapper(CalendarEvent calendarEvent) {
         this.calendarEvent = calendarEvent;
 
-        calendarEvent.addEventChangeListener((CalendarEvent.EventChangeListener) eventChangeEvent ->
-                fireItemChanged()
-        );
+        calendarEvent.addEventChangeListener(eventChangeEvent -> fireItemChanged());
     }
 
     protected void fireItemChanged() {

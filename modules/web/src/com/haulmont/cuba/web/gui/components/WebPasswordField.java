@@ -18,7 +18,7 @@
 package com.haulmont.cuba.web.gui.components;
 
 import com.haulmont.cuba.gui.components.PasswordField;
-import com.haulmont.cuba.web.toolkit.ui.CubaPasswordField;
+import com.haulmont.cuba.web.widgets.CubaPasswordField;
 
 public class WebPasswordField extends WebAbstractTextField<CubaPasswordField> implements PasswordField {
 

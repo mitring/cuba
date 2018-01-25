@@ -27,7 +27,7 @@ import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.auth.WebAuthConfig;
-import com.haulmont.cuba.web.toolkit.ui.CubaFileUpload;
+import com.haulmont.cuba.web.widgets.CubaFileUpload;
 import com.vaadin.server.*;
 import com.vaadin.server.communication.*;
 import com.vaadin.ui.Component;

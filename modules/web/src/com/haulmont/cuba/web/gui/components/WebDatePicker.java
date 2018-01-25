@@ -33,7 +33,7 @@ import com.haulmont.cuba.gui.data.impl.WeakItemChangeListener;
 import com.haulmont.cuba.gui.data.impl.WeakItemPropertyChangeListener;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.data.PropertyWrapper;
-import com.haulmont.cuba.web.toolkit.ui.CubaDatePicker;
+import com.haulmont.cuba.web.widgets.CubaDatePicker;
 import com.vaadin.v7.ui.InlineDateField;
 
 import javax.validation.constraints.Future;

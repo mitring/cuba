@@ -31,8 +31,7 @@ import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.impl.WeakItemChangeListener;
 import com.haulmont.cuba.gui.data.impl.WeakItemPropertyChangeListener;
 import com.haulmont.cuba.gui.export.ByteArrayDataProvider;
-import com.haulmont.cuba.web.toolkit.ui.CubaImage;
-import com.vaadin.event.MouseEvents;
+import com.haulmont.cuba.web.widgets.CubaImage;
 
 import java.io.InputStream;
 import java.util.function.Supplier;

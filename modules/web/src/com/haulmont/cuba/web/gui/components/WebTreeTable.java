@@ -32,9 +32,9 @@ import com.haulmont.cuba.web.gui.data.CollectionDsWrapper;
 import com.haulmont.cuba.web.gui.data.HierarchicalDsWrapper;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.data.PropertyWrapper;
-import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
-import com.haulmont.cuba.web.toolkit.data.TreeTableContainer;
-import com.haulmont.cuba.web.toolkit.ui.CubaTreeTable;
+import com.haulmont.cuba.web.widgets.data.AggregationContainer;
+import com.haulmont.cuba.web.widgets.data.TreeTableContainer;
+import com.haulmont.cuba.web.widgets.CubaTreeTable;
 import com.vaadin.v7.data.Item;
 import com.vaadin.server.Resource;
 

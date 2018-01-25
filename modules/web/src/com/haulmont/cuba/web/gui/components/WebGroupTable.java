@@ -35,12 +35,11 @@ import com.haulmont.cuba.web.gui.data.CollectionDsWrapper;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.data.PropertyWrapper;
 import com.haulmont.cuba.web.gui.data.SortableCollectionDsWrapper;
-import com.haulmont.cuba.web.toolkit.data.AggregationContainer;
-import com.haulmont.cuba.web.toolkit.data.GroupTableContainer;
-import com.haulmont.cuba.web.toolkit.ui.CubaGroupTable;
-import com.vaadin.v7.data.Item;
+import com.haulmont.cuba.web.widgets.CubaGroupTable;
+import com.haulmont.cuba.web.widgets.data.AggregationContainer;
+import com.haulmont.cuba.web.widgets.data.GroupTableContainer;
 import com.vaadin.server.Resource;
-import org.apache.commons.collections4.CollectionUtils;
+import com.vaadin.v7.data.Item;
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Element;
 
@@ -75,18 +74,46 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
                 return WebGroupTable.this.getItemIcon(itemId);
             }
 
-            /* vaadin8 reimplement
+            @Override
+            protected boolean isNonGeneratedProperty(Object id) {
+                return (id instanceof MetaPropertyPath);
+            }
+
             @Override
             protected boolean changeVariables(Map<String, Object> variables) {
                 boolean b = super.changeVariables(variables);
                 b = handleSpecificVariables(variables) || b;
                 return b;
             }
-            */
 
             @Override
             public void groupBy(Object[] properties) {
                 groupBy(properties, rerender);
+            }
+
+            @Override
+            protected LinkedHashSet<Object> getItemIdsInRange(Object startItemId, final int length) {
+                Set<Object> rootIds = super.getItemIdsInRange(startItemId, length);
+                LinkedHashSet<Object> ids = new LinkedHashSet<>();
+                for (Object itemId: rootIds) {
+                    if (itemId instanceof GroupInfo) {
+                        if (!isExpanded(itemId)) {
+                            Collection<?> itemIds = getGroupItemIds(itemId);
+                            ids.addAll(itemIds);
+                            expand(itemId, true);
+                        }
+
+                        List<GroupInfo> children = (List<GroupInfo>) getChildren(itemId);
+                        for (GroupInfo groupInfo : children) {
+                            if (!isExpanded(groupInfo)) {
+                                expand(groupInfo, true);
+                            }
+                        }
+                    } else {
+                        ids.add(itemId);
+                    }
+                }
+                return ids;
             }
         };
     }

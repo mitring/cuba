@@ -22,7 +22,7 @@ import com.haulmont.bali.util.Preconditions;
 import com.haulmont.cuba.gui.components.SourceCodeEditor;
 import com.haulmont.cuba.gui.components.autocomplete.AutoCompleteSupport;
 import com.haulmont.cuba.gui.components.autocomplete.Suggester;
-import com.haulmont.cuba.web.toolkit.ui.CubaSourceCodeEditor;
+import com.haulmont.cuba.web.widgets.CubaSourceCodeEditor;
 import org.apache.commons.lang.StringUtils;
 import org.vaadin.aceeditor.AceMode;
 import org.vaadin.aceeditor.Suggestion;

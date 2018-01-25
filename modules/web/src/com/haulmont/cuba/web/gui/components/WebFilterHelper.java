@@ -35,7 +35,7 @@ import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.app.folders.AppFolderEditWindow;
 import com.haulmont.cuba.web.app.folders.CubaFoldersPane;
 import com.haulmont.cuba.web.app.folders.FolderEditWindow;
-import com.haulmont.cuba.web.toolkit.ui.CubaTextField;
+import com.haulmont.cuba.web.widgets.CubaTextField;
 import com.vaadin.event.Transferable;
 import com.vaadin.event.dd.DragAndDropEvent;
 import com.vaadin.event.dd.DropHandler;

@@ -28,7 +28,7 @@ import com.haulmont.cuba.gui.presentations.Presentations;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.AppUI;
-import com.haulmont.cuba.web.toolkit.ui.CubaSourceCodeEditor;
+import com.haulmont.cuba.web.widgets.CubaSourceCodeEditor;
 import com.vaadin.ui.Button;
 import org.apache.commons.lang.StringUtils;
 import org.vaadin.aceeditor.AceMode;
