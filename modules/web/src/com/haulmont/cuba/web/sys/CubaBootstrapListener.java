@@ -49,8 +49,6 @@ public class CubaBootstrapListener implements BootstrapListener {
     public void modifyBootstrapPage(BootstrapPageResponse response) {
         Element head = response.getDocument().getElementsByTag("head").get(0);
 
-        includeScript(getWebJarResource("jquery.min.js"), response, head);
-
         int customDeviceWidthForViewport = webConfig.getCustomDeviceWidthForViewport();
         if (customDeviceWidthForViewport > 0) {
             includeMetaViewport("width=" + customDeviceWidthForViewport +
