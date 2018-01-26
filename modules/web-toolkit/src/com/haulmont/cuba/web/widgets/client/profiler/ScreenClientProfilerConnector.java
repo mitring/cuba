@@ -16,15 +16,12 @@
 
 package com.haulmont.cuba.web.widgets.client.profiler;
 
-
-import com.haulmont.cuba.web.sys.ScreenClientProfilerAgent;
 import com.vaadin.client.ServerConnector;
 import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.extensions.AbstractExtensionConnector;
-import com.vaadin.shared.ui.Connect;
 
-@Connect(value = ScreenClientProfilerAgent.class, loadStyle = Connect.LoadStyle.EAGER)
+//@Connect(value = ScreenClientProfilerAgent.class, loadStyle = Connect.LoadStyle.EAGER)
 public class ScreenClientProfilerConnector extends AbstractExtensionConnector {
 
     protected ScreenClientProfilerServerRpc rpc = RpcProxy.create(ScreenClientProfilerServerRpc.class, this);

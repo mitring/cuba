@@ -30,13 +30,12 @@ import com.haulmont.cuba.security.global.UserSession;
 import com.haulmont.cuba.web.app.UserSettingsTools;
 import com.haulmont.cuba.web.controllers.ControllerUtils;
 import com.haulmont.cuba.web.events.UIRefreshEvent;
-import com.haulmont.cuba.web.toolkit.VersionedThemeResource;
 import com.haulmont.cuba.web.security.events.AppInitializedEvent;
 import com.haulmont.cuba.web.security.events.SessionHeartbeatEvent;
 import com.haulmont.cuba.web.sys.LinkHandler;
 import com.haulmont.cuba.web.sys.ScreenClientProfilerAgent;
+import com.haulmont.cuba.web.toolkit.VersionedThemeResource;
 import com.haulmont.cuba.web.widgets.*;
-import com.haulmont.cuba.web.widgets.client.appui.AppUIClientRpc;
 import com.vaadin.annotations.PreserveOnRefresh;
 import com.vaadin.annotations.Push;
 import com.vaadin.server.*;
@@ -58,7 +57,7 @@ import java.util.*;
 @Scope(BeanDefinition.SCOPE_PROTOTYPE)
 @Push(transport = Transport.WEBSOCKET_XHR)
 @PreserveOnRefresh
-public class AppUI extends UI
+public class AppUI extends CubaUI
         implements ErrorHandler, EnhancedUI, CubaHistoryControl.HistoryBackHandler {
 
     public static final String NAME = "cuba_AppUI";
@@ -402,13 +401,6 @@ public class AppUI extends UI
     public void detach() {
         log.trace("Detaching UI {}", this);
         super.detach();
-    }
-
-    /**
-     * INTERNAL.
-     */
-    public void discardAccumulatedEvents() {
-        getRpcProxy(AppUIClientRpc.class).discardAccumulatedEvents();
     }
 
     public String getProfilerMarker() {

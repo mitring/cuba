@@ -599,7 +599,7 @@ configure(webWidgetsModule) {
         compile(bom['org.apache.commons:commons-collections4'])
         compile(bom['commons-lang:commons-lang'])
         compile(bom['com.google.guava:guava'])
-        compile(bom['ch.qos.logback:logback-classic'])
+        compile(bom['org.slf4j:slf4j-api'])
 
         /* Vaadin */
         compile(bom['com.vaadin:vaadin-server']) {
@@ -778,7 +778,7 @@ configure(webModuleThemesModule) {
 
 configure(webToolkitModule) {
     dependencies {
-        compile(webModule)
+        compile(webWidgetsModule)
         compile(bom['com.vaadin:vaadin-client'])
         compile(bom['com.vaadin:vaadin-client-compiler'])
         compile(bom['com.vaadin:vaadin-compatibility-client'])
@@ -791,7 +791,7 @@ configure(webToolkitModule) {
         // Strict
         strict = true
         // Debug flags:
-        printCompilerClassPath = false
+        printCompilerClassPath = true
         logLevel = 'INFO'
         // Parallel thread count
         workers = 2

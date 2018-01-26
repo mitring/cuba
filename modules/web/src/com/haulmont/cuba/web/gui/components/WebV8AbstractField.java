@@ -34,6 +34,8 @@ import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.gui.data.ValueListener;
 import com.haulmont.cuba.gui.data.impl.WeakItemChangeListener;
 import com.haulmont.cuba.web.gui.data.ItemWrapper;
+import com.vaadin.data.Binder;
+import com.vaadin.v7.data.Property;
 import org.apache.commons.lang.StringUtils;
 
 import javax.validation.constraints.NotNull;
@@ -65,6 +67,7 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
     protected Datasource.ItemChangeListener<Entity> securityItemChangeListener;
     protected WeakItemChangeListener securityWeakItemChangeListener;
     protected EditableChangeListener parentEditableChangeListener;
+    private Binder.Binding binding;
 
     @Override
     public Datasource getDatasource() {
@@ -94,8 +97,7 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             metaProperty = null;
             metaPropertyPath = null;
 
-//            vaadin8
-//            component.setPropertyDataSource(null);
+            unbind();
 
             //noinspection unchecked
             this.datasource.removeItemChangeListener(securityWeakItemChangeListener);
@@ -120,8 +122,9 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             initFieldConverter();
 
             itemWrapper = createDatasourceWrapper(datasource, Collections.singleton(metaPropertyPath));
-//            vaadin8
-//            component.setPropertyDataSource(itemWrapper.getItemProperty(metaPropertyPath));
+
+            Property itemProperty = itemWrapper.getItemProperty(metaPropertyPath);
+            binding = bind(itemProperty);
 
             initRequired(metaPropertyPath);
 
@@ -137,6 +140,20 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             this.datasource.addItemChangeListener(securityWeakItemChangeListener);
 
             initBeanValidator();
+        }
+    }
+
+    // ???
+    protected Binder.Binding bind(Property itemProperty) {
+        return new Binder()
+                .forField(component)
+                .bind(o -> itemProperty.getValue(), (o, o2) -> itemProperty.setValue(o2));
+    }
+
+    protected void unbind() {
+        if (binding != null) {
+            binding.unbind();
+            binding = null;
         }
     }
 

@@ -208,12 +208,12 @@ public class CubaPickerField extends com.vaadin.v7.ui.CustomField implements Act
     }
 
     protected void updateTextRepresentation() {
-        TextField textField = (TextField) field;
+        CubaTextField textField = (CubaTextField) field;
 
         suppressTextChangeListener = true;
 
         String value = getStringRepresentation();
-        textField.setValue(value != null ? value : "");
+        textField.setValueIgnoreReadOnly(value != null ? value : "");
 
         suppressTextChangeListener = false;
     }

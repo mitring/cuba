@@ -17,7 +17,7 @@
 
 package com.haulmont.cuba.web.widgets.client.appui;
 
-import com.haulmont.cuba.web.AppUI;
+import com.haulmont.cuba.web.widgets.CubaUI;
 import com.haulmont.cuba.web.widgets.client.button.CubaButtonConnector;
 import com.vaadin.client.ApplicationConnection;
 import com.vaadin.client.ApplicationConnection.RemoveMethodInvocationCallback;
@@ -29,17 +29,17 @@ import com.vaadin.shared.ui.Connect;
 import com.vaadin.shared.ui.button.ButtonServerRpc;
 import com.vaadin.shared.ui.tabsheet.TabsheetServerRpc;
 
-@Connect(AppUI.class)
-public class AppUIConnector extends UIConnector {
+@Connect(CubaUI.class)
+public class CubaUIConnector extends UIConnector {
 
     public static final String CUBA_NOTIFICATION_MODALITY_CURTAIN = "c-notification-modalitycurtain";
 
-    public AppUIConnector() {
+    public CubaUIConnector() {
 //        vaadin8 reimplement
 //        VNotification.setRelativeZIndex(true);
 
         //noinspection Convert2Lambda
-        registerRpc(AppUIClientRpc.class, new AppUIClientRpc() {
+        registerRpc(CubaUIClientRpc.class, new CubaUIClientRpc() {
             @Override
             public void discardAccumulatedEvents() {
                 // silent time
