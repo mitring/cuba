@@ -17,7 +17,6 @@
 
 package com.haulmont.cuba.core.app.importexport;
 
-import com.google.common.collect.Multimap;
 import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.chile.core.model.MetaProperty;
 import com.haulmont.chile.core.model.Range;
@@ -25,6 +24,7 @@ import com.haulmont.cuba.core.Persistence;
 import com.haulmont.cuba.core.PersistenceSecurity;
 import com.haulmont.cuba.core.app.DataStore;
 import com.haulmont.cuba.core.app.RdbmsStore;
+import com.haulmont.cuba.core.app.ServerConfig;
 import com.haulmont.cuba.core.app.StoreFactory;
 import com.haulmont.cuba.core.app.dynamicattributes.DynamicAttributesManagerAPI;
 import com.haulmont.cuba.core.app.serialization.EntitySerializationAPI;
@@ -89,6 +89,9 @@ public class EntityImportExport implements EntityImportExportAPI {
 
     @Inject
     protected ReferenceToEntitySupport referenceToEntitySupport;
+
+    @Inject
+    protected GlobalConfig globalConfig;
 
     @Override
     public byte[] exportEntitiesToZIP(Collection<? extends Entity> entities, View view) {
@@ -289,8 +292,10 @@ public class EntityImportExport implements EntityImportExportAPI {
         if (dstEntity instanceof BaseGenericIdEntity && !createOp) {
             String storeName = metadata.getTools().getStoreName(dstEntity.getMetaClass());
             DataStore dataStore = storeFactory.get(storeName);
-            //row-level security works only for entities from RdbmsStore
             if (dataStore instanceof RdbmsStore) {
+                if (useSecurityToken()) {
+                    persistenceSecurity.assertTokenForREST(srcEntity, regularView);
+                }
                 persistenceSecurity.restoreSecurityState(dstEntity);
                 securityState = BaseEntityInternalAccess.getSecurityState(dstEntity);
             }
@@ -465,14 +470,16 @@ public class EntityImportExport implements EntityImportExportAPI {
         }
 
         SecurityState securityState = null;
-        if (srcEntity instanceof BaseGenericIdEntity && !createOp) {
-            String storeName = metadata.getTools().getStoreName(srcEntity.getMetaClass());
+        if (dstEntity instanceof BaseGenericIdEntity && !createOp) {
+            String storeName = metadata.getTools().getStoreName(dstEntity.getMetaClass());
             DataStore dataStore = storeFactory.get(storeName);
             //row-level security works only for entities from RdbmsStore
             if (dataStore instanceof RdbmsStore) {
-                persistenceSecurity.checkSecurityToken(srcEmbeddedEntity, null);
-                persistenceSecurity.restoreSecurityState(srcEmbeddedEntity);
-                securityState = BaseEntityInternalAccess.getSecurityState(srcEmbeddedEntity);
+                if (useSecurityToken()) {
+                    persistenceSecurity.assertTokenForREST(srcEmbeddedEntity, regularView);
+                }
+                persistenceSecurity.restoreSecurityState(dstEmbeddedEntity);
+                securityState = BaseEntityInternalAccess.getSecurityState(dstEmbeddedEntity);
             }
         }
 
@@ -617,12 +624,16 @@ public class EntityImportExport implements EntityImportExportAPI {
         return entities;
     }
 
+    protected boolean useSecurityToken() {
+        return globalConfig.getRestUseSecurityTokenForClient();
+    }
+
     protected Entity findReferenceEntity(Entity entity, EntityImportViewProperty viewProperty, CommitContext commitContext,
                                          Set<Entity> loadedEntities) {
         Entity result = Stream.concat(loadedEntities.stream(), commitContext.getCommitInstances().stream())
                 .filter(item -> item.equals(entity))
                 .findFirst().orElse(null);
-        if (result != null) {
+        if (result == null) {
             LoadContext<? extends Entity> ctx = LoadContext.create(entity.getClass())
                     .setSoftDeletion(false)
                     .setView(View.MINIMAL)

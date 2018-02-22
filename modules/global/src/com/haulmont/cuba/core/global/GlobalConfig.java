@@ -196,6 +196,11 @@ public interface GlobalConfig extends Config {
     @DefaultBoolean(false)
     boolean getRestAnonymousEnabled();
 
+    @Property("cuba.rest.useSecurityTokenForClient")
+    @Source(type = SourceType.DATABASE)
+    @DefaultBoolean(false)
+    boolean getRestUseSecurityTokenForClient();
+
     /**
      * @return response of the HTTP GET request on the health check URL
      */
