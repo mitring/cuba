@@ -22,10 +22,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Splitter;
+import com.haulmont.bali.datastruct.Pair;
 import com.haulmont.bali.util.Dom4j;
 import com.haulmont.cuba.core.global.Resources;
 import com.haulmont.cuba.core.sys.AppContext;
 import io.swagger.models.*;
+import io.swagger.models.parameters.BodyParameter;
+import io.swagger.models.parameters.Parameter;
+import io.swagger.models.parameters.QueryParameter;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.springframework.core.io.Resource;
@@ -89,15 +93,16 @@ public class OpenAPIDocumentationController {
     }
 
     protected void checkSwagger() {
-        if (swagger == null) {
-            swagger = new Swagger()
-                    .basePath(getBasePath())
-                    .consumes(APPLICATION_JSON_VALUE)
-                    .produces(APPLICATION_JSON_VALUE)
-                    .info(generateInfo())
-                    .paths(generatePaths())
-                    .tags(generateTags(false, true, false));
-        }
+        /*
+         * todo: use condition "swagger == null"
+         */
+        swagger = new Swagger()
+                .basePath(getBasePath())
+                .consumes(APPLICATION_JSON_VALUE)
+                .produces(APPLICATION_JSON_VALUE)
+                .info(generateInfo())
+                .paths(generatePaths())
+                .tags(generateTags(false, true, false));
     }
 
     protected String getBasePath() {
@@ -114,6 +119,8 @@ public class OpenAPIDocumentationController {
                         .url("http://www.apache.org/licenses/LICENSE-2.0.html"));
     }
 
+    // todo: remove
+    @SuppressWarnings("SameParameterValue")
     protected List<Tag> generateTags(boolean entitiesArePresent, boolean queriesArePresent, boolean servicesArePresent) {
         List<Tag> tags = new ArrayList<>();
 
@@ -141,12 +148,12 @@ public class OpenAPIDocumentationController {
     protected Map<String, Path> generatePaths() {
         Map<String, Path> paths = new HashMap<>();
 
-        generateQueriesPaths().forEach(paths::put);
+        generateQueryPaths().forEach(paths::put);
 
         return paths;
     }
 
-    protected Map<String, Path> generateQueriesPaths() {
+    protected Map<String, Path> generateQueryPaths() {
         String queriesConfigFiles = AppContext.getProperty(QUERIES_CONFIG);
         if (queriesConfigFiles == null || queriesConfigFiles.isEmpty()) {
             return Collections.emptyMap();
@@ -174,7 +181,6 @@ public class OpenAPIDocumentationController {
         return queriesPaths;
     }
 
-    // todo: consider query parameters
     @SuppressWarnings("unchecked")
     protected Map<String, Path> loadPathsFromQueryConfig(Element rootElement) {
         Map<String, Path> paths = new HashMap<>();
@@ -183,21 +189,69 @@ public class OpenAPIDocumentationController {
             String entity = query.attributeValue("entity");
             String queryName = query.attributeValue("name");
 
-            paths.put(String.format(QUERY_PATH, entity, queryName), generateQueryPath(entity, queryName));
+            paths.put(
+                    String.format(QUERY_PATH, entity, queryName),
+                    generateQueryPath(entity, queryName, parseQueryParams(query)));
         }
 
         return paths;
     }
 
-    protected Path generateQueryPath(String entity, String queryName) {
+    protected Path generateQueryPath(String entity, String queryName, List<Pair<String, String>> params) {
+        return new Path()
+                .get(generateQueryOperation(RequestMethod.GET, params))
+                .post(generateQueryOperation(RequestMethod.POST, params));
+    }
+
+    protected Operation generateQueryOperation(RequestMethod method, List<Pair<String, String>> params) {
         Operation operation = new Operation()
                 .tag("Queries")
                 .summary("Execute a query")
                 .description("Executes a predefined query. Query parameters must be passed in the request body as JSON map")
-                .response(200, new Response().description("Success"));
+                .response(200, new Response().description("Success"))
+                .response(403, new Response().description("Forbidden. A user doesn't have permissions to read the entity"))
+                .response(404, new Response().description("MetaClass not found"));
 
-        return new Path()
-                .get(operation)
-                .post(operation);
+        params.forEach(param ->
+                operation.addParameter(
+                        generateQueryOperationParam(param, method)));
+
+        return operation;
+    }
+
+    // todo: consider multiple parameters
+    private Parameter generateQueryOperationParam(Pair<String, String> param, RequestMethod method) {
+        if (RequestMethod.GET == method) {
+            return new QueryParameter()
+                    .name(param.getFirst())
+                    .type("string");
+        } else {
+            return new BodyParameter()
+                    .name(param.getFirst())
+                    .schema(new ModelImpl()
+                            .type(param.getSecond()));
+        }
+    }
+
+    // todo: consider arrays
+    @SuppressWarnings("unchecked")
+    protected List<Pair<String, String>> parseQueryParams(Element query) {
+        Element paramsEl = query.element("params");
+        if (paramsEl == null
+                || paramsEl.elements() == null
+                || paramsEl.elements().isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<Pair<String, String>> params = new ArrayList<>();
+        for (Element param : (List<Element>) paramsEl.elements("param")) {
+            String name = param.attributeValue("name");
+            String type = param.attributeValue("type");
+            type = type.substring(type.lastIndexOf(".") + 1).toLowerCase();
+
+            params.add(new Pair<>(name, type));
+        }
+
+        return params;
     }
 }
