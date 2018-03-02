@@ -118,9 +118,7 @@ public class CubaFileDownloader extends AbstractExtension {
             stream.setParameter(DownloadStream.CONTENT_DISPOSITION, contentDisposition);
 
             // Content-Type to block eager browser plug-ins from hijacking the file
-            if (isOverrideContentType() && !isViewDocumentRequest) {
-                stream.setContentType("application/octet-stream;charset=UTF-8");
-            } else {
+            if (!isViewDocumentRequest) {
                 if (StringUtils.isNotEmpty(stream.getContentType())) {
                     stream.setContentType(stream.getContentType() + ";charset=UTF-8\"");
                 } else {
