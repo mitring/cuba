@@ -31,6 +31,7 @@ import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.QueryParameter;
 import io.swagger.models.parameters.RefParameter;
+import io.swagger.models.properties.ObjectProperty;
 import io.swagger.models.properties.StringProperty;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
@@ -47,7 +48,7 @@ import java.util.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @RestController("cuba_OpenAPIDocumentationController")
-@RequestMapping("/v2/openapi_docs")
+@RequestMapping("/v2/rest_docs")
 public class OpenAPIDocumentationController {
 
     protected static final String WEB_HOST_NAME = "cuba.webHostName";
@@ -58,6 +59,8 @@ public class OpenAPIDocumentationController {
     protected static final String SERVICES_CONFIG = "cuba.rest.servicesConfig";
 
     protected static final String QUERY_PATH = "/queries/%s/%s";
+    protected static final String SERVICE_PATH = "/services/%s/%s";
+
     protected static final String ARRAY_SIGNATURE = "[]";
 
     @Inject
@@ -72,7 +75,7 @@ public class OpenAPIDocumentationController {
     protected boolean queriesArePresent = false;
     protected boolean servicesArePresent = false;
 
-    @RequestMapping(value = "/openapi.json", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/rest.json", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
     public String getSwaggerJson() {
         checkSwagger();
 
@@ -85,7 +88,7 @@ public class OpenAPIDocumentationController {
         }
     }
 
-    @RequestMapping(value = "/openapi.yml", method = RequestMethod.GET, produces = "application/yaml")
+    @RequestMapping(value = "/rest.yml", method = RequestMethod.GET, produces = "application/yaml")
     public String getSwaggerYaml() {
         checkSwagger();
 
@@ -164,9 +167,115 @@ public class OpenAPIDocumentationController {
     protected Map<String, Path> generatePaths() {
         Map<String, Path> paths = new HashMap<>();
 
-        generateQueryPaths().forEach(paths::put);
+        paths.putAll(generateQueryPaths());
+        paths.putAll(generateServicesPaths());
 
         return paths;
+    }
+
+    protected Map<String, Path> generateServicesPaths() {
+        String servicesConfigFiles = AppContext.getProperty(SERVICES_CONFIG);
+        if (servicesConfigFiles == null || servicesConfigFiles.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Path> servicesPaths = new HashMap<>();
+
+        for (String servicesConfig : Splitter.on(' ').omitEmptyStrings().trimResults().split(servicesConfigFiles)) {
+            Resource configResource = resources.getResource(servicesConfig);
+            if (configResource.exists()) {
+                InputStream stream = null;
+                try {
+                    stream = configResource.getInputStream();
+                    Element rootElement = Dom4j.readDocument(stream).getRootElement();
+
+                    servicesPaths.putAll(loadPathsFromServicesConfig(rootElement));
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to read queries config from " + servicesPaths, e);
+                } finally {
+                    IOUtils.closeQuietly(stream);
+                }
+            }
+        }
+        servicesArePresent = !servicesPaths.isEmpty();
+
+        return servicesPaths;
+    }
+
+    @SuppressWarnings("unchecked")
+    protected Map<String, Path> loadPathsFromServicesConfig(Element rootElement) {
+        Map<String, Path> paths = new HashMap<>();
+
+        for (Element service : ((List<Element>) rootElement.elements("service"))) {
+            String serviceName = service.attributeValue("name");
+
+            for (Element method : ((List<Element>) service.elements("method"))) {
+                String methodName = method.attributeValue("name");
+
+                List<Pair<String, String>> methodParams = parseMethodParams(method);
+
+                paths.put(
+                        String.format(SERVICE_PATH, serviceName, methodName),
+                        generateServiceMethodPath(serviceName, methodName, methodParams));
+            }
+        }
+
+        return paths;
+    }
+
+    protected Path generateServiceMethodPath(String serviceName, String methodName, List<Pair<String, String>> params) {
+        return new Path()
+                .get(generateServiceMethodOp(serviceName, methodName, params, RequestMethod.GET))
+                .post(generateServiceMethodOp(serviceName, methodName, params, RequestMethod.POST));
+    }
+
+    // todo: make responses shared
+    protected Operation generateServiceMethodOp(String serviceName, String methodName, List<Pair<String, String>> params, RequestMethod method) {
+        Operation operation = new Operation()
+                .tag("Services")
+                .summary(serviceName + "#" + methodName)
+                .description("Executes the service method. This request expects query parameters with the names defined " +
+                        "in services configuration on the middleware")
+
+                .response(200, new Response()
+                        .description("Returns the result of the method execution. It can be of simple " +
+                                "datatype as well as JSON that represents an entity or entities collection.")
+                        .schema(new StringProperty()))
+
+                .response(204, new Response()
+                        .description("No content. This status is returned when the service method was executed " +
+                                "successfully but returns null or is of void type."))
+
+                .response(403, new Response()
+                        .description("Forbidden. The user doesn't have permissions to invoke the service method.")
+                        .schema(new ObjectProperty()
+                                .property("error", new StringProperty().description("Error message"))
+                                .property("details", new StringProperty().description("Detailed error description"))
+                        ));
+
+        params.forEach(param ->
+                operation.addParameter(
+                        generateServiceMethodParam(serviceName, methodName, param, method)
+                ));
+
+        return operation;
+    }
+
+    protected Parameter generateServiceMethodParam(String serviceName, String methodName, Pair<String, String> param, RequestMethod method) {
+        String paramName = serviceName + "_"
+                + methodName + "_"
+                + param.getFirst() + "_"
+                + method.name();
+
+        String ref = "#/parameters/" + paramName;
+
+        if (RequestMethod.GET == method) {
+            parameters.put(paramName, generateGetOperationParam(param));
+        } else {
+            parameters.put(paramName, generatePostOperationParam(param));
+        }
+
+        return new RefParameter(ref);
     }
 
     protected Map<String, Path> generateQueryPaths() {
@@ -174,32 +283,33 @@ public class OpenAPIDocumentationController {
         if (queriesConfigFiles == null || queriesConfigFiles.isEmpty()) {
             return Collections.emptyMap();
         }
-        queriesArePresent = true;
 
         Map<String, Path> queriesPaths = new HashMap<>();
 
-        for (String queryConfig : Splitter.on(' ').omitEmptyStrings().trimResults().split(queriesConfigFiles)) {
-            Resource configResource = resources.getResource(queryConfig);
+        for (String queriesConfig : Splitter.on(' ').omitEmptyStrings().trimResults().split(queriesConfigFiles)) {
+            Resource configResource = resources.getResource(queriesConfig);
             if (configResource.exists()) {
                 InputStream stream = null;
                 try {
                     stream = configResource.getInputStream();
                     Element rootElement = Dom4j.readDocument(stream).getRootElement();
 
-                    queriesPaths.putAll(loadPathsFromQueryConfig(rootElement));
+                    queriesPaths.putAll(loadPathsFromQueriesConfig(rootElement));
                 } catch (IOException e) {
-                    throw new RuntimeException("Unable to read queries config from " + queryConfig, e);
+                    throw new RuntimeException("Unable to read queries config from " + queriesConfig, e);
                 } finally {
                     IOUtils.closeQuietly(stream);
                 }
             }
         }
 
+        queriesArePresent = !queriesPaths.isEmpty();
+
         return queriesPaths;
     }
 
     @SuppressWarnings("unchecked")
-    protected Map<String, Path> loadPathsFromQueryConfig(Element rootElement) {
+    protected Map<String, Path> loadPathsFromQueriesConfig(Element rootElement) {
         Map<String, Path> paths = new HashMap<>();
 
         for (Element query : ((List<Element>) rootElement.elements("query"))) {
@@ -220,41 +330,40 @@ public class OpenAPIDocumentationController {
                 .post(generateQueryOperation(entity, queryName, RequestMethod.POST, params));
     }
 
-    protected Operation generateQueryOperation(String entity, String queryName, RequestMethod method, List<Pair<String, String>> params) {
+    protected Operation generateQueryOperation(String entityName, String queryName, RequestMethod method, List<Pair<String, String>> params) {
         Operation operation = new Operation()
                 .tag("Queries")
                 .summary(queryName)
                 .description("Executes a predefined query. Query parameters must be passed in the request body as JSON map")
                 .response(200, new Response().description("Success"))
-                .response(403, new Response().description("Forbidden. A user doesn't have permissions to read the entity: " + entity))
-                .response(404, new Response().description("MetaClass not found for the entity: " + entity));
+                .response(403, new Response().description("Forbidden. A user doesn't have permissions to read the entity: " + entityName))
+                .response(404, new Response().description("MetaClass not found for the entity: " + entityName));
 
         params.forEach(param ->
                 operation.addParameter(
-                        generateQueryOperationParam(queryName, param, method)));
+                        generateQueryOperationParam(entityName, queryName, param, method)));
 
         return operation;
     }
 
-    private Parameter generateQueryOperationParam(String queryName, Pair<String, String> param, RequestMethod method) {
-        String paramName = queryName
-                + Character.toUpperCase(param.getFirst().charAt(0))
-                + param.getFirst().substring(1)
-                + "Param"
+    private Parameter generateQueryOperationParam(String entityName, String queryName, Pair<String, String> param, RequestMethod method) {
+        String paramName = entityName + "_"
+                + queryName + "_"
+                + param.getFirst() + "_"
                 + method.name();
 
         String ref = "#/parameters/" + paramName;
 
         if (RequestMethod.GET == method) {
-            parameters.put(paramName, generateGetQueryOpParam(param));
+            parameters.put(paramName, generateGetOperationParam(param));
         } else {
-            parameters.put(paramName, generatePostQueryOpParam(param));
+            parameters.put(paramName, generatePostOperationParam(param));
         }
 
         return new RefParameter(ref);
     }
 
-    protected QueryParameter generateGetQueryOpParam(Pair<String, String> param) {
+    protected QueryParameter generateGetOperationParam(Pair<String, String> param) {
         QueryParameter parameter = new QueryParameter()
                 .name(param.getFirst())
                 .required(true);
@@ -268,7 +377,7 @@ public class OpenAPIDocumentationController {
         return parameter;
     }
 
-    protected BodyParameter generatePostQueryOpParam(Pair<String, String> param) {
+    protected BodyParameter generatePostOperationParam(Pair<String, String> param) {
         BodyParameter parameter = new BodyParameter()
                 .name(param.getFirst());
         parameter.setRequired(true);
@@ -286,11 +395,29 @@ public class OpenAPIDocumentationController {
     }
 
     @SuppressWarnings("unchecked")
+    protected List<Pair<String, String>> parseMethodParams(Element method) {
+        List<Pair<String, String>> params = new ArrayList<>();
+        for (Element param : ((List<Element>) method.elements("param"))) {
+            String name = param.attributeValue("name");
+
+            String type = param.attributeValue("type");
+            if (type == null || type.isEmpty()) {
+                type = "string";
+            } else {
+                type = type.substring(type.lastIndexOf(".") + 1)
+                        .toLowerCase();
+            }
+
+            params.add(new Pair<>(name, type));
+        }
+
+        return params;
+    }
+
+    @SuppressWarnings("unchecked")
     protected List<Pair<String, String>> parseQueryParams(Element query) {
         Element paramsEl = query.element("params");
-        if (paramsEl == null
-                || paramsEl.elements() == null
-                || paramsEl.elements().isEmpty()) {
+        if (paramsEl == null) {
             return Collections.emptyList();
         }
 
