@@ -31,8 +31,7 @@ import io.swagger.models.parameters.BodyParameter;
 import io.swagger.models.parameters.Parameter;
 import io.swagger.models.parameters.QueryParameter;
 import io.swagger.models.parameters.RefParameter;
-import io.swagger.models.properties.ObjectProperty;
-import io.swagger.models.properties.StringProperty;
+import io.swagger.models.properties.*;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
 import org.springframework.core.io.Resource;
@@ -44,6 +43,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -100,7 +100,7 @@ public class OpenAPIDocumentationController {
 
             return new YAMLMapper()
                     .writeValueAsString(jsonNode)
-                    .replace("---", "");
+                    .substring("---".length() + 1);
         } catch (IOException e) {
             throw new RuntimeException("An error occurred while generating Swagger documentation", e);
         }
@@ -206,13 +206,13 @@ public class OpenAPIDocumentationController {
     protected Map<String, Path> loadPathsFromServicesConfig(Element rootElement) {
         Map<String, Path> paths = new HashMap<>();
 
-        for (Element service : ((List<Element>) rootElement.elements("service"))) {
-            String serviceName = service.attributeValue("name");
+        for (Element serviceEl : ((List<Element>) rootElement.elements("service"))) {
+            String serviceName = serviceEl.attributeValue("name");
 
-            for (Element method : ((List<Element>) service.elements("method"))) {
-                String methodName = method.attributeValue("name");
+            for (Element methodEl : ((List<Element>) serviceEl.elements("method"))) {
+                String methodName = methodEl.attributeValue("name");
 
-                List<Pair<String, String>> methodParams = parseMethodParams(method);
+                List<Pair<String, String>> methodParams = parseParams(methodEl);
 
                 paths.put(
                         String.format(SERVICE_PATH, serviceName, methodName),
@@ -385,53 +385,74 @@ public class OpenAPIDocumentationController {
         if (!param.getSecond().contains(ARRAY_SIGNATURE)) {
             parameter.schema(
                     new ModelImpl()
-                            .type("string"));
+                            .property(
+                                    param.getFirst(),
+                                    getParamProperty(param.getSecond())
+                            ));
         } else {
+            String javaType = param.getSecond().replace(ARRAY_SIGNATURE, "");
             parameter.schema(
                     new ArrayModel()
-                            .items(new StringProperty()));
+                            .items(getParamProperty(javaType)));
         }
+
         return parameter;
     }
 
-    @SuppressWarnings("unchecked")
-    protected List<Pair<String, String>> parseMethodParams(Element method) {
-        List<Pair<String, String>> params = new ArrayList<>();
-        for (Element param : ((List<Element>) method.elements("param"))) {
-            String name = param.attributeValue("name");
-
-            String type = param.attributeValue("type");
-            if (type == null || type.isEmpty()) {
-                type = "string";
-            } else {
-                type = type.substring(type.lastIndexOf(".") + 1)
-                        .toLowerCase();
-            }
-
-            params.add(new Pair<>(name, type));
+    protected Property getParamProperty(String javaType) {
+        switch (javaType) {
+            case "boolean":
+                return new BooleanProperty().example(true);
+            case "float":
+            case "double":
+                return new DoubleProperty().example("3.14");
+            case "byte":
+            case "short":
+            case "integer":
+                return new IntegerProperty().example(42);
+            case "long":
+                return new LongProperty().example(Long.MAX_VALUE >> 4);
+            case "date":
+                return new DateProperty().example("2005-14-10T13:17:42.16Z");
+            case "uuid":
+                UUIDProperty uuidProp = new UUIDProperty();
+                uuidProp.setExample("19474a3b-99b5-482e-9e77-852be9adf817");
+                return uuidProp;
+            case "string":
+            default:
+                return new StringProperty().example("Hello World!");
         }
-
-        return params;
     }
 
     @SuppressWarnings("unchecked")
-    protected List<Pair<String, String>> parseQueryParams(Element query) {
-        Element paramsEl = query.element("params");
+    protected List<Pair<String, String>> parseQueryParams(Element queryEl) {
+        Element paramsEl = queryEl.element("params");
         if (paramsEl == null) {
             return Collections.emptyList();
         }
 
-        List<Pair<String, String>> params = new ArrayList<>();
-        for (Element param : (List<Element>) paramsEl.elements("param")) {
-            String name = param.attributeValue("name");
+        return parseParams(paramsEl);
+    }
 
-            String type = param.attributeValue("type");
+    @SuppressWarnings("unchecked")
+    protected List<Pair<String, String>> parseParams(Element paramsEl) {
+        return ((List<Element>) paramsEl.elements("param"))
+                .stream()
+                .map(this::parseParam)
+                .collect(Collectors.toList());
+    }
+
+    protected Pair<String, String> parseParam(Element paramEl) {
+        String name = paramEl.attributeValue("name");
+
+        String type = paramEl.attributeValue("type");
+        if (type == null || type.isEmpty()) {
+            type = "string";
+        } else {
             type = type.substring(type.lastIndexOf(".") + 1)
                     .toLowerCase();
-
-            params.add(new Pair<>(name, type));
         }
 
-        return params;
+        return new Pair<>(name, type);
     }
 }
