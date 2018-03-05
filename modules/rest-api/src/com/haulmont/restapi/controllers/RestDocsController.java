@@ -24,6 +24,8 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.google.common.base.Splitter;
 import com.haulmont.bali.datastruct.Pair;
 import com.haulmont.bali.util.Dom4j;
+import com.haulmont.bali.util.ReflectionHelper;
+import com.haulmont.chile.core.annotations.NamePattern;
 import com.haulmont.cuba.core.global.Resources;
 import com.haulmont.cuba.core.sys.AppContext;
 import io.swagger.models.*;
@@ -40,26 +42,43 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
+import javax.persistence.Column;
+import javax.persistence.Entity;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-@RestController("cuba_OpenAPIDocumentationController")
+@RestController("cuba_RestDocsController")
 @RequestMapping("/v2/rest_docs")
-public class OpenAPIDocumentationController {
+public class RestDocsController {
 
     protected static final String WEB_HOST_NAME = "cuba.webHostName";
     protected static final String WEB_PORT = "cuba.webPort";
     protected static final String WEB_CONTEXT_NAME = "cuba.webContextName";
 
+    protected static final String PERSISTENCE_CONFIG = "cuba.persistenceConfig";
     protected static final String QUERIES_CONFIG = "cuba.rest.queriesConfig";
     protected static final String SERVICES_CONFIG = "cuba.rest.servicesConfig";
 
+    protected static final String ENTITY_PATH = "/entities/%s";
+    // read, update, delete
+    protected static final String ENTITY_RUD_OPS = "/entities/%s/%s";
+    protected static final String ENTITY_SEARCH = "/entities/%s/search";
+
     protected static final String QUERY_PATH = "/queries/%s/%s";
     protected static final String SERVICE_PATH = "/services/%s/%s";
+
+    protected static final String DEFINITIONS_PREFIX = "#/definitions/";
+    protected static final String PARAMETERS_PREFIX = "#/parameters/";
+
+    protected static final String QUERIES_TAG = "Queries";
+    protected static final String ENTITIES_TAG = "Entities";
+    protected static final String SERVICES_TAG = "Services";
 
     protected static final String ARRAY_SIGNATURE = "[]";
 
@@ -70,6 +89,7 @@ public class OpenAPIDocumentationController {
     protected Swagger swagger = null;
 
     protected Map<String, Parameter> parameters = new HashMap<>();
+    protected Map<String, Model> definitions = new HashMap<>();
 
     protected boolean entitiesArePresent = false;
     protected boolean queriesArePresent = false;
@@ -99,8 +119,8 @@ public class OpenAPIDocumentationController {
                     jsonWriter.writeValueAsBytes(swagger));
 
             return new YAMLMapper()
-                    .writeValueAsString(jsonNode)
-                    .substring("---".length() + 1);
+                    .disable(WRITE_DOC_START_MARKER)
+                    .writeValueAsString(jsonNode);
         } catch (IOException e) {
             throw new RuntimeException("An error occurred while generating Swagger documentation", e);
         }
@@ -120,6 +140,7 @@ public class OpenAPIDocumentationController {
                 .tags(generateTags(entitiesArePresent, queriesArePresent, servicesArePresent));
 
         swagger.setParameters(parameters);
+        swagger.setDefinitions(definitions);
     }
 
     protected String getHost() {
@@ -145,19 +166,19 @@ public class OpenAPIDocumentationController {
 
         if (entitiesArePresent) {
             tags.add(new Tag()
-                    .name("Entities")
+                    .name(ENTITIES_TAG)
                     .description("CRUD entities operations"));
         }
 
         if (queriesArePresent) {
             tags.add(new Tag()
-                    .name("Queries")
+                    .name(QUERIES_TAG)
                     .description("Predefined queries execution"));
         }
 
         if (servicesArePresent) {
             tags.add(new Tag()
-                    .name("Services")
+                    .name(SERVICES_TAG)
                     .description("Middleware services execution"));
         }
 
@@ -167,11 +188,135 @@ public class OpenAPIDocumentationController {
     protected Map<String, Path> generatePaths() {
         Map<String, Path> paths = new HashMap<>();
 
+        paths.putAll(generateEntitiesPaths());
         paths.putAll(generateQueryPaths());
         paths.putAll(generateServicesPaths());
 
         return paths;
     }
+
+    /*
+     * Entities
+     */
+
+    protected Map<String, Path> generateEntitiesPaths() {
+        String persistenceConfigFiles = AppContext.getProperty(PERSISTENCE_CONFIG);
+        if (persistenceConfigFiles == null || persistenceConfigFiles.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Path> entitiesPaths = new HashMap<>();
+
+        for (String persistenceConfig : Splitter.on(' ').omitEmptyStrings().trimResults().split(persistenceConfigFiles)) {
+            Resource configResource = resources.getResource(persistenceConfig);
+            if (configResource.exists()) {
+                InputStream stream = null;
+                try {
+                    stream = configResource.getInputStream();
+                    Element rootElement = Dom4j.readDocument(stream).getRootElement();
+
+                    entitiesPaths.putAll(loadPathsFromPersistenceConfig(rootElement));
+                } catch (IOException e) {
+                    throw new RuntimeException("Unable to read entities from " + persistenceConfig, e);
+                } finally {
+                    IOUtils.closeQuietly(stream);
+                }
+            }
+        }
+        entitiesArePresent = !entitiesPaths.isEmpty();
+
+        return entitiesPaths;
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Path> loadPathsFromPersistenceConfig(Element rootElement) {
+        Element persistenceUnitEl = rootElement.element("persistence-unit");
+        if (persistenceUnitEl == null) {
+            return Collections.emptyMap();
+        }
+
+        Map<String, Path> paths = new HashMap<>();
+        for (Element eClass : ((List<Element>) persistenceUnitEl.elements("class"))) {
+            String classFqn = (String) eClass.getData();
+            // todo: temporary. Remove later
+            if (!"com.haulmont.cuba.security.entity.User".equals(classFqn)) {
+                continue;
+            }
+
+            paths.putAll(generateEntityPaths(classFqn));
+        }
+
+        return paths;
+    }
+
+    protected Map<String, Path> generateEntityPaths(String classFqn) {
+        Pair<String, ModelImpl> entityModel = createEntityModel(ReflectionHelper.getClass(classFqn));
+
+        String entityRef = DEFINITIONS_PREFIX + "entities_" + entityModel.getFirst();
+
+        return generateEntityBrowsePath(entityModel, entityRef);
+    }
+
+    protected Map<String, Path> generateEntityBrowsePath(Pair<String, ModelImpl> entityModel, String entityRef) {
+        return Collections.singletonMap(
+                String.format(ENTITY_PATH, entityModel.getFirst()),
+                new Path().get(new Operation()
+                        .tag(ENTITIES_TAG)
+                        .produces(APPLICATION_JSON_VALUE)
+                        .response(200, new Response()
+                                .description("Success. The list of entities is returned in the response body.")
+                                .schema(
+                                        new RefProperty(entityRef)))));
+    }
+
+    protected Pair<String, ModelImpl> createEntityModel(Class<Object> entityClass) {
+        Map<String, Property> properties = new TreeMap<>();
+
+        try {
+            Field idField = entityClass.getDeclaredField("id");
+            String idType = idField.getType().getSimpleName().toLowerCase();
+            Property idProperty = getPropertyFromJavaType(idType);
+
+            properties.put("id", idProperty);
+        } catch (NoSuchFieldException ignored) {
+        }
+
+        String entityName = "";
+        Entity entityAnnotation = entityClass.getAnnotation(Entity.class);
+        if (entityAnnotation != null) {
+            entityName = entityAnnotation.name();
+            properties.put("_entityName", new StringProperty()._default(entityName));
+        }
+
+        NamePattern namePatternAnnotation = entityClass.getAnnotation(NamePattern.class);
+        if (namePatternAnnotation != null) {
+            String namePattern = namePatternAnnotation.value();
+            properties.put("_instanceName", new StringProperty().example(namePattern));
+        }
+
+        for (Field field : entityClass.getDeclaredFields()) {
+            if ("id".equals(field.getName()) || field.getAnnotation(Column.class) == null) {
+                continue;
+            }
+
+            String fieldName = field.getName();
+            Property fieldProperty = getPropertyFromJavaType(field.getType().getSimpleName().toLowerCase());
+
+            properties.put(fieldName, fieldProperty);
+        }
+
+        ModelImpl entityModel = new ModelImpl();
+        entityModel.setProperties(properties);
+
+        String entityDefinitionRef = "entities_" + entityName;
+        definitions.put(entityDefinitionRef, entityModel);
+
+        return new Pair<>(entityName, entityModel);
+    }
+
+    /*
+     * Services
+     */
 
     protected Map<String, Path> generateServicesPaths() {
         String servicesConfigFiles = AppContext.getProperty(SERVICES_CONFIG);
@@ -191,7 +336,7 @@ public class OpenAPIDocumentationController {
 
                     servicesPaths.putAll(loadPathsFromServicesConfig(rootElement));
                 } catch (IOException e) {
-                    throw new RuntimeException("Unable to read queries config from " + servicesPaths, e);
+                    throw new RuntimeException("Unable to read queries config from " + servicesConfig, e);
                 } finally {
                     IOUtils.closeQuietly(stream);
                 }
@@ -212,11 +357,9 @@ public class OpenAPIDocumentationController {
             for (Element methodEl : ((List<Element>) serviceEl.elements("method"))) {
                 String methodName = methodEl.attributeValue("name");
 
-                List<Pair<String, String>> methodParams = parseParams(methodEl);
-
                 paths.put(
                         String.format(SERVICE_PATH, serviceName, methodName),
-                        generateServiceMethodPath(serviceName, methodName, methodParams));
+                        generateServiceMethodPath(serviceName, methodName, parseParams(methodEl)));
             }
         }
 
@@ -232,7 +375,7 @@ public class OpenAPIDocumentationController {
     // todo: make responses shared
     protected Operation generateServiceMethodOp(String serviceName, String methodName, List<Pair<String, String>> params, RequestMethod method) {
         Operation operation = new Operation()
-                .tag("Services")
+                .tag(SERVICES_TAG)
                 .summary(serviceName + "#" + methodName)
                 .description("Executes the service method. This request expects query parameters with the names defined " +
                         "in services configuration on the middleware")
@@ -267,7 +410,7 @@ public class OpenAPIDocumentationController {
                 + param.getFirst() + "_"
                 + method.name();
 
-        String ref = "#/parameters/" + paramName;
+        String ref = PARAMETERS_PREFIX + paramName;
 
         if (RequestMethod.GET == method) {
             parameters.put(paramName, generateGetOperationParam(param));
@@ -277,6 +420,10 @@ public class OpenAPIDocumentationController {
 
         return new RefParameter(ref);
     }
+
+    /*
+     * Queries
+     */
 
     protected Map<String, Path> generateQueryPaths() {
         String queriesConfigFiles = AppContext.getProperty(QUERIES_CONFIG);
@@ -332,7 +479,7 @@ public class OpenAPIDocumentationController {
 
     protected Operation generateQueryOperation(String entityName, String queryName, RequestMethod method, List<Pair<String, String>> params) {
         Operation operation = new Operation()
-                .tag("Queries")
+                .tag(QUERIES_TAG)
                 .summary(queryName)
                 .description("Executes a predefined query. Query parameters must be passed in the request body as JSON map")
                 .response(200, new Response().description("Success"))
@@ -346,13 +493,11 @@ public class OpenAPIDocumentationController {
         return operation;
     }
 
-    private Parameter generateQueryOperationParam(String entityName, String queryName, Pair<String, String> param, RequestMethod method) {
+    protected Parameter generateQueryOperationParam(String entityName, String queryName, Pair<String, String> param, RequestMethod method) {
         String paramName = entityName + "_"
                 + queryName + "_"
                 + param.getFirst() + "_"
                 + method.name();
-
-        String ref = "#/parameters/" + paramName;
 
         if (RequestMethod.GET == method) {
             parameters.put(paramName, generateGetOperationParam(param));
@@ -360,10 +505,24 @@ public class OpenAPIDocumentationController {
             parameters.put(paramName, generatePostOperationParam(param));
         }
 
-        return new RefParameter(ref);
+        return new RefParameter(PARAMETERS_PREFIX + paramName);
     }
 
-    protected QueryParameter generateGetOperationParam(Pair<String, String> param) {
+    @SuppressWarnings("unchecked")
+    protected List<Pair<String, String>> parseQueryParams(Element queryEl) {
+        Element paramsEl = queryEl.element("params");
+        if (paramsEl == null) {
+            return Collections.emptyList();
+        }
+
+        return parseParams(paramsEl);
+    }
+
+    /*
+     * Common
+     */
+
+    protected Parameter generateGetOperationParam(Pair<String, String> param) {
         QueryParameter parameter = new QueryParameter()
                 .name(param.getFirst())
                 .required(true);
@@ -377,7 +536,7 @@ public class OpenAPIDocumentationController {
         return parameter;
     }
 
-    protected BodyParameter generatePostOperationParam(Pair<String, String> param) {
+    protected Parameter generatePostOperationParam(Pair<String, String> param) {
         BodyParameter parameter = new BodyParameter()
                 .name(param.getFirst());
         parameter.setRequired(true);
@@ -385,21 +544,18 @@ public class OpenAPIDocumentationController {
         if (!param.getSecond().contains(ARRAY_SIGNATURE)) {
             parameter.schema(
                     new ModelImpl()
-                            .property(
-                                    param.getFirst(),
-                                    getParamProperty(param.getSecond())
-                            ));
+                            .property(param.getFirst(), getPropertyFromJavaType(param.getSecond())));
         } else {
             String javaType = param.getSecond().replace(ARRAY_SIGNATURE, "");
             parameter.schema(
                     new ArrayModel()
-                            .items(getParamProperty(javaType)));
+                            .items(getPropertyFromJavaType(javaType)));
         }
 
         return parameter;
     }
 
-    protected Property getParamProperty(String javaType) {
+    protected Property getPropertyFromJavaType(String javaType) {
         switch (javaType) {
             case "boolean":
                 return new BooleanProperty().example(true);
@@ -408,6 +564,7 @@ public class OpenAPIDocumentationController {
                 return new DoubleProperty().example("3.14");
             case "byte":
             case "short":
+            case "int":
             case "integer":
                 return new IntegerProperty().example(42);
             case "long":
@@ -422,16 +579,6 @@ public class OpenAPIDocumentationController {
             default:
                 return new StringProperty().example("Hello World!");
         }
-    }
-
-    @SuppressWarnings("unchecked")
-    protected List<Pair<String, String>> parseQueryParams(Element queryEl) {
-        Element paramsEl = queryEl.element("params");
-        if (paramsEl == null) {
-            return Collections.emptyList();
-        }
-
-        return parseParams(paramsEl);
     }
 
     @SuppressWarnings("unchecked")
