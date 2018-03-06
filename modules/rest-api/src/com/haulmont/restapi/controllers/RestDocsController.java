@@ -29,10 +29,7 @@ import com.haulmont.chile.core.annotations.NamePattern;
 import com.haulmont.cuba.core.global.Resources;
 import com.haulmont.cuba.core.sys.AppContext;
 import io.swagger.models.*;
-import io.swagger.models.parameters.BodyParameter;
-import io.swagger.models.parameters.Parameter;
-import io.swagger.models.parameters.QueryParameter;
-import io.swagger.models.parameters.RefParameter;
+import io.swagger.models.parameters.*;
 import io.swagger.models.properties.*;
 import org.apache.commons.io.IOUtils;
 import org.dom4j.Element;
@@ -67,13 +64,14 @@ public class RestDocsController {
 
     protected static final String ENTITY_PATH = "/entities/%s";
     // read, update, delete
-    protected static final String ENTITY_RUD_OPS = "/entities/%s/%s";
+    protected static final String ENTITY_RUD_OPS = "/entities/%s/{entityId}";
     protected static final String ENTITY_SEARCH = "/entities/%s/search";
 
     protected static final String QUERY_PATH = "/queries/%s/%s";
     protected static final String SERVICE_PATH = "/services/%s/%s";
 
     protected static final String DEFINITIONS_PREFIX = "#/definitions/";
+    protected static final String ENTITY_DEFINITION_PREFIX = DEFINITIONS_PREFIX + "entities_";
     protected static final String PARAMETERS_PREFIX = "#/parameters/";
 
     protected static final String QUERIES_TAG = "Queries";
@@ -252,21 +250,148 @@ public class RestDocsController {
     protected Map<String, Path> generateEntityPaths(String classFqn) {
         Pair<String, ModelImpl> entityModel = createEntityModel(ReflectionHelper.getClass(classFqn));
 
-        String entityRef = DEFINITIONS_PREFIX + "entities_" + entityModel.getFirst();
+        Map<String, Path> entityPaths = new HashMap<>();
 
-        return generateEntityBrowsePath(entityModel, entityRef);
+        entityPaths.putAll(generateEntityBrowsePath(entityModel));
+        entityPaths.putAll(generateEntityCRUDPaths(entityModel));
+
+        Pair<String, Path> searchPath = generateEntityFilterPaths(entityModel);
+        entityPaths.put(searchPath.getFirst(), searchPath.getSecond());
+
+        return entityPaths;
     }
 
-    protected Map<String, Path> generateEntityBrowsePath(Pair<String, ModelImpl> entityModel, String entityRef) {
+    protected Pair<String, Path> generateEntityFilterPaths(Pair<String, ModelImpl> entityModel) {
+        return new Pair<>(
+                String.format(ENTITY_SEARCH, entityModel.getFirst()),
+                new Path()
+                        .get(generateEntitySearchOperation(entityModel, RequestMethod.GET))
+                        .post(generateEntitySearchOperation(entityModel, RequestMethod.POST)));
+    }
+
+    protected Operation generateEntitySearchOperation(Pair<String, ModelImpl> entityModel, RequestMethod method) {
+        Operation operation = new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .response(200, new Response()
+                        .description("Success. Entities that conforms filter conditions are returned in the response body.")
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                .response(400, new Response().description("Bad request. For example, the condition value cannot be parsed."))
+                .response(403, new Response().description("Forbidden. The user doesn't have permissions to read the entity"))
+                .response(404, new Response().description("Not found. MetaClass for the entity with the given name not found"));
+
+        if (RequestMethod.GET == method) {
+            QueryParameter parameter = new QueryParameter()
+                    .name("Filter")
+                    .property(new StringProperty().description("JSON with filter definition"));
+            operation.parameter(parameter);
+        } else {
+            BodyParameter parameter = new BodyParameter()
+                    .name("Filter")
+                    .schema(new ModelImpl().property("JSON with filter definition", new StringProperty()));
+            operation.parameter(parameter);
+        }
+
+        return operation;
+    }
+
+    protected Map<String, Path> generateEntityCRUDPaths(Pair<String, ModelImpl> entityModel) {
+        Map<String, Path> crudPaths = new HashMap<>();
+
+        Pair<String, Path> createPath = generateEntityCreatePath(entityModel);
+        crudPaths.put(createPath.getFirst(), createPath.getSecond());
+
+        Pair<String, Path> rudPath = generateEntityRUDPaths(entityModel);
+        crudPaths.put(rudPath.getFirst(), rudPath.getSecond());
+
+        return crudPaths;
+    }
+
+    protected Pair<String, Path> generateEntityRUDPaths(Pair<String, ModelImpl> entityModel) {
+        return new Pair<>(
+                String.format(ENTITY_RUD_OPS, entityModel.getFirst()),
+                new Path()
+                        .delete(generateEntityDeleteOperation(entityModel))
+                        .get(generateEntityReadOperation(entityModel))
+                        .put(generateEntityUpdateOperation(entityModel)));
+    }
+
+    protected Operation generateEntityUpdateOperation(Pair<String, ModelImpl> entityModel) {
+        String entityRef = ENTITY_DEFINITION_PREFIX + entityModel.getFirst();
+
+        BodyParameter bodyParam = new BodyParameter()
+                .name("Entity")
+                .schema(new RefModel(entityRef));
+        bodyParam.setRequired(true);
+
+        return new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .parameter(new PathParameter()
+                        .name("entityId")
+                        .description("Entity identifier")
+                        .required(true)
+                        .property(new StringProperty()))
+                .parameter(bodyParam)
+                .response(200, new Response()
+                        .description("Success. The updated entity is returned in the response body.")
+                        .schema(new RefProperty(entityRef)))
+                .response(403, new Response().description("Forbidden. The user doesn't have permissions to update the entity"))
+                .response(404, new Response().description("MetaClass not found or entity with the given identifier not found."));
+    }
+
+    protected Operation generateEntityReadOperation(Pair<String, ModelImpl> entityModel) {
+        return new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .parameter(new PathParameter()
+                        .name("entityId")
+                        .description("Entity identifier")
+                        .property(new StringProperty()))
+                .response(200, new Response()
+                        .description("Success. The entity is returned in the response body.")
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                .response(403, new Response().description("Forbidden. The user doesn't have permissions to read the entity"))
+                .response(404, new Response().description("MetaClass not found or entity with the five identifier not found."));
+    }
+
+    protected Operation generateEntityDeleteOperation(Pair<String, ModelImpl> entityModel) {
+        return new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .parameter(new PathParameter()
+                        .name("entityId")
+                        .description("Entity identifier")
+                        .property(new StringProperty()))
+                .response(200, new Response().description("Success. Entity was deleted."))
+                .response(403, new Response().description("Forbidden. The user doesn't have permissions to delete the entity"))
+                .response(404, new Response().description("MetaClass not found or entity with the given identifier not found."));
+    }
+
+    protected Pair<String, Path> generateEntityCreatePath(Pair<String, ModelImpl> entityModel) {
+        Operation createOp = new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .response(201, new Response()
+                        .description("Entity created. The created entity is returned in the response body.")
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())));
+
+        return new Pair<>(
+                String.format(ENTITY_PATH, entityModel.getFirst()),
+                new Path().post(createOp));
+    }
+
+    protected Map<String, Path> generateEntityBrowsePath(Pair<String, ModelImpl> entityModel) {
+        Operation browseOp = new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .response(200, new Response()
+                        .description("Success. The list of entities is returned in the response body.")
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())));
+
         return Collections.singletonMap(
                 String.format(ENTITY_PATH, entityModel.getFirst()),
-                new Path().get(new Operation()
-                        .tag(ENTITIES_TAG)
-                        .produces(APPLICATION_JSON_VALUE)
-                        .response(200, new Response()
-                                .description("Success. The list of entities is returned in the response body.")
-                                .schema(
-                                        new RefProperty(entityRef)))));
+                new Path().get(browseOp));
     }
 
     protected Pair<String, ModelImpl> createEntityModel(Class<Object> entityClass) {
@@ -577,7 +702,7 @@ public class RestDocsController {
                 return uuidProp;
             case "string":
             default:
-                return new StringProperty().example("Hello World!");
+                return new StringProperty().example("String value example");
         }
     }
 
