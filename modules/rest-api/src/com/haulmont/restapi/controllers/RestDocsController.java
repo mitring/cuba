@@ -187,7 +187,7 @@ public class RestDocsController {
     }
 
     protected Map<String, Path> generatePaths() {
-        Map<String, Path> paths = new HashMap<>();
+        Map<String, Path> paths = new LinkedHashMap<>();
 
         paths.putAll(generateEntitiesPaths());
         paths.putAll(generateQueryPaths());
@@ -215,7 +215,7 @@ public class RestDocsController {
             return Collections.emptyMap();
         }
 
-        Map<String, Path> paths = new HashMap<>();
+        Map<String, Path> paths = new LinkedHashMap<>();
         for (Element eClass : ((List<Element>) persistenceUnitEl.elements("class"))) {
             String classFqn = (String) eClass.getData();
             // todo: temporary. Remove later
@@ -232,10 +232,8 @@ public class RestDocsController {
     protected Map<String, Path> generateEntityPaths(String classFqn) {
         Pair<String, ModelImpl> entityModel = createEntityModel(ReflectionHelper.getClass(classFqn));
 
-        Map<String, Path> entityPaths = new HashMap<>();
+        Map<String, Path> entityPaths = new LinkedHashMap<>();
 
-        Pair<String, Path> browsePath = generateEntityBrowsePath(entityModel);
-        entityPaths.put(browsePath.getFirst(), browsePath.getSecond());
         entityPaths.putAll(generateEntityCRUDPaths(entityModel));
 
         Pair<String, Path> searchPath = generateEntityFilterPaths(entityModel);
@@ -245,9 +243,12 @@ public class RestDocsController {
     }
 
     protected Map<String, Path> generateEntityCRUDPaths(Pair<String, ModelImpl> entityModel) {
-        Map<String, Path> crudPaths = new HashMap<>();
+        Map<String, Path> crudPaths = new LinkedHashMap<>();
 
         Pair<String, Path> createPath = generateEntityCreatePath(entityModel);
+        createPath.getSecond()
+                .get(generateEntityBrowseOperation(entityModel));
+
         crudPaths.put(createPath.getFirst(), createPath.getSecond());
 
         Pair<String, Path> rudPath = generateEntityRUDPaths(entityModel);
@@ -269,26 +270,19 @@ public class RestDocsController {
         Operation operation = new Operation()
                 .tag(ENTITIES_TAG)
                 .produces(APPLICATION_JSON_VALUE)
+                .summary("Creates new entity.")
+                .description("The method expects a JSON with entity object in the request body. " +
+                        "The entity object may contain references to other entities.")
                 .response(201, new Response()
                         .description("Entity created. The created entity is returned in the response body.")
-                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())));
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                .response(400, getErrorResponse("Bad request. For example, the entity may have a reference to the non-existing entity."))
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to create the entity."))
+                .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found"));
 
         return new Pair<>(
                 String.format(ENTITY_PATH, entityModel.getFirst()),
                 new Path().post(operation));
-    }
-
-    protected Pair<String, Path> generateEntityBrowsePath(Pair<String, ModelImpl> entityModel) {
-        Operation operation = new Operation()
-                .tag(ENTITIES_TAG)
-                .produces(APPLICATION_JSON_VALUE)
-                .response(200, new Response()
-                        .description("Success. The list of entities is returned in the response body.")
-                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())));
-
-        return new Pair<>(
-                String.format(ENTITY_PATH, entityModel.getFirst()),
-                new Path().get(operation));
     }
 
     protected Pair<String, Path> generateEntityFilterPaths(Pair<String, ModelImpl> entityModel) {
@@ -299,10 +293,25 @@ public class RestDocsController {
                         .post(generateEntitySearchOperation(entityModel, RequestMethod.POST)));
     }
 
+    protected Operation generateEntityBrowseOperation(Pair<String, ModelImpl> entityModel) {
+        return new Operation()
+                .tag(ENTITIES_TAG)
+                .produces(APPLICATION_JSON_VALUE)
+                .summary("Gets a list of entities.")
+                .description("Gets a list of entities.")
+                .response(200, new Response()
+                        .description("Success. The list of entities is returned in the response body.")
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
+                .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
+    }
+
     protected Operation generateEntityReadOperation(Pair<String, ModelImpl> entityModel) {
         return new Operation()
                 .tag(ENTITIES_TAG)
                 .produces(APPLICATION_JSON_VALUE)
+                .summary("Gets a single entity by identifier")
+                .description("Gets a single entity by identifier")
                 .parameter(new PathParameter()
                         .name("entityId")
                         .description("Entity identifier")
@@ -310,45 +319,50 @@ public class RestDocsController {
                 .response(200, new Response()
                         .description("Success. The entity is returned in the response body.")
                         .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
-                .response(403, new Response().description("Forbidden. The user doesn't have permissions to read the entity"))
-                .response(404, new Response().description("MetaClass not found or entity with the given identifier not found."));
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
+                .response(404, getErrorResponse("MetaClass not found or entity with the given identifier not found."));
     }
 
     protected Operation generateEntityUpdateOperation(Pair<String, ModelImpl> entityModel) {
         String entityRef = ENTITY_DEFINITION_PREFIX + entityModel.getFirst();
 
-        BodyParameter bodyParam = new BodyParameter()
-                .name("Entity")
+        BodyParameter entityParam = new BodyParameter()
+                .name("entity")
                 .schema(new RefModel(entityRef));
-        bodyParam.setRequired(true);
+        entityParam.setRequired(true);
+
+        PathParameter entityIdParam = new PathParameter()
+                .name("entityId")
+                .description("Entity identifier")
+                .required(true)
+                .property(new StringProperty());
 
         return new Operation()
                 .tag(ENTITIES_TAG)
                 .produces(APPLICATION_JSON_VALUE)
-                .parameter(new PathParameter()
-                        .name("entityId")
-                        .description("Entity identifier")
-                        .required(true)
-                        .property(new StringProperty()))
-                .parameter(bodyParam)
+                .summary("Updates the entity.")
+                .description("Updates the entity. Only fields that are passed in the JSON object (the request body) are updated.")
+                .parameter(entityIdParam)
+                .parameter(entityParam)
                 .response(200, new Response()
                         .description("Success. The updated entity is returned in the response body.")
                         .schema(new RefProperty(entityRef)))
-                .response(403, new Response().description("Forbidden. The user doesn't have permissions to update the entity"))
-                .response(404, new Response().description("MetaClass not found or entity with the given identifier not found."));
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to update the entity"))
+                .response(404, getErrorResponse("MetaClass not found or entity with the given identifier not found."));
     }
 
     protected Operation generateEntityDeleteOperation(Pair<String, ModelImpl> entityModel) {
         return new Operation()
                 .tag(ENTITIES_TAG)
                 .produces(APPLICATION_JSON_VALUE)
+                .summary("Deletes the entity.")
                 .parameter(new PathParameter()
                         .name("entityId")
                         .description("Entity identifier")
                         .property(new StringProperty()))
                 .response(200, new Response().description("Success. Entity was deleted."))
-                .response(403, new Response().description("Forbidden. The user doesn't have permissions to delete the entity"))
-                .response(404, new Response().description("MetaClass not found or entity with the given identifier not found."));
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to delete the entity"))
+                .response(404, getErrorResponse("MetaClass not found or entity with the given identifier not found."));
     }
 
     protected Operation generateEntitySearchOperation(Pair<String, ModelImpl> entityModel, RequestMethod method) {
@@ -358,18 +372,18 @@ public class RestDocsController {
                 .response(200, new Response()
                         .description("Success. Entities that conforms filter conditions are returned in the response body.")
                         .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
-                .response(400, new Response().description("Bad request. For example, the condition value cannot be parsed."))
-                .response(403, new Response().description("Forbidden. The user doesn't have permissions to read the entity"))
-                .response(404, new Response().description("Not found. MetaClass for the entity with the given name not found"));
+                .response(400, getErrorResponse("Bad request. For example, the condition value cannot be parsed."))
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity"))
+                .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found"));
 
         if (RequestMethod.GET == method) {
             QueryParameter parameter = new QueryParameter()
-                    .name("Filter")
+                    .name("filter")
                     .property(new StringProperty().description("JSON with filter definition"));
             operation.parameter(parameter);
         } else {
             BodyParameter parameter = new BodyParameter()
-                    .name("Filter")
+                    .name("filter")
                     .schema(new ModelImpl().property("JSON with filter definition", new StringProperty()));
             operation.parameter(parameter);
         }
@@ -379,7 +393,7 @@ public class RestDocsController {
 
     // todo: consider inheritance
     protected Pair<String, ModelImpl> createEntityModel(Class<Object> entityClass) {
-        Map<String, Property> properties = new TreeMap<>();
+        Map<String, Property> properties = new LinkedHashMap<>();
 
         try {
             Field idField = entityClass.getDeclaredField("id");
@@ -437,7 +451,7 @@ public class RestDocsController {
 
     @SuppressWarnings("unchecked")
     protected Map<String, Path> loadPathsFromServicesConfig(Element rootElement) {
-        Map<String, Path> paths = new HashMap<>();
+        Map<String, Path> paths = new LinkedHashMap<>();
 
         for (Element serviceEl : ((List<Element>) rootElement.elements("service"))) {
             String serviceName = serviceEl.attributeValue("name");
@@ -467,22 +481,13 @@ public class RestDocsController {
                 .summary(service + "#" + method)
                 .description("Executes the service method. This request expects query parameters with the names defined " +
                         "in services configuration on the middleware")
-
                 .response(200, new Response()
-                        .description("Returns the result of the method execution. It can be of simple " +
-                                "datatype as well as JSON that represents an entity or entities collection.")
+                        .description("Returns the result of the method execution. It can be of simple datatype " +
+                                "as well as JSON that represents an entity or entities collection.")
                         .schema(new StringProperty()))
-
-                .response(204, new Response()
-                        .description("No content. This status is returned when the service method was executed " +
-                                "successfully but returns null or is of void type."))
-
-                .response(403, new Response()
-                        .description("Forbidden. The user doesn't have permissions to invoke the service method.")
-                        .schema(new ObjectProperty()
-                                .property("error", new StringProperty().description("Error message"))
-                                .property("details", new StringProperty().description("Detailed error description"))
-                        ));
+                .response(204, new Response().description("No content. This status is returned when the service " +
+                        "method was executed successfully but returns null or is of void type."))
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to invoke the service method."));
 
         List<Parameter> methodParams = params.stream()
                 .map(p -> generateServiceMethodParam(service, method, p, requestMethod))
@@ -518,7 +523,7 @@ public class RestDocsController {
 
     @SuppressWarnings("unchecked")
     protected Map<String, Path> loadPathsFromQueriesConfig(Element rootElement) {
-        Map<String, Path> paths = new HashMap<>();
+        Map<String, Path> paths = new LinkedHashMap<>();
 
         for (Element query : ((List<Element>) rootElement.elements("query"))) {
             String entity = query.attributeValue("entity");
@@ -544,8 +549,8 @@ public class RestDocsController {
                 .summary(queryName)
                 .description("Executes a predefined query. Query parameters must be passed in the request body as JSON map.")
                 .response(200, new Response().description("Success"))
-                .response(403, new Response().description("Forbidden. A user doesn't have permissions to read the entity: " + entityName))
-                .response(404, new Response().description("MetaClass not found for the entity: " + entityName));
+                .response(403, getErrorResponse("Forbidden. A user doesn't have permissions to read the entity"))
+                .response(404, getErrorResponse("MetaClass not found for the entity"));
 
         List<Parameter> methodParams = params.stream()
                 .map(p -> generateQueryOperationParam(entityName, queryName, p, method))
@@ -667,7 +672,7 @@ public class RestDocsController {
             return Collections.emptyMap();
         }
 
-        Map<String, Path> paths = new HashMap<>();
+        Map<String, Path> paths = new LinkedHashMap<>();
 
         for (String configFile : Splitter.on(' ').omitEmptyStrings().trimResults().split(configFiles)) {
             paths.putAll(generatePathsFromConfigResource(resources.getResource(configFile), pathsGenerator));
@@ -692,5 +697,17 @@ public class RestDocsController {
         } finally {
             IOUtils.closeQuietly(stream);
         }
+    }
+
+    protected Property getErrorSchema() {
+        return new ObjectProperty()
+                .property("error", new StringProperty().description("Error message"))
+                .property("details", new StringProperty().description("Detailed error description"));
+    }
+
+    protected Response getErrorResponse(String msg) {
+        return new Response()
+                .description(msg)
+                .schema(getErrorSchema());
     }
 }
