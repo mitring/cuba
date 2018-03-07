@@ -33,7 +33,6 @@ import com.haulmont.cuba.web.events.UIRefreshEvent;
 import com.haulmont.cuba.web.security.events.AppInitializedEvent;
 import com.haulmont.cuba.web.security.events.SessionHeartbeatEvent;
 import com.haulmont.cuba.web.sys.LinkHandler;
-import com.haulmont.cuba.web.sys.ScreenClientProfilerAgent;
 import com.haulmont.cuba.web.toolkit.VersionedThemeResource;
 import com.haulmont.cuba.web.widgets.*;
 import com.vaadin.annotations.PreserveOnRefresh;
@@ -82,9 +81,6 @@ public class AppUI extends CubaUI
     protected WebConfig webConfig;
 
     @Inject
-    protected ScreenProfilerConfig screenProfilerConfig;
-
-    @Inject
     protected UserSettingsTools userSettingsTools;
 
     @Inject
@@ -106,13 +102,7 @@ public class AppUI extends CubaUI
 
     protected boolean testMode = false;
 
-    protected String profilerMarker;
-
-    protected Map<String, String> profiledScreens;
-
     protected CubaClientManager clientManager;
-
-    protected ScreenClientProfilerAgent clientProfiler;
 
     protected CubaFileDownloader fileDownloader;
 
@@ -162,9 +152,6 @@ public class AppUI extends CubaUI
 
         fileDownloader = new CubaFileDownloader();
         fileDownloader.extend(this);
-
-        clientProfiler = new ScreenClientProfilerAgent();
-        clientProfiler.extend(this);
 
         if (webConfig.getAllowHandleBrowserHistoryBack()) {
             historyControl = new CubaHistoryControl();
@@ -403,33 +390,6 @@ public class AppUI extends CubaUI
         super.detach();
     }
 
-    public String getProfilerMarker() {
-        return profilerMarker;
-    }
-
-    public void setProfilerMarker(String profilerMarker) {
-        this.profilerMarker = profilerMarker;
-    }
-
-    public void setProfiledScreen(String profilerMarker, String screen) {
-        if (profiledScreens == null) {
-            profiledScreens = new HashMap<>();
-        }
-        profiledScreens.put(profilerMarker, screen);
-    }
-
-    public String getProfiledScreen(String profilerMarker) {
-        return profiledScreens.get(profilerMarker);
-    }
-
-    public void clearProfiledScreens(List<String> profilerMarkers) {
-        if (profiledScreens != null) {
-            for (String profilerMarker : profilerMarkers) {
-                profiledScreens.remove(profilerMarker);
-            }
-        }
-    }
-
     protected void updateClientSystemMessages(Locale locale) {
         CubaClientManager.SystemMessages msgs = new CubaClientManager.SystemMessages();
 
@@ -493,16 +453,9 @@ public class AppUI extends CubaUI
     public void beforeTopLevelWindowInit() {
         updateUiTheme();
 
-        setProfilerParameters();
-
         updateClientSystemMessages(app.getLocale());
 
         getTestIdManager().reset();
-    }
-
-    protected void setProfilerParameters() {
-        clientProfiler.setFlushEventsCount(screenProfilerConfig.getFlushEventsCount());
-        clientProfiler.setFlushTimeout(screenProfilerConfig.getFlushTimeout());
     }
 
     protected void updateUiTheme() {
