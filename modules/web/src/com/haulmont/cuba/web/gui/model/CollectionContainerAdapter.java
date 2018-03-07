@@ -23,10 +23,10 @@ import com.haulmont.cuba.gui.model.InstanceContainer;
 import com.haulmont.cuba.gui.model.impl.WeakContainerListenerAdapter;
 import com.haulmont.cuba.web.gui.data.StaticItemSetChangeEvent;
 import com.haulmont.cuba.web.gui.data.UnsubscribableDsWrapper;
-import com.vaadin.data.Container;
-import com.vaadin.data.Item;
-import com.vaadin.data.Property;
 import com.vaadin.ui.UI;
+import com.vaadin.v7.data.Container;
+import com.vaadin.v7.data.Item;
+import com.vaadin.v7.data.Property;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -40,7 +40,7 @@ public class CollectionContainerAdapter implements Container, Container.ItemSetC
     protected Collection<MetaPropertyPath> properties = new ArrayList<>();
 
     // lazily initialized listeners list
-    protected List<ItemSetChangeListener> itemSetChangeListeners = null;
+    protected List<Container.ItemSetChangeListener> itemSetChangeListeners = null;
 
 //    protected EntityContainer.StateChangeListener cdsStateChangeListener;
     protected InstanceContainer.ItemPropertyChangeListener cdsItemPropertyChangeListener;

@@ -25,8 +25,8 @@ import com.haulmont.cuba.gui.model.CollectionContainer;
 import com.haulmont.cuba.gui.model.InstanceContainer;
 import com.haulmont.cuba.gui.model.impl.WeakCollectionChangeListener;
 import com.haulmont.cuba.web.gui.data.UnsubscribableDsWrapper;
-import com.vaadin.data.Item;
-import com.vaadin.data.Property;
+import com.vaadin.v7.data.Item;
+import com.vaadin.v7.data.Property;
 
 import java.util.*;
 

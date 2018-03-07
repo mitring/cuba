@@ -21,6 +21,7 @@ import com.haulmont.cuba.core.entity.Entity;
 import com.haulmont.cuba.gui.components.Action;
 import com.haulmont.cuba.gui.components.ListComponent;
 import com.haulmont.cuba.gui.data.CollectionDatasource;
+import com.haulmont.cuba.gui.model.CollectionContainer;
 import com.vaadin.v7.ui.AbstractSelect;
 
 import javax.annotation.Nullable;

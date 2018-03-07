@@ -29,9 +29,9 @@ import com.haulmont.cuba.gui.model.InstanceContainer;
 import com.haulmont.cuba.gui.model.impl.WeakItemChangeListener;
 import com.haulmont.cuba.gui.model.impl.WeakItemPropertyChangeListener;
 import com.haulmont.cuba.web.gui.data.AbstractPropertyWrapper;
-import com.haulmont.cuba.web.gui.data.PropertyValueStringify;
 import com.haulmont.cuba.web.gui.data.UnsubscribableDsWrapper;
-import com.vaadin.data.util.converter.Converter;
+import com.haulmont.cuba.web.widgets.data.PropertyValueStringify;
+import com.vaadin.v7.data.util.converter.Converter;
 
 import java.text.ParseException;
 

@@ -28,6 +28,7 @@ import com.haulmont.cuba.core.global.BeanValidation;
 import com.haulmont.cuba.core.global.MessageTools;
 import com.haulmont.cuba.core.global.MetadataTools;
 import com.haulmont.cuba.gui.components.Field;
+import com.haulmont.cuba.gui.components.PropertyBoundComponent;
 import com.haulmont.cuba.gui.components.RequiredValueMissingException;
 import com.haulmont.cuba.gui.components.ValidationException;
 import com.haulmont.cuba.gui.components.compatibility.ComponentValueListenerWrapper;
@@ -45,7 +46,8 @@ import java.util.*;
 import java.util.List;
 import java.util.function.Consumer;
 
-public abstract class DesktopAbstractField<C extends JComponent> extends DesktopAbstractComponent<C> implements Field, DesktopComponent.HasContextHelpClickHandler, PropertyBoundComponent { {
+public abstract class DesktopAbstractField<C extends JComponent> extends DesktopAbstractComponent<C> implements Field,
+        DesktopComponent.HasContextHelpClickHandler, PropertyBoundComponent {
 
     protected List<ValueChangeListener> listeners = new ArrayList<>();
 
