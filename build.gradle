@@ -788,8 +788,8 @@ configure(webToolkitModule) {
         // Strict
         strict = true
         // Debug flags:
-        printCompilerClassPath = true
-        logLevel = 'INFO'
+//        printCompilerClassPath = true
+//        logLevel = 'INFO'
         // Parallel thread count
         workers = 2
 
@@ -947,6 +947,9 @@ configure(portalModule) {
         appName = 'cuba-portal'
         appJars('cuba-global', 'cuba-client', 'cuba-portal', 'cuba-rest-api')
     }
+
+    // vaadin8 do not deploy portal, enable after release_7_0 branching
+    deploy.enabled = false
 }
 
 configure(idpModule) {
