@@ -48,6 +48,7 @@ import java.util.function.Consumer;
 
 import static com.haulmont.cuba.gui.ComponentsHelper.handleFilteredAttributes;
 
+// vaadin8 ??? Custom binding bridge for the new UI components ?
 public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
         extends WebAbstractComponent<T> implements Field {
 
@@ -68,7 +69,6 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
     protected Datasource.ItemChangeListener<Entity> securityItemChangeListener;
     protected WeakItemChangeListener securityWeakItemChangeListener;
     protected EditableChangeListener parentEditableChangeListener;
-    private Binder.Binding binding;
 
     @Override
     public Datasource getDatasource() {
@@ -98,8 +98,6 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             metaProperty = null;
             metaPropertyPath = null;
 
-            unbind();
-
             //noinspection unchecked
             this.datasource.removeItemChangeListener(securityWeakItemChangeListener);
             securityWeakItemChangeListener = null;
@@ -117,7 +115,7 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             //noinspection unchecked
             this.datasource = datasource;
 
-            final MetaClass metaClass = datasource.getMetaClass();
+            MetaClass metaClass = datasource.getMetaClass();
             resolveMetaPropertyPath(metaClass, property);
 
             initFieldConverter();
@@ -125,7 +123,6 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             itemWrapper = createDatasourceWrapper(datasource, Collections.singleton(metaPropertyPath));
 
             Property itemProperty = itemWrapper.getItemProperty(metaPropertyPath);
-            binding = bind(itemProperty);
 
             initRequired(metaPropertyPath);
 
@@ -141,20 +138,6 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
             this.datasource.addItemChangeListener(securityWeakItemChangeListener);
 
             initBeanValidator();
-        }
-    }
-
-    // ???
-    protected Binder.Binding bind(Property itemProperty) {
-        return new Binder()
-                .forField(component)
-                .bind(o -> itemProperty.getValue(), (o, o2) -> itemProperty.setValue(o2));
-    }
-
-    protected void unbind() {
-        if (binding != null) {
-            binding.unbind();
-            binding = null;
         }
     }
 
