@@ -17,6 +17,7 @@
 
 package com.haulmont.cuba.web.gui.components;
 
+import com.haulmont.cuba.gui.components.CapsLockIndicator;
 import com.haulmont.cuba.gui.components.PasswordField;
 import com.haulmont.cuba.web.toolkit.ui.CubaPasswordField;
 
@@ -51,5 +52,15 @@ public class WebPasswordField extends WebAbstractTextField<CubaPasswordField> im
     @Override
     public String getValue() {
         return super.getValue();
+    }
+
+    @Override
+    public void setCapsLockIndicator(CapsLockIndicator capsLockIndicator) {
+        component.setCapsLockIndicator(capsLockIndicator);
+    }
+
+    @Override
+    public CapsLockIndicator getCapsLockIndicator() {
+        return component.getCapsLockIndicator();
     }
 }

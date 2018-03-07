@@ -18,12 +18,19 @@
 package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaPasswordField;
+import com.vaadin.client.communication.RpcProxy;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.passwordfield.PasswordFieldConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaPasswordField.class)
 public class CubaPasswordFieldConnector extends PasswordFieldConnector {
+
+    protected CubaPasswordFieldServerRpc rpc = RpcProxy.create(CubaPasswordFieldServerRpc.class, this);
+
+    public CubaPasswordFieldConnector() {
+        getWidget().capsLockStateChangeConsumer = changedState -> rpc.capsLockStateChanged(changedState);
+    }
 
     @Override
     public CubaPasswordFieldState getState() {

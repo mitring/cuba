@@ -32,6 +32,9 @@ public interface PasswordField extends TextInputField, TextInputField.MaxLengthL
      */
     void setAutocomplete(Boolean autocomplete);
 
+    void setCapsLockIndicator(CapsLockIndicator capsLockIndicator);
+    CapsLockIndicator getCapsLockIndicator();
+
     @SuppressWarnings("unchecked")
     @Override
     String getValue();

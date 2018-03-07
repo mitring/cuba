@@ -18,6 +18,7 @@
 package com.haulmont.cuba.desktop.gui.components;
 
 import com.haulmont.cuba.desktop.sys.vcl.Flushable;
+import com.haulmont.cuba.gui.components.CapsLockIndicator;
 import com.haulmont.cuba.gui.components.PasswordField;
 
 import javax.swing.*;
@@ -98,5 +99,16 @@ public class DesktopPasswordField extends DesktopAbstractTextField<JPasswordFiel
         public void flushValue() {
             flush();
         }
+    }
+
+    @Override
+    public void setCapsLockIndicator(CapsLockIndicator capsLockIndicator) {
+        // do nothing
+    }
+
+    @Override
+    public CapsLockIndicator getCapsLockIndicator() {
+        // do nothing
+        return null;
     }
 }
