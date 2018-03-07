@@ -118,7 +118,9 @@ public class CubaFileDownloader extends AbstractExtension {
             stream.setParameter(DownloadStream.CONTENT_DISPOSITION, contentDisposition);
 
             // Content-Type to block eager browser plug-ins from hijacking the file
-            if (!isViewDocumentRequest) {
+            if (isOverrideContentType() && !isViewDocumentRequest && !isSafariOrIOS()) {
+                stream.setContentType("application/octet-stream;charset=UTF-8");
+            } else {
                 if (StringUtils.isNotEmpty(stream.getContentType())) {
                     stream.setContentType(stream.getContentType() + ";charset=UTF-8\"");
                 } else {
@@ -131,5 +133,10 @@ public class CubaFileDownloader extends AbstractExtension {
 
         stream.writeResponse(request, response);
         return true;
+    }
+
+    protected boolean isSafariOrIOS() {
+        return Page.getCurrent().getWebBrowser().isSafari()
+                || Page.getCurrent().getWebBrowser().isIOS();
     }
 }
