@@ -180,11 +180,13 @@ public class CubaComboBoxWidget extends VFilterSelect implements ShortcutActionH
         }
     }
 
+    /*
+    todo vaadin8
     @Override
     protected boolean isDoSelectedItemActionOnBlur() {
         return super.isDoSelectedItemActionOnBlur()
                 // We need to create a new item if suggestionPopup is closed
                 // by clicking outside the component
                 && suggestionPopup.isJustClosed();
-    }
+    }*/
 }

@@ -17,8 +17,11 @@
 
 package com.haulmont.cuba.web.widgets.client.orderedactionslayout;
 
-import com.haulmont.cuba.web.toolkit.ui.CubaOrderedActionsLayout;
-import com.vaadin.client.*;
+import com.haulmont.cuba.web.widgets.CubaOrderedActionsLayout;
+import com.vaadin.client.ApplicationConnection;
+import com.vaadin.client.ComponentConnector;
+import com.vaadin.client.Paintable;
+import com.vaadin.client.UIDL;
 import com.vaadin.client.ui.AbstractFieldConnector;
 import com.vaadin.client.ui.Icon;
 import com.vaadin.client.ui.ShortcutActionHandler;

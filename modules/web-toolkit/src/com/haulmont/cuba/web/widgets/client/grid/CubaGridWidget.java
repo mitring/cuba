@@ -25,6 +25,7 @@ import com.haulmont.cuba.web.widgets.client.grid.events.CubaGridKeyDownEvent;
 import com.haulmont.cuba.web.widgets.client.grid.events.CubaGridKeyPressEvent;
 import com.haulmont.cuba.web.widgets.client.grid.events.CubaGridKeyUpEvent;
 import com.vaadin.client.WidgetUtil;
+import com.vaadin.v7.client.renderers.Renderer;
 import com.vaadin.v7.client.widget.escalator.EscalatorUpdater;
 import com.vaadin.v7.client.widget.escalator.FlyweightCell;
 import com.vaadin.v7.client.widget.escalator.RowContainer;
@@ -247,6 +248,7 @@ public class CubaGridWidget extends Grid<JsonObject> {
         }
     }
 
+    /* todo vaadin8
     @Override
     protected SelectionColumn createSelectionColumn(Renderer<Boolean> selectColumnRenderer) {
         return new CubaSelectionColumn(selectColumnRenderer);
@@ -264,5 +266,5 @@ public class CubaGridWidget extends Grid<JsonObject> {
                 // do nothing, as we want trigger select/deselect all only by clicking on the checkbox
             };
         }
-    }
+    }*/
 }

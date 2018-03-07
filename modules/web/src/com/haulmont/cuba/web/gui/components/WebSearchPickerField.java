@@ -33,6 +33,7 @@ import org.apache.commons.lang.ObjectUtils;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class WebSearchPickerField extends WebSearchField implements SearchPickerField {
 

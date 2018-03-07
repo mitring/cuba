@@ -31,6 +31,7 @@ import com.vaadin.v7.ui.ComboBox;
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 public class WebLookupPickerField extends WebLookupField implements LookupPickerField {
 

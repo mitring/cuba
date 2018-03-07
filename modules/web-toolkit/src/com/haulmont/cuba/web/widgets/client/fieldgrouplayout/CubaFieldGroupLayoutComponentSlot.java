@@ -20,6 +20,8 @@ package com.haulmont.cuba.web.widgets.client.fieldgrouplayout;
 import com.google.gwt.dom.client.Element;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.user.client.DOM;
+import com.google.gwt.user.client.Event;
+import com.google.gwt.user.client.EventListener;
 import com.haulmont.cuba.web.widgets.client.caption.CaptionHolder;
 import com.haulmont.cuba.web.widgets.client.caption.CubaCaptionWidget;
 import com.haulmont.cuba.web.widgets.client.gridlayout.CubaGridLayoutSlot;

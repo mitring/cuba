@@ -468,7 +468,8 @@ public abstract class WebAbstractField<T extends com.vaadin.v7.ui.AbstractField>
             this.contextHelpIconClickHandler = handler;
 
             if (handler == null) {
-                component.removeContextHelpIconClickListener(contextHelpIconClickListener);
+//                todo vaadin8
+//                component.removeContextHelpIconClickListener(contextHelpIconClickListener);
                 contextHelpIconClickListener = null;
             } else {
                 if (contextHelpIconClickListener == null) {

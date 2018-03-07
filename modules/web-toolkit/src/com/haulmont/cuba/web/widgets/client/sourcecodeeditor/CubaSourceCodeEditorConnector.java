@@ -23,6 +23,8 @@ import com.google.gwt.dom.client.NativeEvent;
 import com.google.gwt.event.dom.client.MouseEvent;
 import com.google.gwt.user.client.ui.Widget;
 import com.haulmont.cuba.web.widgets.CubaSourceCodeEditor;
+import com.vaadin.client.MouseEventDetailsBuilder;
+import com.vaadin.client.TooltipInfo;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.HasContextHelpConnector;
 import com.vaadin.shared.AbstractFieldState;

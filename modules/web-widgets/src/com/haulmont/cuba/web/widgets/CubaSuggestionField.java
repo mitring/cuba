@@ -16,6 +16,7 @@
 
 package com.haulmont.cuba.web.widgets;
 
+import com.google.common.base.Strings;
 import com.haulmont.cuba.web.widgets.client.suggestionfield.CubaSuggestionFieldClientRpc;
 import com.haulmont.cuba.web.widgets.client.suggestionfield.CubaSuggestionFieldServerRpc;
 import com.haulmont.cuba.web.widgets.client.suggestionfield.CubaSuggestionFieldState;

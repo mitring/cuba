@@ -26,6 +26,7 @@ import com.vaadin.server.PaintTarget;
 import com.vaadin.v7.data.Container;
 import com.vaadin.v7.data.Property;
 import com.vaadin.v7.data.util.IndexedContainer;
+import com.vaadin.v7.ui.Table;
 import org.apache.commons.collections4.CollectionUtils;
 
 import javax.annotation.Nullable;
@@ -50,19 +51,20 @@ public class CubaGroupTable extends CubaTable implements GroupTableContainer {
         if (columnOrder == null || !isColumnReorderingAllowed()) {
             return;
         }
-        final LinkedList<Object> newOrder = new LinkedList<>();
+        List<Object> newOrder = new ArrayList<>();
         for (Object aColumnOrder : columnOrder) {
-            if (aColumnOrder != null && visibleColumns.contains(aColumnOrder)) {
-                visibleColumns.remove(aColumnOrder);
+            if (aColumnOrder != null && _visibleColumns().contains(aColumnOrder)) {
+                _visibleColumns().remove(aColumnOrder);
                 newOrder.add(aColumnOrder);
             }
         }
-        for (final Object columnId : visibleColumns) {
+        for (final Object columnId : _visibleColumns()) {
             if (!newOrder.contains(columnId)) {
                 newOrder.add(columnId);
             }
         }
-        visibleColumns = newOrder;
+        _visibleColumns().clear();
+        _visibleColumns().addAll(newOrder);
 
         // Assure visual refresh
         refreshRowCache();

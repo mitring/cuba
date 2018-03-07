@@ -28,7 +28,6 @@ import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.StyleConstants;
 import com.vaadin.client.VCaption;
 import com.vaadin.client.WidgetUtil;
-import com.vaadin.client.ui.AbstractFieldConnector;
 import com.vaadin.client.ui.HasContextHelpConnector;
 import com.vaadin.client.ui.ImageIcon;
 import com.vaadin.client.ui.aria.AriaHelper;

@@ -24,10 +24,6 @@ buildscript {
     
     repositories {
         mavenLocal()
-        // vaadin8 only for Vaadin 8 beta
-        maven {
-            url 'https://maven.vaadin.com/vaadin-prereleases'
-        }
         maven {
             credentials {
                 username System.getenv('HAULMONT_REPOSITORY_USER') ?: 'cuba'
@@ -619,9 +615,10 @@ configure(webWidgetsModule) {
         compile(bom['com.vaadin:vaadin-context-menu'])
 
         /* WebJar dependencies */
+        compile(bom['org.webjars:webjars-locator'])
         compile(bom['org.webjars:jquery'])
         compile(bom['org.webjars:jquery-ui'])
-        compile(bom['org.webjars:jquery-fileupload'])
+        compile(bom['org.webjars.bower:jquery-file-upload'])
         compile(bom['org.webjars:swfobject'])
         compile(bom['org.webjars:swfupload'])
         compile(bom['org.webjars.npm:object-fit-images'])

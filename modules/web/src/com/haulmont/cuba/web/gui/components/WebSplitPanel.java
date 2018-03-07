@@ -22,6 +22,7 @@ import com.haulmont.cuba.gui.components.Component;
 import com.haulmont.cuba.gui.components.Frame;
 import com.haulmont.cuba.gui.components.SplitPanel;
 import com.haulmont.cuba.web.widgets.CubaHorizontalSplitPanel;
+import com.haulmont.cuba.web.widgets.client.split.SplitPanelDockMode;
 import com.vaadin.server.Sizeable.Unit;
 import com.vaadin.ui.AbstractSplitPanel;
 import com.vaadin.ui.VerticalSplitPanel;

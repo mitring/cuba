@@ -44,6 +44,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.haulmont.cuba.gui.ComponentsHelper.handleFilteredAttributes;
 
@@ -474,5 +475,15 @@ public abstract class WebV8AbstractField<T extends com.vaadin.ui.AbstractField>
     @Override
     public void setContextHelpTextHtmlEnabled(boolean enabled) {
         component.setContextHelpTextHtmlEnabled(enabled);
+    }
+
+    @Override
+    public Consumer<ContextHelpIconClickEvent> getContextHelpIconClickHandler() {
+        return null; // todo vaadin8
+    }
+
+    @Override
+    public void setContextHelpIconClickHandler(Consumer<ContextHelpIconClickEvent> handler) {
+        // todo vaadin8
     }
 }
