@@ -45,6 +45,7 @@ public interface Component {
         BOTTOM_CENTER
     }
 
+    // vaadin8 convert to enumeration
     int UNITS_PIXELS = 0;
     int UNITS_PERCENTAGE = 8;
 
@@ -586,23 +587,53 @@ public interface Component {
     }
 
     /**
+     * vaadin8
+     */
+    interface ValueChangeNotifier {
+        void addValueChangeListener(ValueChangeListener listener);
+        void removeValueChangeListener(ValueChangeListener listener);
+    }
+
+    /**
      * Object having a value.
      */
-    interface HasValue extends Editable, BelongToFrame {
-        <T> T getValue();
-
-        void setValue(Object value);
+    interface HasValue<T> extends ValueChangeNotifier {
+        T getValue();
+        void setValue(T value);
 
         /**
+         * vaadin8 for removal
+         *
          * @deprecated Use {@link #addValueChangeListener(ValueChangeListener)}
          */
         @Deprecated
         void addListener(ValueListener listener);
         @Deprecated
         void removeListener(ValueListener listener);
+    }
 
-        void addValueChangeListener(ValueChangeListener listener);
-        void removeValueChangeListener(ValueChangeListener listener);
+    /**
+     * vaadin8 document
+     *
+     * @param <T>
+     */
+    interface ValueSource<T> extends Component.ValueChangeNotifier {
+        T getValue();
+        void setValue(T value);
+
+        boolean isReadOnly();
+
+        Class<T> getType();
+    }
+
+    /**
+     * vaadin8 document
+     *
+     * @param <T>
+     */
+    interface HasValueBinding<T> {
+        void setValueSource(ValueSource<T> valueSource);
+        ValueSource<T> getValueSource();
     }
 
     /**
@@ -1049,6 +1080,9 @@ public interface Component {
         MarginInfo getOuterMargin();
     }
 
+    /**
+     * todo JavaDoc
+     */
     interface HasInputPrompt {
         /**
          * @return current input prompt.
