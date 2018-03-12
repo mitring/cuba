@@ -84,5 +84,7 @@ public class CubaPasswordField extends PasswordField {
 
     public void setCapsLockIndicator(CapsLockIndicator capsLockIndicator) {
         this.capsLockIndicator = capsLockIndicator;
+
+        getState().indicateCapsLock = capsLockIndicator != null;
     }
 }

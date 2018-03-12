@@ -47,5 +47,7 @@ public class CubaPasswordFieldConnector extends PasswordFieldConnector {
         super.onStateChanged(stateChangeEvent);
 
         getWidget().setAutocomplete(getState().autocomplete);
+
+        getWidget().setIndicateCapsLock(getState().indicateCapsLock);
     }
 }

@@ -20,18 +20,18 @@ package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
 import com.google.gwt.event.dom.client.KeyPressEvent;
 import com.google.gwt.event.dom.client.KeyPressHandler;
 import com.google.gwt.user.client.Window;
+import com.google.gwt.event.shared.HandlerRegistration;
 import com.vaadin.client.BrowserInfo;
 import com.vaadin.client.ui.VPasswordField;
 
 import java.util.function.Consumer;
 
-public class CubaPasswordFieldWidget extends VPasswordField {
+public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressHandler {
 
     protected boolean capsLock = false;
 
     public Consumer<Boolean> capsLockStateChangeConsumer;
-
-    protected KeyHandler keyHandler;
+    protected HandlerRegistration clickHandlerRegistration = null;
 
     public void setAutocomplete(boolean autocomplete) {
         if (autocomplete) {
@@ -47,36 +47,39 @@ public class CubaPasswordFieldWidget extends VPasswordField {
                 getElement().setAttribute("autocomplete", "new-password");
             }
         }
-
-        keyHandler = new KeyHandler();
-
-        addKeyPressHandler(keyHandler);
     }
 
+    public void setIndicateCapsLock(boolean indicateCapsLock) {
+        if (indicateCapsLock) {
+            if (clickHandlerRegistration == null) {
+                clickHandlerRegistration = addKeyPressHandler(this);
+            }
+        } else if (clickHandlerRegistration != null) {
+            clickHandlerRegistration.removeHandler();
+            clickHandlerRegistration = null;
+        }
+    }
 
     protected boolean isMacOS() {
         String userAgent = Window.Navigator.getUserAgent();
         return userAgent.contains("Mac");
     }
 
-    class KeyHandler implements KeyPressHandler {
+    @Override
+    public void onKeyPress(KeyPressEvent event) {
+        int charCode = event.getCharCode();
+        boolean shiftKey = event.isShiftKeyDown();
+        boolean prevCapsLock = capsLock;
 
-        @Override
-        public void onKeyPress(KeyPressEvent event) {
-            int charCode = event.getCharCode();
-            boolean shiftKey = event.isShiftKeyDown();
-            boolean prevCapsLock = capsLock;
+        if (charCode >= 97 && charCode <= 122) {
+            capsLock = shiftKey;
+        } else if (charCode >= 65 && charCode <= 90 && !(shiftKey && isMacOS())) {
+            capsLock = !shiftKey;
+        }
 
-            if (charCode >= 97 && charCode <= 122) {
-                capsLock = shiftKey;
-            } else if (charCode >= 65 && charCode <= 90 && !(shiftKey && isMacOS())) {
-                capsLock = !shiftKey;
-            }
-
-            if (capsLock != prevCapsLock) {
-                if (capsLockStateChangeConsumer != null) {
-                    capsLockStateChangeConsumer.accept(capsLock);
-                }
+        if (capsLock != prevCapsLock) {
+            if (capsLockStateChangeConsumer != null) {
+                capsLockStateChangeConsumer.accept(capsLock);
             }
         }
     }

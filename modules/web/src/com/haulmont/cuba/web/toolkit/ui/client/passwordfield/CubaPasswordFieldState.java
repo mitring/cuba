@@ -22,4 +22,6 @@ import com.vaadin.shared.ui.textfield.AbstractTextFieldState;
 public class CubaPasswordFieldState extends AbstractTextFieldState {
 
     public boolean autocomplete = false;
+
+    public boolean indicateCapsLock = false;
 }
