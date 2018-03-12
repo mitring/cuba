@@ -167,19 +167,16 @@ public class RestDocsController {
     protected Pair<List<Tag>, Map<String, Path>> generatePaths() {
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        Pair<List<String>, Map<String, Path>> entities =
-                generatePathsFromConfig(PERSISTENCE_CONFIG, this::loadPathsFromPersistenceConfig);
-        paths.putAll(entities.getSecond());
+        PathsContainer entities = generatePathsFromConfig(PERSISTENCE_CONFIG, this::loadPathsFromPersistenceConfig);
+        paths.putAll(entities.getPaths());
 
-        Pair<List<String>, Map<String, Path>> queries =
-                generatePathsFromConfig(QUERIES_CONFIG, this::loadPathsFromQueriesConfig);
-        paths.putAll(queries.getSecond());
+        PathsContainer queries = generatePathsFromConfig(QUERIES_CONFIG, this::loadPathsFromQueriesConfig);
+        paths.putAll(queries.getPaths());
 
-        Pair<List<String>, Map<String, Path>> services =
-                generatePathsFromConfig(SERVICES_CONFIG, this::loadPathsFromServicesConfig);
-        paths.putAll(services.getSecond());
+        PathsContainer services = generatePathsFromConfig(SERVICES_CONFIG, this::loadPathsFromServicesConfig);
+        paths.putAll(services.getPaths());
 
-        return new Pair<>(generateTags(entities.getFirst(), queries.getFirst(), services.getFirst()), paths);
+        return new Pair<>(generateTags(entities.getTags(), queries.getTags(), services.getTags()), paths);
     }
 
     protected List<Tag> generateTags(List<String> entities, List<String> queryEntities, List<String> services) {
@@ -210,10 +207,10 @@ public class RestDocsController {
      * Entities
      */
 
-    protected Pair<List<String>, Map<String, Path>> loadPathsFromPersistenceConfig(Element rootElement) {
-        Element persistenceUnitEl = rootElement.element("persistence-unit");
+    protected PathsContainer loadPathsFromPersistenceConfig(Element root) {
+        Element persistenceUnitEl = root.element("persistence-unit");
         if (persistenceUnitEl == null) {
-            return new Pair<>(Collections.emptyList(), Collections.emptyMap());
+            return new PathsContainer(Collections.emptyList(), Collections.emptyMap());
         }
 
         List<String> entities = new ArrayList<>();
@@ -231,23 +228,21 @@ public class RestDocsController {
             paths.putAll(pair.getSecond());
         }
 
-        return new Pair<>(entities, paths);
+        return new PathsContainer(entities, paths);
     }
 
-    protected Pair<String, Map<String, Path>> generateEntityPaths(String classFqn) {
-        Pair<String, ModelImpl> entityModel = createEntityModel(ReflectionHelper.getClass(classFqn));
+    protected Pair<String, Map<String, Path>> generateEntityPaths(String entityFqn) {
+        ModelImpl entityModel = createEntityModel(ReflectionHelper.getClass(entityFqn));
 
         Map<String, Path> entityPaths = new LinkedHashMap<>();
 
         entityPaths.putAll(generateEntityCRUDPaths(entityModel));
+        entityPaths.putAll(generateEntityFilterPaths(entityModel));
 
-        Pair<String, Path> searchPath = generateEntityFilterPaths(entityModel);
-        entityPaths.put(searchPath.getFirst(), searchPath.getSecond());
-
-        return new Pair<>(entityModel.getFirst(), entityPaths);
+        return new Pair<>(entityModel.getName(), entityPaths);
     }
 
-    protected Map<String, Path> generateEntityCRUDPaths(Pair<String, ModelImpl> entityModel) {
+    protected Map<String, Path> generateEntityCRUDPaths(ModelImpl entityModel) {
         Map<String, Path> crudPaths = new LinkedHashMap<>();
 
         Pair<String, Path> createPath = generateEntityCreatePath(entityModel);
@@ -256,31 +251,38 @@ public class RestDocsController {
 
         crudPaths.put(createPath.getFirst(), createPath.getSecond());
 
-        Pair<String, Path> rudPath = generateEntityRUDPaths(entityModel);
-        crudPaths.put(rudPath.getFirst(), rudPath.getSecond());
+        crudPaths.putAll(generateEntityRUDPaths(entityModel));
 
         return crudPaths;
     }
 
-    protected Pair<String, Path> generateEntityRUDPaths(Pair<String, ModelImpl> entityModel) {
-        return new Pair<>(
-                String.format(ENTITY_RUD_OPS, entityModel.getFirst()),
+    protected Map<String, Path> generateEntityRUDPaths(ModelImpl entityModel) {
+        return Collections.singletonMap(
+                String.format(ENTITY_RUD_OPS, entityModel.getName()),
                 new Path()
-                        .delete(generateEntityDeleteOperation(entityModel))
                         .get(generateEntityReadOperation(entityModel))
-                        .put(generateEntityUpdateOperation(entityModel)));
+                        .put(generateEntityUpdateOperation(entityModel))
+                        .delete(generateEntityDeleteOperation(entityModel)));
     }
 
-    protected Pair<String, Path> generateEntityCreatePath(Pair<String, ModelImpl> entityModel) {
+    protected Map<String, Path> generateEntityFilterPaths(ModelImpl entityModel) {
+        return Collections.singletonMap(
+                String.format(ENTITY_SEARCH, entityModel.getName()),
+                new Path()
+                        .get(generateEntitySearchOperation(entityModel, RequestMethod.GET))
+                        .post(generateEntitySearchOperation(entityModel, RequestMethod.POST)));
+    }
+
+    protected Pair<String, Path> generateEntityCreatePath(ModelImpl entityModel) {
         Operation operation = new Operation()
-                .tag(entityModel.getFirst())
+                .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Creates new entity.")
+                .summary("Creates new entity")
                 .description("The method expects a JSON with entity object in the request body. " +
                         "The entity object may contain references to other entities.")
                 .response(201, new Response()
                         .description("Entity created. The created entity is returned in the response body.")
-                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName())))
                 .response(400, getErrorResponse("Bad request. For example, the entity may have a reference to the non-existing entity."))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to create the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
@@ -288,34 +290,25 @@ public class RestDocsController {
         BodyParameter entityParam = new BodyParameter()
                 .name("entityJson")
                 .description("JSON object with the entity")
-                .schema(new RefModel(ENTITY_DEFINITION_PREFIX + entityModel.getFirst()));
+                .schema(new RefModel(ENTITY_DEFINITION_PREFIX + entityModel.getName()));
         entityParam.setRequired(true);
 
         operation.parameter(entityParam);
 
         return new Pair<>(
-                String.format(ENTITY_PATH, entityModel.getFirst()),
+                String.format(ENTITY_PATH, entityModel.getName()),
                 new Path().post(operation));
     }
 
-    protected Pair<String, Path> generateEntityFilterPaths(Pair<String, ModelImpl> entityModel) {
-        return new Pair<>(
-                String.format(ENTITY_SEARCH, entityModel.getFirst()),
-                new Path()
-                        .get(generateEntitySearchOperation(entityModel, RequestMethod.GET))
-                        .post(generateEntitySearchOperation(entityModel, RequestMethod.POST)));
-    }
-
-    protected Operation generateEntityBrowseOperation(Pair<String, ModelImpl> entityModel) {
+    protected Operation generateEntityBrowseOperation(ModelImpl entityModel) {
         Operation operation = new Operation()
-                .tag(entityModel.getFirst())
+                .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Gets a list of entities.")
-                .description("Gets a list of entities.")
+                .summary("Gets a list of entities")
+                .description("Gets a list of entities")
                 .response(200, new Response()
                         .description("Success. The list of entities is returned in the response body.")
-                        .schema(new ArrayProperty(
-                                new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst()))))
+                        .schema(new ArrayProperty(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName()))))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
 
@@ -324,9 +317,9 @@ public class RestDocsController {
         return operation;
     }
 
-    protected Operation generateEntityReadOperation(Pair<String, ModelImpl> entityModel) {
+    protected Operation generateEntityReadOperation(ModelImpl entityModel) {
         Operation operation = new Operation()
-                .tag(entityModel.getFirst())
+                .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
                 .summary("Gets a single entity by identifier")
                 .description("Gets a single entity by identifier")
@@ -337,7 +330,7 @@ public class RestDocsController {
                         .property(new StringProperty()))
                 .response(200, new Response()
                         .description("Success. The entity is returned in the response body.")
-                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName())))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
 
@@ -346,38 +339,36 @@ public class RestDocsController {
         return operation;
     }
 
-    protected Operation generateEntityUpdateOperation(Pair<String, ModelImpl> entityModel) {
-        String entityRef = ENTITY_DEFINITION_PREFIX + entityModel.getFirst();
-
+    protected Operation generateEntityUpdateOperation(ModelImpl entityModel) {
         BodyParameter entityParam = new BodyParameter()
                 .name("entityJson")
                 .description("JSON object with the entity")
-                .schema(new RefModel(entityRef));
+                .schema(new RefModel(ENTITY_DEFINITION_PREFIX + entityModel.getName()));
         entityParam.setRequired(true);
 
         PathParameter entityIdParam = new PathParameter()
                 .name("entityId")
                 .description("Entity identifier")
                 .required(true)
-                .property(new StringProperty());
+                .property(new StringProperty().description("Entity identifier"));
 
         return new Operation()
-                .tag(entityModel.getFirst())
+                .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Updates the entity.")
+                .summary("Updates the entity")
                 .description("Updates the entity. Only fields that are passed in the JSON object (the request body) are updated.")
                 .parameter(entityIdParam)
                 .parameter(entityParam)
                 .response(200, new Response()
                         .description("Success. The updated entity is returned in the response body.")
-                        .schema(new RefProperty(entityRef)))
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName())))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to update the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
     }
 
-    protected Operation generateEntityDeleteOperation(Pair<String, ModelImpl> entityModel) {
+    protected Operation generateEntityDeleteOperation(ModelImpl entityModel) {
         return new Operation()
-                .tag(entityModel.getFirst())
+                .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
                 .summary("Deletes the entity.")
                 .parameter(new PathParameter()
@@ -390,22 +381,22 @@ public class RestDocsController {
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
     }
 
-    protected Operation generateEntitySearchOperation(Pair<String, ModelImpl> entityModel, RequestMethod method) {
+    protected Operation generateEntitySearchOperation(ModelImpl entityModel, RequestMethod requestMethod) {
         Operation operation = new Operation()
-                .tag(entityModel.getFirst())
+                .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
                 .summary("Find entities by filter conditions")
                 .description("Finds entities by filter conditions. The filter is defined by JSON object that is passed as in URL parameter.")
                 .response(200, new Response()
                         .description("Success. Entities that conforms filter conditions are returned in the response body.")
-                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getFirst())))
+                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName())))
                 .response(400, getErrorResponse("Bad request. For example, the condition value cannot be parsed."))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
 
         operation.setParameters(generateEntityOptionalParams(false));
 
-        if (RequestMethod.GET == method) {
+        if (RequestMethod.GET == requestMethod) {
             QueryParameter parameter = new QueryParameter()
                     .name("filter")
                     .required(true)
@@ -472,7 +463,7 @@ public class RestDocsController {
         return multipleEntityParams;
     }
 
-    protected Pair<String, ModelImpl> createEntityModel(Class<Object> entityClass) {
+    protected ModelImpl createEntityModel(Class<Object> entityClass) {
         Map<String, Property> properties = new LinkedHashMap<>();
 
         Map<String, MetaProperty> entityProperties = metadata.getClassNN(entityClass).getProperties()
@@ -499,14 +490,13 @@ public class RestDocsController {
             properties.put(fieldName, fieldProperty);
         }
 
-        ModelImpl entityModel = new ModelImpl();
-        entityModel.setProperties(properties);
+        ModelImpl model = new ModelImpl()
+                .name(entityNameProperty.getDefault());
+        model.setProperties(properties);
 
-        String entityName = entityNameProperty.getDefault();
-        String entityDefinitionRef = "entities_" + entityName;
-        definitions.put(entityDefinitionRef, entityModel);
+        definitions.put("entities_" + model.getName(), model);
 
-        return new Pair<>(entityName, entityModel);
+        return model;
     }
 
     protected Property getIdProperty(MetaProperty idProperty) {
@@ -537,11 +527,11 @@ public class RestDocsController {
      * Services
      */
 
-    protected Pair<List<String>, Map<String, Path>> loadPathsFromServicesConfig(Element rootElement) {
+    protected PathsContainer loadPathsFromServicesConfig(Element root) {
         Set<String> services = new LinkedHashSet<>();
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        for (Element serviceEl : ((List<Element>) rootElement.elements("service"))) {
+        for (Element serviceEl : ((List<Element>) root.elements("service"))) {
             String serviceName = serviceEl.attributeValue("name");
             services.add(serviceName);
 
@@ -554,13 +544,13 @@ public class RestDocsController {
             }
         }
 
-        return new Pair<>(new ArrayList<>(services), paths);
+        return new PathsContainer(new ArrayList<>(services), paths);
     }
 
-    protected Path generateServiceMethodPath(String serviceName, String methodName, List<Pair<String, String>> params) {
+    protected Path generateServiceMethodPath(String service, String method, List<Pair<String, String>> params) {
         return new Path()
-                .get(generateServiceMethodOp(serviceName, methodName, params, RequestMethod.GET))
-                .post(generateServiceMethodOp(serviceName, methodName, params, RequestMethod.POST));
+                .get(generateServiceMethodOp(service, method, params, RequestMethod.GET))
+                .post(generateServiceMethodOp(service, method, params, RequestMethod.POST));
     }
 
     protected Operation generateServiceMethodOp(String service, String method, List<Pair<String, String>> params,
@@ -612,11 +602,11 @@ public class RestDocsController {
      * Queries
      */
 
-    protected Pair<List<String>, Map<String, Path>> loadPathsFromQueriesConfig(Element rootElement) {
+    protected PathsContainer loadPathsFromQueriesConfig(Element root) {
         Set<String> queryEntities = new LinkedHashSet<>();
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        for (Element query : ((List<Element>) rootElement.elements("query"))) {
+        for (Element query : ((List<Element>) root.elements("query"))) {
             String entity = query.attributeValue("entity");
             queryEntities.add(entity);
 
@@ -627,15 +617,25 @@ public class RestDocsController {
             paths.put(
                     String.format(QUERY_PATH, entity, queryName),
                     generateQueryPath(entity, queryName, params));
+
+            paths.put(
+                    String.format(QUERY_COUNT_PATH, entity, queryName),
+                    generateQueryCountPath(entity, queryName, params));
         }
 
-        return new Pair<>(new ArrayList<>(queryEntities), paths);
+        return new PathsContainer(new ArrayList<>(queryEntities), paths);
     }
 
     protected Path generateQueryPath(String entity, String queryName, List<Pair<String, String>> params) {
         return new Path()
                 .get(generateQueryOperation(entity, queryName, params, RequestMethod.GET))
                 .post(generateQueryOperation(entity, queryName, params, RequestMethod.POST));
+    }
+
+    protected Path generateQueryCountPath(String entity, String query, List<Pair<String, String>> params) {
+        return new Path()
+                .get(generateQueryCountOperation(entity, query, params, RequestMethod.GET))
+                .post(generateQueryCountOperation(entity, query, params, RequestMethod.POST));
     }
 
     protected Operation generateQueryOperation(String entityName, String queryName, List<Pair<String, String>> params,
@@ -654,12 +654,28 @@ public class RestDocsController {
         return operation;
     }
 
+    protected Operation generateQueryCountOperation(String entity, String query, List<Pair<String, String>> queryParams,
+                                                    RequestMethod requestMethod) {
+        Operation operation = new Operation()
+                .tag(entity + " Queries")
+                .produces(APPLICATION_JSON_VALUE)
+                .summary("Return a number of entities in query result")
+                .description("Returns a number of entities that matches the query. You can use the all keyword for " +
+                        "the queryNameParam to get the number of all available entities.")
+                .response(200, new Response()
+                        .description("Success. Entities count is returned")
+                        .schema(new IntegerProperty().description("Entities count")))
+                .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
+                .response(404, getErrorResponse("MetaClass not found or query with the given name not found"));
+
+        operation.setParameters(generateQueryOperationParams(entity, query, queryParams, requestMethod, false));
+
+        return operation;
+    }
+
     protected List<Parameter> generateQueryOperationParams(String entity, String query, List<Pair<String, String>> params,
                                                            RequestMethod requestMethod, boolean generateOptionalParams) {
-        List<Parameter> optionalParams = new ArrayList<>();
-        if (generateOptionalParams) {
-            optionalParams.addAll(generateOptionalQueryParams());
-        }
+        List<Parameter> optionalParams = generateOptionalQueryParams(generateOptionalParams);
 
         if (RequestMethod.GET == requestMethod) {
             List<Parameter> queryParams = params.stream()
@@ -682,7 +698,11 @@ public class RestDocsController {
         }
     }
 
-    protected List<Parameter> generateOptionalQueryParams() {
+    protected List<Parameter> generateOptionalQueryParams(boolean generateParams) {
+        if (!generateParams) {
+            return Collections.emptyList();
+        }
+
         return Arrays.asList(
                 new QueryParameter()
                         .name("dynamicAttributes")
@@ -735,11 +755,10 @@ public class RestDocsController {
      * Common
      */
 
-    protected Pair<List<String>, Map<String, Path>> generatePathsFromConfig(final String config,
-                                        Function<Element, Pair<List<String>, Map<String, Path>>> pathsGenerator) {
+    protected PathsContainer generatePathsFromConfig(final String config, Function<Element, PathsContainer> generator) {
         String configFiles = AppContext.getProperty(config);
         if (configFiles == null || configFiles.isEmpty()) {
-            return new Pair<>(Collections.emptyList(), Collections.emptyMap());
+            return new PathsContainer(Collections.emptyList(), Collections.emptyMap());
         }
 
         List<String> tagSources = new ArrayList<>();
@@ -751,20 +770,18 @@ public class RestDocsController {
                 .split(configFiles);
 
         for (String configFile : configs) {
-            Pair<List<String>, Map<String, Path>> pair =
-                    generatePathsFromConfigResource(resources.getResource(configFile), pathsGenerator);
+            PathsContainer pair = generatePathsFromConfigResource(resources.getResource(configFile), generator);
 
-            tagSources.addAll(pair.getFirst());
-            paths.putAll(pair.getSecond());
+            tagSources.addAll(pair.getTags());
+            paths.putAll(pair.getPaths());
         }
 
-        return new Pair<>(tagSources, paths);
+        return new PathsContainer(tagSources, paths);
     }
 
-    protected Pair<List<String>, Map<String, Path>> generatePathsFromConfigResource(Resource resource,
-                                        Function<Element, Pair<List<String>, Map<String, Path>>> pathsGenerator) {
+    protected PathsContainer generatePathsFromConfigResource(Resource resource, Function<Element, PathsContainer> generator) {
         if (!resource.exists()) {
-            return new Pair<>(Collections.emptyList(), Collections.emptyMap());
+            return new PathsContainer(Collections.emptyList(), Collections.emptyMap());
         }
 
         InputStream stream = null;
@@ -772,7 +789,7 @@ public class RestDocsController {
             stream = resource.getInputStream();
             Element rootElement = Dom4j.readDocument(stream).getRootElement();
 
-            return pathsGenerator.apply(rootElement);
+            return generator.apply(rootElement);
         } catch (IOException e) {
             throw new RuntimeException("Unable to generate paths from " + resource.getFilename(), e);
         } finally {
@@ -790,51 +807,47 @@ public class RestDocsController {
     protected Pair<String, String> parseParam(Element paramEl) {
         String name = paramEl.attributeValue("name");
 
-        String type = paramEl.attributeValue("type");
-        if (type == null || type.isEmpty()) {
-            type = "string";
-        } else {
-            type = type.substring(type.lastIndexOf(".") + 1)
-                    .toLowerCase();
-        }
+        String type = Optional.of(paramEl.attributeValue("type"))
+                .orElse("string");
+        type = type.substring(type.lastIndexOf(".") + 1)
+                .toLowerCase();
 
         return new Pair<>(name, type);
     }
 
     protected Parameter generatePostOperationParam(List<Pair<String, String>> params) {
+        Map<String, Property> modelProps = params.stream()
+                .collect(Collectors.toMap(
+                        Pair::getFirst, p -> getPropertyFromJavaType(p.getSecond())));
+
+        ModelImpl parameterModel = new ModelImpl();
+        parameterModel.setProperties(modelProps);
+
         BodyParameter parameter = new BodyParameter()
                 .name("paramsObject");
         parameter.setRequired(true);
 
-        ModelImpl parameterModel = new ModelImpl();
-        for (Pair<String, String> param : params) {
-            if (!param.getSecond().contains(ARRAY_SIGNATURE)) {
-                parameterModel.addProperty(param.getFirst(), getPropertyFromJavaType(param.getSecond()));
-            } else {
-                String javaType = param.getSecond().replace(ARRAY_SIGNATURE, "");
-                parameterModel.addProperty(param.getFirst(), new ArrayProperty(getPropertyFromJavaType(javaType)));
-            }
-        }
-        parameter.schema(parameterModel);
-
-        return parameter;
+        return parameter.schema(parameterModel);
     }
 
     protected Parameter generateGetOperationParam(Pair<String, String> param) {
-        QueryParameter parameter = new QueryParameter()
+        return new QueryParameter()
                 .name(param.getFirst())
-                .required(true);
-
-        if (!param.getSecond().contains(ARRAY_SIGNATURE)) {
-            parameter.type("string");
-        } else {
-            parameter.type("array")
-                    .items(new StringProperty());
-        }
-        return parameter;
+                .required(true)
+                .type(param.getSecond().contains(ARRAY_SIGNATURE)
+                        ? "array"
+                        : "string")
+                .items(param.getSecond().contains(ARRAY_SIGNATURE)
+                        ? new StringProperty()
+                        : null);
     }
 
     protected Property getPropertyFromJavaType(String javaType) {
+        if (javaType.contains(ARRAY_SIGNATURE)) {
+            Property itemProperty = getPropertyFromJavaType(javaType.replace(ARRAY_SIGNATURE, ""));
+            return new ArrayProperty(itemProperty);
+        }
+
         switch (javaType) {
             case "boolean":
                 return new BooleanProperty().example(true);
@@ -870,5 +883,24 @@ public class RestDocsController {
         return new Response()
                 .description(msg)
                 .schema(getErrorSchema());
+    }
+
+    protected class PathsContainer {
+
+        protected final List<String> tags;
+        protected final Map<String, Path> paths;
+
+        protected PathsContainer(List<String> tags, Map<String, Path> paths) {
+            this.tags = tags;
+            this.paths = paths;
+        }
+
+        protected List<String> getTags() {
+            return tags;
+        }
+
+        protected Map<String, Path> getPaths() {
+            return paths;
+        }
     }
 }
