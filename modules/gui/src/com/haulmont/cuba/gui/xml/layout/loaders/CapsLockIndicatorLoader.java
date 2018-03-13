@@ -14,28 +14,28 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.web.gui.components;
+package com.haulmont.cuba.gui.xml.layout.loaders;
 
 import com.haulmont.cuba.gui.components.CapsLockIndicator;
-import com.haulmont.cuba.web.toolkit.ui.CubaCapsLockIndicator;
+import com.haulmont.cuba.gui.components.Component;
 
-public class WebCapsLockIndicator extends WebAbstractComponent<CubaCapsLockIndicator> implements CapsLockIndicator {
+public class CapsLockIndicatorLoader extends AbstractComponentLoader<CapsLockIndicator> {
 
-    protected String DEFAULT_ICON = "font-icon:CIRCLE";
+    @Override
+    public void createComponent() {
+        resultComponent = factory.createComponent(CapsLockIndicator.class);
 
-    public WebCapsLockIndicator() {
-        component = new CubaCapsLockIndicator();
-
-        setIcon(DEFAULT_ICON);
+        loadId(resultComponent, element);
     }
 
     @Override
-    public boolean isCapsLock() {
-        return component.isCapsLock();
-    }
+    public void loadComponent() {
+        loadAlign(resultComponent, element);
+        loadStyleName(resultComponent, element);
+        loadIcon(resultComponent, element);
+        loadVisible(resultComponent, element);
 
-    @Override
-    public void setCapsLock(boolean capsLock) {
-        component.setCapsLock(capsLock);
+        loadWidth(resultComponent, element, Component.AUTO_SIZE);
+        loadHeight(resultComponent, element, Component.AUTO_SIZE);
     }
 }

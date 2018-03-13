@@ -20,6 +20,9 @@ import com.vaadin.client.ui.VButton;
 
 public class CubaCapsLockIndicatorWidget extends VButton {
 
+    protected String STYLE_NAME = "c-caps-lock-indicator";
+
     public CubaCapsLockIndicatorWidget() {
+        addStyleName(STYLE_NAME);
     }
 }

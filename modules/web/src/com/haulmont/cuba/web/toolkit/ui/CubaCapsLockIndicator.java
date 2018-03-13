@@ -21,16 +21,9 @@ import com.vaadin.ui.Button;
 
 public class CubaCapsLockIndicator extends Button {
 
-    protected String STYLE_NAME = "c-caps-lock-indicator";
-
-    public CubaCapsLockIndicator() {
-        setStyleName(STYLE_NAME);
-    }
-
     public void setCapsLock(boolean capsLock) {
         getState().isCapsLock = capsLock;
     }
-
 
     public boolean isCapsLock() {
         return getState(false).isCapsLock;
