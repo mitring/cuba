@@ -43,12 +43,20 @@ import com.haulmont.cuba.gui.xml.layout.ComponentsFactory;
 import com.haulmont.cuba.security.entity.*;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.time.DateUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.ParsePosition;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class EntityLogBrowser extends AbstractWindow {
+
+    private static final Logger log = LoggerFactory.getLogger(EntityLogBrowser.class);
 
     public interface Companion {
         void enableTextSelection(Table table);
@@ -160,6 +168,9 @@ public class EntityLogBrowser extends AbstractWindow {
             companion.enableTextSelection(entityLogTable);
             companion.enableTextSelection(entityLogAttrTable);
         }
+
+        entityLogAttrTable.getColumn("value").setFormatter(this::getFormattedValue);
+        entityLogAttrTable.getColumn("oldValue").setFormatter(this::getFormattedValue);
 
         systemAttrsList = Arrays.asList("createTs", "createdBy", "updateTs", "updatedBy", "deleteTs", "deletedBy", "version", "id");
         Map<String, Object> changeTypeMap = new LinkedHashMap<>();
@@ -558,5 +569,26 @@ public class EntityLogBrowser extends AbstractWindow {
             loggedEntityTable.setEnabled(true);
             loggedEntityTable.requestFocus();
         }
+    }
+
+    protected String getFormattedValue(Object value) {
+        String stringValue = String.valueOf(value);
+
+        try {
+            DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
+            Date dateFormat = formatter.parse(stringValue);
+            String date = formatter.format(dateFormat);
+
+            formatter = new SimpleDateFormat("HH:mm:ss.SSS");
+            Date time = formatter.parse(stringValue, new ParsePosition(11));
+
+            return time != null ? date + " " + formatter.format(time) : date + " 00:00:00.000";
+
+        } catch (ParseException e) {
+            log.debug("Can't parse string to date or time pattern and comparative value will be returned as is. "
+                    + "Returned value: {}", stringValue);
+        }
+
+        return stringValue;
     }
 }
