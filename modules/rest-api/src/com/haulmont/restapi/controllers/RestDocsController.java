@@ -807,7 +807,7 @@ public class RestDocsController {
     protected Pair<String, String> parseParam(Element paramEl) {
         String name = paramEl.attributeValue("name");
 
-        String type = Optional.of(paramEl.attributeValue("type"))
+        String type = Optional.ofNullable(paramEl.attributeValue("type"))
                 .orElse("string");
         type = type.substring(type.lastIndexOf(".") + 1)
                 .toLowerCase();
