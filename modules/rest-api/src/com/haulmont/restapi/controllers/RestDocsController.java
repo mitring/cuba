@@ -26,6 +26,7 @@ import com.haulmont.bali.datastruct.Pair;
 import com.haulmont.bali.util.Dom4j;
 import com.haulmont.bali.util.ReflectionHelper;
 import com.haulmont.chile.core.annotations.NamePattern;
+import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.chile.core.model.MetaProperty;
 import com.haulmont.chile.core.model.MetadataObject;
 import com.haulmont.cuba.core.global.Metadata;
@@ -43,6 +44,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
 import javax.persistence.Entity;
+import javax.persistence.MappedSuperclass;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.*;
@@ -69,7 +71,6 @@ public class RestDocsController {
     protected static final String ENTITY_RUD_OPS = "/entities/%s/{entityId}";
     protected static final String ENTITY_SEARCH = "/entities/%s/search";
 
-    protected static final String QUERIES_PER_ENTITY_PATH = "/queries/%s";
     protected static final String QUERY_PATH = "/queries/%s/%s";
     protected static final String QUERY_COUNT_PATH = "/queries/%s/%s/count";
 
@@ -217,13 +218,15 @@ public class RestDocsController {
         Map<String, Path> paths = new LinkedHashMap<>();
 
         for (Element eClass : ((List<Element>) persistenceUnitEl.elements("class"))) {
-            String classFqn = (String) eClass.getData();
-            // todo: temporary. Remove later
-            if (!"com.haulmont.cuba.security.entity.User".equals(classFqn)) {
+            String entityFqn = (String) eClass.getData();
+
+            Class<?> entityClass = ReflectionHelper.getClass(entityFqn);
+            if (entityClass.getAnnotation(MappedSuperclass.class) != null
+                    || metadata.getTools().isSystemLevel(metadata.getClass(entityClass))) {
                 continue;
             }
 
-            Pair<String, Map<String, Path>> pair = generateEntityPaths(classFqn);
+            Pair<String, Map<String, Path>> pair = generateEntityPaths(entityClass);
             entities.add(pair.getFirst());
             paths.putAll(pair.getSecond());
         }
@@ -231,8 +234,8 @@ public class RestDocsController {
         return new PathsContainer(entities, paths);
     }
 
-    protected Pair<String, Map<String, Path>> generateEntityPaths(String entityFqn) {
-        ModelImpl entityModel = createEntityModel(ReflectionHelper.getClass(entityFqn));
+    protected Pair<String, Map<String, Path>> generateEntityPaths(Class entityClass) {
+        ModelImpl entityModel = createEntityModel(entityClass);
 
         Map<String, Path> entityPaths = new LinkedHashMap<>();
 
@@ -277,7 +280,7 @@ public class RestDocsController {
         Operation operation = new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Creates new entity")
+                .summary("Creates new entity: " + entityModel.getName())
                 .description("The method expects a JSON with entity object in the request body. " +
                         "The entity object may contain references to other entities.")
                 .response(201, new Response()
@@ -304,7 +307,7 @@ public class RestDocsController {
         Operation operation = new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Gets a list of entities")
+                .summary("Gets a list of entities: " + entityModel.getName())
                 .description("Gets a list of entities")
                 .response(200, new Response()
                         .description("Success. The list of entities is returned in the response body.")
@@ -321,7 +324,7 @@ public class RestDocsController {
         Operation operation = new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Gets a single entity by identifier")
+                .summary("Gets a single entity by identifier: " + entityModel.getName())
                 .description("Gets a single entity by identifier")
                 .parameter(new PathParameter()
                         .name("entityId")
@@ -355,8 +358,9 @@ public class RestDocsController {
         return new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Updates the entity")
-                .description("Updates the entity. Only fields that are passed in the JSON object (the request body) are updated.")
+                .summary("Updates the entity: " + entityModel.getName())
+                .description("Updates the entity. Only fields that are passed in the JSON object " +
+                        "(the request body) are updated.")
                 .parameter(entityIdParam)
                 .parameter(entityParam)
                 .response(200, new Response()
@@ -370,7 +374,7 @@ public class RestDocsController {
         return new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Deletes the entity.")
+                .summary("Deletes the entity: " + entityModel.getName())
                 .parameter(new PathParameter()
                         .name("entityId")
                         .description("Entity identifier")
@@ -385,11 +389,12 @@ public class RestDocsController {
         Operation operation = new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
-                .summary("Find entities by filter conditions")
-                .description("Finds entities by filter conditions. The filter is defined by JSON object that is passed as in URL parameter.")
+                .summary("Find entities by filter conditions: " + entityModel.getName())
+                .description("Finds entities by filter conditions. The filter is defined by JSON object " +
+                        "that is passed as in URL parameter.")
                 .response(200, new Response()
                         .description("Success. Entities that conforms filter conditions are returned in the response body.")
-                        .schema(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName())))
+                        .schema(new ArrayProperty(new RefProperty(ENTITY_DEFINITION_PREFIX + entityModel.getName()))))
                 .response(400, getErrorResponse("Bad request. For example, the condition value cannot be parsed."))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
@@ -470,11 +475,14 @@ public class RestDocsController {
                 .stream()
                 .collect(Collectors.toMap(MetadataObject::getName, p -> p));
 
-        properties.put("id", getIdProperty(entityProperties.get("id")));
+        MetaProperty idMetaProperty = entityProperties.get("id");
+        if (idMetaProperty != null) {
+            Property idProperty = getPropertyFromJavaType(idMetaProperty.getJavaType().getName());
+            properties.put("id", idProperty);
+        }
 
-        StringProperty entityNameProperty = getEntityNameProperty(entityClass, properties);
+        StringProperty entityNameProperty = getEntityNameProperty(entityClass);
         properties.put("_entityName", entityNameProperty);
-
         properties.put("_instanceName", getNamePatternProperty(entityClass));
 
         for (Map.Entry<String, MetaProperty> fieldEntry : entityProperties.entrySet()) {
@@ -485,9 +493,15 @@ public class RestDocsController {
                 continue;
             }
 
-            String javaType = metaProperty.getJavaType().getSimpleName().toLowerCase();
-            Property fieldProperty = getPropertyFromJavaType(javaType);
-            properties.put(fieldName, fieldProperty);
+            // todo: Map?
+            if (List.class == metaProperty.getJavaType() || Set.class == metaProperty.getJavaType()) {
+                Property itemsProperty = getPropertyFromJavaType(metaProperty.getRange().asClass().getJavaClass().getName());
+                Property collectionProperty = new ArrayProperty(itemsProperty);
+                properties.put(fieldName, collectionProperty);
+            } else {
+                Property fieldProperty = getPropertyFromJavaType(metaProperty.getJavaType().getName());
+                properties.put(fieldName, fieldProperty);
+            }
         }
 
         ModelImpl model = new ModelImpl()
@@ -499,12 +513,6 @@ public class RestDocsController {
         return model;
     }
 
-    protected Property getIdProperty(MetaProperty idProperty) {
-        Class<?> idType = idProperty.getJavaType();
-        String type = idType.getSimpleName().toLowerCase();
-        return getPropertyFromJavaType(type);
-    }
-
     protected Property getNamePatternProperty(Class<Object> entityClass) {
         Property namePatternProperty = new StringProperty();
         NamePattern namePatternAnnotation = entityClass.getAnnotation(NamePattern.class);
@@ -514,7 +522,7 @@ public class RestDocsController {
         return namePatternProperty;
     }
 
-    protected StringProperty getEntityNameProperty(Class<Object> entityClass, Map<String, Property> properties) {
+    protected StringProperty getEntityNameProperty(Class<Object> entityClass) {
         StringProperty entityNameProperty = new StringProperty();
         Entity entityAnnotation = entityClass.getAnnotation(Entity.class);
         if (entityAnnotation != null) {
@@ -537,9 +545,7 @@ public class RestDocsController {
 
             for (Element methodEl : ((List<Element>) serviceEl.elements("method"))) {
                 String methodName = methodEl.attributeValue("name");
-
-                paths.put(
-                        String.format(SERVICE_PATH, serviceName, methodName),
+                paths.put(String.format(SERVICE_PATH, serviceName, methodName),
                         generateServiceMethodPath(serviceName, methodName, parseParams(methodEl)));
             }
         }
@@ -611,16 +617,10 @@ public class RestDocsController {
             queryEntities.add(entity);
 
             String queryName = query.attributeValue("name");
-
             List<Pair<String, String>> params = parseQueryParams(query);
 
-            paths.put(
-                    String.format(QUERY_PATH, entity, queryName),
-                    generateQueryPath(entity, queryName, params));
-
-            paths.put(
-                    String.format(QUERY_COUNT_PATH, entity, queryName),
-                    generateQueryCountPath(entity, queryName, params));
+            paths.put(String.format(QUERY_PATH, entity, queryName), generateQueryPath(entity, queryName, params));
+            paths.put(String.format(QUERY_COUNT_PATH, entity, queryName), generateQueryCountPath(entity, queryName, params));
         }
 
         return new PathsContainer(new ArrayList<>(queryEntities), paths);
@@ -645,7 +645,9 @@ public class RestDocsController {
                 .produces(APPLICATION_JSON_VALUE)
                 .summary(queryName)
                 .description("Executes a predefined query. Query parameters must be passed in the request body as JSON map.")
-                .response(200, new Response().description("Success"))
+                .response(200, new Response()
+                        .description("Success")
+                        .schema(new ArrayProperty(new RefProperty(ENTITY_DEFINITION_PREFIX + entityName))))
                 .response(403, getErrorResponse("Forbidden. A user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
 
@@ -808,9 +810,7 @@ public class RestDocsController {
         String name = paramEl.attributeValue("name");
 
         String type = Optional.ofNullable(paramEl.attributeValue("type"))
-                .orElse("string");
-        type = type.substring(type.lastIndexOf(".") + 1)
-                .toLowerCase();
+                .orElse(String.class.getName());
 
         return new Pair<>(name, type);
     }
@@ -848,7 +848,38 @@ public class RestDocsController {
             return new ArrayProperty(itemProperty);
         }
 
-        switch (javaType) {
+        Property primitiveProperty = getPrimitiveProperty(javaType);
+        if (primitiveProperty != null) {
+            return primitiveProperty;
+        }
+
+        Property entityProperty = getEntityProperty(javaType);
+        if (entityProperty != null) {
+            return entityProperty;
+        }
+
+        return new ObjectProperty().description(javaType);
+    }
+
+    protected Property getEntityProperty(String javaType) {
+        Class<Object> clazz = ReflectionHelper.getClass(javaType);
+
+        MetaClass metaClass = metadata.getClass(clazz);
+        if (metaClass != null) {
+            return new ObjectProperty()
+                    .description(metaClass.getName());
+        }
+
+        return null;
+    }
+
+    protected Property getPrimitiveProperty(String javaType) {
+        String primitiveType = javaType;
+        if (javaType.contains(".")) {
+            primitiveType = primitiveType.substring(primitiveType.lastIndexOf(".") + 1).toLowerCase();
+        }
+
+        switch (primitiveType) {
             case "boolean":
                 return new BooleanProperty().example(true);
             case "float":
@@ -868,8 +899,9 @@ public class RestDocsController {
                 uuidProp.setExample("19474a3b-99b5-482e-9e77-852be9adf817");
                 return uuidProp;
             case "string":
+                return new StringProperty().example("String");
             default:
-                return new StringProperty().example("String value example");
+                return null;
         }
     }
 
