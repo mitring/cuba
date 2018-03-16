@@ -21,34 +21,37 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.google.common.base.Splitter;
 import com.haulmont.bali.datastruct.Pair;
-import com.haulmont.bali.util.Dom4j;
 import com.haulmont.bali.util.ReflectionHelper;
 import com.haulmont.chile.core.annotations.NamePattern;
 import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.chile.core.model.MetaProperty;
 import com.haulmont.chile.core.model.MetadataObject;
+import com.haulmont.cuba.core.global.GlobalConfig;
 import com.haulmont.cuba.core.global.Metadata;
+import com.haulmont.cuba.core.global.MetadataTools;
 import com.haulmont.cuba.core.global.Resources;
-import com.haulmont.cuba.core.sys.AppContext;
+import com.haulmont.restapi.config.RestQueriesConfiguration;
+import com.haulmont.restapi.config.RestQueriesConfiguration.QueryInfo;
+import com.haulmont.restapi.config.RestQueriesConfiguration.QueryParamInfo;
+import com.haulmont.restapi.config.RestServicesConfiguration;
+import com.haulmont.restapi.config.RestServicesConfiguration.RestMethodInfo;
+import com.haulmont.restapi.config.RestServicesConfiguration.RestMethodParamInfo;
 import io.swagger.models.*;
 import io.swagger.models.parameters.*;
 import io.swagger.models.properties.*;
-import org.apache.commons.io.IOUtils;
-import org.dom4j.Element;
-import org.springframework.core.io.Resource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
 import javax.persistence.Entity;
-import javax.persistence.MappedSuperclass;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.*;
-import java.util.function.Function;
+import java.util.concurrent.locks.ReadWriteLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
 import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER;
@@ -59,13 +62,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 @RequestMapping("/v2/rest_docs")
 public class RestDocsController {
 
-    protected static final String WEB_HOST_NAME = "cuba.webHostName";
-    protected static final String WEB_PORT = "cuba.webPort";
-    protected static final String WEB_CONTEXT_NAME = "cuba.webContextName";
-
-    protected static final String PERSISTENCE_CONFIG = "cuba.persistenceConfig";
-    protected static final String QUERIES_CONFIG = "cuba.rest.queriesConfig";
-    protected static final String SERVICES_CONFIG = "cuba.rest.servicesConfig";
+    private static final Logger log = LoggerFactory.getLogger(RestDocsController.class);
 
     protected static final String ENTITY_PATH = "/entities/%s";
     protected static final String ENTITY_RUD_OPS = "/entities/%s/{entityId}";
@@ -77,9 +74,9 @@ public class RestDocsController {
     protected static final String SERVICE_PATH = "/services/%s/%s";
 
     protected static final String DEFINITIONS_PREFIX = "#/definitions/";
+    protected static final String ENTITY_DEFINITION_PREFIX = DEFINITIONS_PREFIX + "entities_";
     protected static final String PARAMETERS_PREFIX = "#/parameters/";
 
-    protected static final String ENTITY_DEFINITION_PREFIX = DEFINITIONS_PREFIX + "entities_";
     protected static final String GET_PARAM_NAME = "%s_%s_%s_%s";
     protected static final String POST_PARAM_NAME = "%s_%s_paramsObject_%s";
 
@@ -91,6 +88,21 @@ public class RestDocsController {
     @Inject
     protected Metadata metadata;
 
+    @Inject
+    protected MetadataTools metadataTools;
+
+    @Inject
+    protected GlobalConfig globalConfig;
+
+    @Inject
+    protected RestQueriesConfiguration queriesConfiguration;
+
+    @Inject
+    protected RestServicesConfiguration servicesConfiguration;
+
+    protected ReadWriteLock lock = new ReentrantReadWriteLock();
+    protected volatile boolean initialized = false;
+
     // cache
     protected Swagger swagger = null;
 
@@ -99,7 +111,12 @@ public class RestDocsController {
 
     @RequestMapping(value = "/rest.json", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
     public String getSwaggerJson() {
-        checkSwagger();
+        lock.readLock().lock();
+        try {
+            checkInitialized();
+        } finally {
+            lock.readLock().unlock();
+        }
 
         ObjectMapper jsonWriter = new ObjectMapper();
         jsonWriter.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -112,7 +129,12 @@ public class RestDocsController {
 
     @RequestMapping(value = "/rest.yml", method = RequestMethod.GET, produces = "application/yaml")
     public String getSwaggerYaml() {
-        checkSwagger();
+        lock.readLock().lock();
+        try {
+            checkInitialized();
+        } finally {
+            lock.readLock().unlock();
+        }
 
         ObjectMapper jsonWriter = new ObjectMapper();
         jsonWriter.setSerializationInclusion(JsonInclude.Include.NON_NULL);
@@ -128,10 +150,24 @@ public class RestDocsController {
         }
     }
 
-    protected void checkSwagger() {
-        /*
-         * todo: use condition "swagger == null"
-         */
+    protected void checkInitialized() {
+        if (!initialized) {
+            lock.readLock().unlock();
+            lock.writeLock().lock();
+            try {
+                if (!initialized) {
+                    log.info("Generating Swagger documentation");
+                    init();
+                    initialized = true;
+                }
+            } finally {
+                lock.readLock().lock();
+                lock.writeLock().unlock();
+            }
+        }
+    }
+
+    protected void init() {
         Pair<List<Tag>, Map<String, Path>> tagsAndPaths = generatePaths();
 
         swagger = new Swagger()
@@ -140,66 +176,67 @@ public class RestDocsController {
                 .consumes(APPLICATION_JSON_VALUE)
                 .produces(APPLICATION_JSON_VALUE)
                 .info(generateInfo())
-                .paths(tagsAndPaths.getSecond())
-                .tags(tagsAndPaths.getFirst());
+                .tags(tagsAndPaths.getFirst())
+                .paths(tagsAndPaths.getSecond());
 
         swagger.setParameters(parameters);
         swagger.setDefinitions(definitions);
     }
 
     protected String getHost() {
-        return AppContext.getProperty(WEB_HOST_NAME) + ":" + AppContext.getProperty(WEB_PORT);
+        return globalConfig.getWebHostName() + ":" + globalConfig.getWebPort();
     }
 
     protected String getBasePath() {
-        return "/" + AppContext.getProperty(WEB_CONTEXT_NAME) + "/rest/v2";
+        return "/" + globalConfig.getWebContextName() + "/rest/v2";
     }
 
     protected Info generateInfo() {
         return new Info()
                 .version("0.1")
                 .title("Project REST API")
-                .description("Generated Swagger documentation")
-                .license(new License()
-                        .name("Apache 2.0")
-                        .url("http://www.apache.org/licenses/LICENSE-2.0.html"));
+                .description("Generated Swagger documentation");
     }
 
     protected Pair<List<Tag>, Map<String, Path>> generatePaths() {
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        PathsContainer entities = generatePathsFromConfig(PERSISTENCE_CONFIG, this::loadPathsFromPersistenceConfig);
-        paths.putAll(entities.getPaths());
+        paths.putAll(generateEntitiesPaths());
+        paths.putAll(generateQueriesPaths());
+        paths.putAll(generateServicesPaths());
 
-        PathsContainer queries = generatePathsFromConfig(QUERIES_CONFIG, this::loadPathsFromQueriesConfig);
-        paths.putAll(queries.getPaths());
-
-        PathsContainer services = generatePathsFromConfig(SERVICES_CONFIG, this::loadPathsFromServicesConfig);
-        paths.putAll(services.getPaths());
-
-        return new Pair<>(generateTags(entities.getTags(), queries.getTags(), services.getTags()), paths);
+        return new Pair<>(generateTags(), paths);
     }
 
-    protected List<Tag> generateTags(List<String> entities, List<String> queryEntities, List<String> services) {
+    protected List<Tag> generateTags() {
         List<Tag> tags = new ArrayList<>();
 
-        for (String entity : entities) {
-            tags.add(new Tag()
-                    .name(entity)
-                    .description("Entity CRUD operations"));
-        }
+        List<Tag> entityTags = metadataTools.getAllPersistentMetaClasses()
+                .stream()
+                .filter(mc -> !metadataTools.isSystemLevel(mc))
+                .map(mc -> new Tag()
+                        .name(mc.getName())
+                        .description("Entity CRUD operations"))
+                .collect(Collectors.toList());
+        tags.addAll(entityTags);
 
-        for (String queryEntity : queryEntities) {
-            tags.add(new Tag()
-                    .name(queryEntity + " Queries")
-                    .description("Predefined queries execution"));
-        }
+        List<Tag> queryTags = queriesConfiguration.getQueries()
+                .stream()
+                .map(QueryInfo::getEntityName)
+                .distinct()
+                .map(queryEntity -> new Tag()
+                        .name(queryEntity + " Queries")
+                        .description("Predefined queries execution"))
+                .collect(Collectors.toList());
+        tags.addAll(queryTags);
 
-        for (String service : services) {
-            tags.add(new Tag()
-                    .name(service)
-                    .description("Middleware services execution"));
-        }
+        List<Tag> serviceTags = servicesConfiguration.getServiceInfos()
+                .stream()
+                .map(serviceInfo -> new Tag()
+                        .name(serviceInfo.getName())
+                        .description("Middleware services execution"))
+                .collect(Collectors.toList());
+        tags.addAll(serviceTags);
 
         return tags;
     }
@@ -208,33 +245,20 @@ public class RestDocsController {
      * Entities
      */
 
-    protected PathsContainer loadPathsFromPersistenceConfig(Element root) {
-        Element persistenceUnitEl = root.element("persistence-unit");
-        if (persistenceUnitEl == null) {
-            return new PathsContainer(Collections.emptyList(), Collections.emptyMap());
-        }
-
-        List<String> entities = new ArrayList<>();
+    protected Map<String, Path> generateEntitiesPaths() {
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        for (Element eClass : ((List<Element>) persistenceUnitEl.elements("class"))) {
-            String entityFqn = (String) eClass.getData();
-
-            Class<?> entityClass = ReflectionHelper.getClass(entityFqn);
-            if (entityClass.getAnnotation(MappedSuperclass.class) != null
-                    || metadata.getTools().isSystemLevel(metadata.getClass(entityClass))) {
+        for (MetaClass metaClass : metadataTools.getAllPersistentMetaClasses()) {
+            if (metadataTools.isSystemLevel(metaClass)) {
                 continue;
             }
-
-            Pair<String, Map<String, Path>> pair = generateEntityPaths(entityClass);
-            entities.add(pair.getFirst());
-            paths.putAll(pair.getSecond());
+            paths.putAll(generateEntityPaths(metaClass));
         }
 
-        return new PathsContainer(entities, paths);
+        return paths;
     }
 
-    protected Pair<String, Map<String, Path>> generateEntityPaths(Class entityClass) {
+    protected Map<String, Path> generateEntityPaths(MetaClass entityClass) {
         ModelImpl entityModel = createEntityModel(entityClass);
 
         Map<String, Path> entityPaths = new LinkedHashMap<>();
@@ -242,7 +266,7 @@ public class RestDocsController {
         entityPaths.putAll(generateEntityCRUDPaths(entityModel));
         entityPaths.putAll(generateEntityFilterPaths(entityModel));
 
-        return new Pair<>(entityModel.getName(), entityPaths);
+        return entityPaths;
     }
 
     protected Map<String, Path> generateEntityCRUDPaths(ModelImpl entityModel) {
@@ -253,7 +277,6 @@ public class RestDocsController {
                 .get(generateEntityBrowseOperation(entityModel));
 
         crudPaths.put(createPath.getFirst(), createPath.getSecond());
-
         crudPaths.putAll(generateEntityRUDPaths(entityModel));
 
         return crudPaths;
@@ -385,7 +408,7 @@ public class RestDocsController {
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
     }
 
-    protected Operation generateEntitySearchOperation(ModelImpl entityModel, RequestMethod requestMethod) {
+    protected Operation generateEntitySearchOperation(ModelImpl entityModel, RequestMethod method) {
         Operation operation = new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
@@ -401,7 +424,7 @@ public class RestDocsController {
 
         operation.setParameters(generateEntityOptionalParams(false));
 
-        if (RequestMethod.GET == requestMethod) {
+        if (RequestMethod.GET == method) {
             QueryParameter parameter = new QueryParameter()
                     .name("filter")
                     .required(true)
@@ -468,10 +491,10 @@ public class RestDocsController {
         return multipleEntityParams;
     }
 
-    protected ModelImpl createEntityModel(Class<Object> entityClass) {
+    protected ModelImpl createEntityModel(MetaClass entityClass) {
         Map<String, Property> properties = new LinkedHashMap<>();
 
-        Map<String, MetaProperty> entityProperties = metadata.getClassNN(entityClass).getProperties()
+        Map<String, MetaProperty> entityProperties = entityClass.getProperties()
                 .stream()
                 .collect(Collectors.toMap(MetadataObject::getName, p -> p));
 
@@ -493,7 +516,6 @@ public class RestDocsController {
                 continue;
             }
 
-            // todo: Map?
             if (List.class == metaProperty.getJavaType() || Set.class == metaProperty.getJavaType()) {
                 Property itemsProperty = getPropertyFromJavaType(metaProperty.getRange().asClass().getJavaClass().getName());
                 Property collectionProperty = new ArrayProperty(itemsProperty);
@@ -513,18 +535,20 @@ public class RestDocsController {
         return model;
     }
 
-    protected Property getNamePatternProperty(Class<Object> entityClass) {
+    protected Property getNamePatternProperty(MetaClass entityClass) {
         Property namePatternProperty = new StringProperty();
-        NamePattern namePatternAnnotation = entityClass.getAnnotation(NamePattern.class);
+        Class<?> javaClass = entityClass.getJavaClass();
+        NamePattern namePatternAnnotation = javaClass.getAnnotation(NamePattern.class);
         if (namePatternAnnotation != null) {
             namePatternProperty.setDefault(namePatternAnnotation.value());
         }
         return namePatternProperty;
     }
 
-    protected StringProperty getEntityNameProperty(Class<Object> entityClass) {
+    protected StringProperty getEntityNameProperty(MetaClass entityClass) {
         StringProperty entityNameProperty = new StringProperty();
-        Entity entityAnnotation = entityClass.getAnnotation(Entity.class);
+        Class<?> javaClass = entityClass.getJavaClass();
+        Entity entityAnnotation = javaClass.getAnnotation(Entity.class);
         if (entityAnnotation != null) {
             entityNameProperty.setDefault(entityAnnotation.name());
         }
@@ -535,36 +559,33 @@ public class RestDocsController {
      * Services
      */
 
-    protected PathsContainer loadPathsFromServicesConfig(Element root) {
-        Set<String> services = new LinkedHashSet<>();
+    protected Map<String, Path> generateServicesPaths() {
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        for (Element serviceEl : ((List<Element>) root.elements("service"))) {
-            String serviceName = serviceEl.attributeValue("name");
-            services.add(serviceName);
+        for (RestServicesConfiguration.RestServiceInfo serviceInfo : servicesConfiguration.getServiceInfos()) {
+            String serviceName = serviceInfo.getName();
 
-            for (Element methodEl : ((List<Element>) serviceEl.elements("method"))) {
-                String methodName = methodEl.attributeValue("name");
+            for (RestMethodInfo methodInfo : serviceInfo.getMethods()) {
+                String methodName = methodInfo.getName();
                 paths.put(String.format(SERVICE_PATH, serviceName, methodName),
-                        generateServiceMethodPath(serviceName, methodName, parseParams(methodEl)));
+                        generateServiceMethodPath(serviceName, methodInfo));
             }
         }
 
-        return new PathsContainer(new ArrayList<>(services), paths);
+        return paths;
     }
 
-    protected Path generateServiceMethodPath(String service, String method, List<Pair<String, String>> params) {
+    protected Path generateServiceMethodPath(String service, RestMethodInfo methodInfo) {
         return new Path()
-                .get(generateServiceMethodOp(service, method, params, RequestMethod.GET))
-                .post(generateServiceMethodOp(service, method, params, RequestMethod.POST));
+                .get(generateServiceMethodOp(service, methodInfo, RequestMethod.GET))
+                .post(generateServiceMethodOp(service, methodInfo, RequestMethod.POST));
     }
 
-    protected Operation generateServiceMethodOp(String service, String method, List<Pair<String, String>> params,
-                                                RequestMethod requestMethod) {
+    protected Operation generateServiceMethodOp(String service, RestMethodInfo methodInfo, RequestMethod requestMethod) {
         Operation operation = new Operation()
                 .tag(service)
                 .produces(APPLICATION_JSON_VALUE)
-                .summary(service + "#" + method)
+                .summary(service + "#" + methodInfo.getName())
                 .description("Executes the service method. This request expects query parameters with the names defined " +
                         "in services configuration on the middleware.")
                 .response(200, new Response()
@@ -575,31 +596,46 @@ public class RestDocsController {
                         "method was executed successfully but returns null or is of void type."))
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to invoke the service method."));
 
-        operation.setParameters(generateServiceMethodParams(service, method, params, requestMethod));
+        operation.setParameters(generateServiceMethodParams(service, methodInfo, requestMethod));
 
         return operation;
     }
 
-    protected List<Parameter> generateServiceMethodParams(String service, String method, List<Pair<String, String>> params,
-                                                          RequestMethod requestMethod) {
+    protected List<Parameter> generateServiceMethodParams(String service, RestMethodInfo methodInfo, RequestMethod requestMethod) {
         if (RequestMethod.GET == requestMethod) {
-            return params.stream()
-                    .map(p -> generateGetServiceOperationParam(service, method, p, requestMethod))
+            return methodInfo.getParams().stream()
+                    .map(p -> generateServiceGetOpParam(service, methodInfo.getName(), p, requestMethod))
                     .collect(Collectors.toList());
         } else {
-            String paramName = String.format(POST_PARAM_NAME, service, method, requestMethod.name());
+            String paramName = String.format(POST_PARAM_NAME, service, methodInfo.getName(), requestMethod.name());
 
-            parameters.put(paramName, generatePostOperationParam(params));
+            parameters.put(paramName, generateServicePostOpParam(methodInfo.getParams()));
 
             return Collections.singletonList(new RefParameter(PARAMETERS_PREFIX + paramName));
         }
     }
 
-    protected Parameter generateGetServiceOperationParam(String service, String method, Pair<String, String> param,
-                                                         RequestMethod requestMethod) {
-        String paramName = String.format(GET_PARAM_NAME, service, method, param.getFirst(), requestMethod.name());
+    protected Parameter generateServicePostOpParam(List<RestMethodParamInfo> params) {
+        Map<String, Property> modelProps = params.stream()
+                .collect(Collectors.toMap(
+                        RestMethodParamInfo::getName,
+                        p -> getPropertyFromJavaType(p.getType())));
 
-        parameters.put(paramName, generateGetOperationParam(param));
+        ModelImpl parameterModel = new ModelImpl();
+        parameterModel.setProperties(modelProps);
+
+        BodyParameter parameter = new BodyParameter()
+                .name("paramsObject");
+        parameter.setRequired(true);
+
+        return parameter.schema(parameterModel);
+    }
+
+    protected Parameter generateServiceGetOpParam(String service, String method, RestMethodParamInfo param,
+                                                  RequestMethod requestMethod) {
+        String paramName = String.format(GET_PARAM_NAME, service, method, param.getName(), requestMethod.name());
+
+        parameters.put(paramName, generateGetOperationParam(new Pair<>(param.getName(), param.getType())));
 
         return new RefParameter(PARAMETERS_PREFIX + paramName);
     }
@@ -608,58 +644,57 @@ public class RestDocsController {
      * Queries
      */
 
-    protected PathsContainer loadPathsFromQueriesConfig(Element root) {
-        Set<String> queryEntities = new LinkedHashSet<>();
+    protected Map<String, Path> generateQueriesPaths() {
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        for (Element query : ((List<Element>) root.elements("query"))) {
-            String entity = query.attributeValue("entity");
-            queryEntities.add(entity);
+        for (QueryInfo queryInfo : queriesConfiguration.getQueries()) {
+            String entity = queryInfo.getEntityName();
+            String queryName = queryInfo.getName();
 
-            String queryName = query.attributeValue("name");
-            List<Pair<String, String>> params = parseQueryParams(query);
+            paths.put(
+                    String.format(QUERY_PATH, entity, queryName),
+                    generateQueryPath(queryInfo));
 
-            paths.put(String.format(QUERY_PATH, entity, queryName), generateQueryPath(entity, queryName, params));
-            paths.put(String.format(QUERY_COUNT_PATH, entity, queryName), generateQueryCountPath(entity, queryName, params));
+            paths.put(
+                    String.format(QUERY_COUNT_PATH, entity, queryName),
+                    generateQueryCountPath(queryInfo));
         }
 
-        return new PathsContainer(new ArrayList<>(queryEntities), paths);
+        return paths;
     }
 
-    protected Path generateQueryPath(String entity, String queryName, List<Pair<String, String>> params) {
+    protected Path generateQueryPath(QueryInfo query) {
         return new Path()
-                .get(generateQueryOperation(entity, queryName, params, RequestMethod.GET))
-                .post(generateQueryOperation(entity, queryName, params, RequestMethod.POST));
+                .get(generateQueryOperation(query, RequestMethod.GET))
+                .post(generateQueryOperation(query, RequestMethod.POST));
     }
 
-    protected Path generateQueryCountPath(String entity, String query, List<Pair<String, String>> params) {
+    protected Path generateQueryCountPath(QueryInfo query) {
         return new Path()
-                .get(generateQueryCountOperation(entity, query, params, RequestMethod.GET))
-                .post(generateQueryCountOperation(entity, query, params, RequestMethod.POST));
+                .get(generateQueryCountOperation(query, RequestMethod.GET))
+                .post(generateQueryCountOperation(query, RequestMethod.POST));
     }
 
-    protected Operation generateQueryOperation(String entityName, String queryName, List<Pair<String, String>> params,
-                                               RequestMethod method) {
+    protected Operation generateQueryOperation(QueryInfo query, RequestMethod method) {
         Operation operation = new Operation()
-                .tag(entityName + " Queries")
+                .tag(query.getEntityName() + " Queries")
                 .produces(APPLICATION_JSON_VALUE)
-                .summary(queryName)
+                .summary(query.getName())
                 .description("Executes a predefined query. Query parameters must be passed in the request body as JSON map.")
                 .response(200, new Response()
                         .description("Success")
-                        .schema(new ArrayProperty(new RefProperty(ENTITY_DEFINITION_PREFIX + entityName))))
+                        .schema(new ArrayProperty(new RefProperty(ENTITY_DEFINITION_PREFIX + query.getEntityName()))))
                 .response(403, getErrorResponse("Forbidden. A user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
 
-        operation.setParameters(generateQueryOperationParams(entityName, queryName, params, method, true));
+        operation.setParameters(generateQueryOpParams(query, method, true));
 
         return operation;
     }
 
-    protected Operation generateQueryCountOperation(String entity, String query, List<Pair<String, String>> queryParams,
-                                                    RequestMethod requestMethod) {
+    protected Operation generateQueryCountOperation(QueryInfo query, RequestMethod method) {
         Operation operation = new Operation()
-                .tag(entity + " Queries")
+                .tag(query.getEntityName() + " Queries")
                 .produces(APPLICATION_JSON_VALUE)
                 .summary("Return a number of entities in query result")
                 .description("Returns a number of entities that matches the query. You can use the all keyword for " +
@@ -670,27 +705,26 @@ public class RestDocsController {
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("MetaClass not found or query with the given name not found"));
 
-        operation.setParameters(generateQueryOperationParams(entity, query, queryParams, requestMethod, false));
+        operation.setParameters(generateQueryOpParams(query, method, false));
 
         return operation;
     }
 
-    protected List<Parameter> generateQueryOperationParams(String entity, String query, List<Pair<String, String>> params,
-                                                           RequestMethod requestMethod, boolean generateOptionalParams) {
+    protected List<Parameter> generateQueryOpParams(QueryInfo query, RequestMethod method, boolean generateOptionalParams) {
         List<Parameter> optionalParams = generateOptionalQueryParams(generateOptionalParams);
 
-        if (RequestMethod.GET == requestMethod) {
-            List<Parameter> queryParams = params.stream()
-                    .map(p -> generateGetQueryOpParam(entity, query, p, requestMethod))
+        if (RequestMethod.GET == method) {
+            List<Parameter> queryParams = query.getParams().stream()
+                    .map(p -> generateQueryGetOpParam(query, p))
                     .collect(Collectors.toList());
 
             queryParams.addAll(optionalParams);
 
             return queryParams;
         } else {
-            String paramName = String.format(POST_PARAM_NAME, entity, query, requestMethod.name());
+            String paramName = String.format(POST_PARAM_NAME, query.getEntityName(), query.getName(), method.name());
 
-            parameters.put(paramName, generatePostOperationParam(params));
+            parameters.put(paramName, generateQueryPostOpParam(query.getParams()));
 
             List<Parameter> queryParams = new ArrayList<>();
             queryParams.add(new RefParameter(PARAMETERS_PREFIX + paramName));
@@ -736,89 +770,20 @@ public class RestDocsController {
         );
     }
 
-    protected Parameter generateGetQueryOpParam(String entity, String query, Pair<String, String> param,
-                                                RequestMethod requestMethod) {
-        String paramName = String.format(GET_PARAM_NAME, entity, query, param.getFirst(), requestMethod.name());
+    protected Parameter generateQueryGetOpParam(QueryInfo query, QueryParamInfo param) {
+        String paramName = String.format(GET_PARAM_NAME, query.getEntityName(), query.getName(), param.getName(),
+                RequestMethod.GET.name());
 
-        parameters.put(paramName, generateGetOperationParam(param));
+        parameters.put(paramName, generateGetOperationParam(new Pair<>(param.getName(), param.getType())));
 
         return new RefParameter(PARAMETERS_PREFIX + paramName);
     }
 
-    protected List<Pair<String, String>> parseQueryParams(Element queryEl) {
-        Element paramsEl = queryEl.element("params");
-        if (paramsEl == null) {
-            return Collections.emptyList();
-        }
-        return parseParams(paramsEl);
-    }
-
-    /*
-     * Common
-     */
-
-    protected PathsContainer generatePathsFromConfig(final String config, Function<Element, PathsContainer> generator) {
-        String configFiles = AppContext.getProperty(config);
-        if (configFiles == null || configFiles.isEmpty()) {
-            return new PathsContainer(Collections.emptyList(), Collections.emptyMap());
-        }
-
-        List<String> tagSources = new ArrayList<>();
-        Map<String, Path> paths = new LinkedHashMap<>();
-
-        Iterable<String> configs = Splitter.on(' ')
-                .omitEmptyStrings()
-                .trimResults()
-                .split(configFiles);
-
-        for (String configFile : configs) {
-            PathsContainer pair = generatePathsFromConfigResource(resources.getResource(configFile), generator);
-
-            tagSources.addAll(pair.getTags());
-            paths.putAll(pair.getPaths());
-        }
-
-        return new PathsContainer(tagSources, paths);
-    }
-
-    protected PathsContainer generatePathsFromConfigResource(Resource resource, Function<Element, PathsContainer> generator) {
-        if (!resource.exists()) {
-            return new PathsContainer(Collections.emptyList(), Collections.emptyMap());
-        }
-
-        InputStream stream = null;
-        try {
-            stream = resource.getInputStream();
-            Element rootElement = Dom4j.readDocument(stream).getRootElement();
-
-            return generator.apply(rootElement);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to generate paths from " + resource.getFilename(), e);
-        } finally {
-            IOUtils.closeQuietly(stream);
-        }
-    }
-
-    protected List<Pair<String, String>> parseParams(Element paramsEl) {
-        return ((List<Element>) paramsEl.elements("param"))
-                .stream()
-                .map(this::parseParam)
-                .collect(Collectors.toList());
-    }
-
-    protected Pair<String, String> parseParam(Element paramEl) {
-        String name = paramEl.attributeValue("name");
-
-        String type = Optional.ofNullable(paramEl.attributeValue("type"))
-                .orElse(String.class.getName());
-
-        return new Pair<>(name, type);
-    }
-
-    protected Parameter generatePostOperationParam(List<Pair<String, String>> params) {
+    protected Parameter generateQueryPostOpParam(List<QueryParamInfo> params) {
         Map<String, Property> modelProps = params.stream()
                 .collect(Collectors.toMap(
-                        Pair::getFirst, p -> getPropertyFromJavaType(p.getSecond())));
+                        QueryParamInfo::getName,
+                        p -> getPropertyFromJavaType(p.getType())));
 
         ModelImpl parameterModel = new ModelImpl();
         parameterModel.setProperties(modelProps);
@@ -829,6 +794,10 @@ public class RestDocsController {
 
         return parameter.schema(parameterModel);
     }
+
+    /*
+     * Common
+     */
 
     protected Parameter generateGetOperationParam(Pair<String, String> param) {
         return new QueryParameter()
@@ -842,27 +811,27 @@ public class RestDocsController {
                         : null);
     }
 
-    protected Property getPropertyFromJavaType(String javaType) {
-        if (javaType.contains(ARRAY_SIGNATURE)) {
-            Property itemProperty = getPropertyFromJavaType(javaType.replace(ARRAY_SIGNATURE, ""));
+    protected Property getPropertyFromJavaType(String type) {
+        if (type.contains(ARRAY_SIGNATURE)) {
+            Property itemProperty = getPropertyFromJavaType(type.replace(ARRAY_SIGNATURE, ""));
             return new ArrayProperty(itemProperty);
         }
 
-        Property primitiveProperty = getPrimitiveProperty(javaType);
+        Property primitiveProperty = getPrimitiveProperty(type);
         if (primitiveProperty != null) {
             return primitiveProperty;
         }
 
-        Property entityProperty = getEntityProperty(javaType);
+        Property entityProperty = getEntityProperty(type);
         if (entityProperty != null) {
             return entityProperty;
         }
 
-        return new ObjectProperty().description(javaType);
+        return new ObjectProperty().description(type);
     }
 
-    protected Property getEntityProperty(String javaType) {
-        Class<Object> clazz = ReflectionHelper.getClass(javaType);
+    protected Property getEntityProperty(String classFqn) {
+        Class<Object> clazz = ReflectionHelper.getClass(classFqn);
 
         MetaClass metaClass = metadata.getClass(clazz);
         if (metaClass != null) {
@@ -873,9 +842,9 @@ public class RestDocsController {
         return null;
     }
 
-    protected Property getPrimitiveProperty(String javaType) {
-        String primitiveType = javaType;
-        if (javaType.contains(".")) {
+    protected Property getPrimitiveProperty(String type) {
+        String primitiveType = type;
+        if (type.contains(".")) {
             primitiveType = primitiveType.substring(primitiveType.lastIndexOf(".") + 1).toLowerCase();
         }
 
@@ -905,34 +874,15 @@ public class RestDocsController {
         }
     }
 
-    protected Property getErrorSchema() {
-        return new ObjectProperty()
-                .property("error", new StringProperty().description("Error message"))
-                .property("details", new StringProperty().description("Detailed error description"));
-    }
-
     protected Response getErrorResponse(String msg) {
         return new Response()
                 .description(msg)
                 .schema(getErrorSchema());
     }
 
-    protected class PathsContainer {
-
-        protected final List<String> tags;
-        protected final Map<String, Path> paths;
-
-        protected PathsContainer(List<String> tags, Map<String, Path> paths) {
-            this.tags = tags;
-            this.paths = paths;
-        }
-
-        protected List<String> getTags() {
-            return tags;
-        }
-
-        protected Map<String, Path> getPaths() {
-            return paths;
-        }
+    protected Property getErrorSchema() {
+        return new ObjectProperty()
+                .property("error", new StringProperty().description("Error message"))
+                .property("details", new StringProperty().description("Detailed error description"));
     }
 }
