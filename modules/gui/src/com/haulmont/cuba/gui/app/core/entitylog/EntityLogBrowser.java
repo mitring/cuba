@@ -169,9 +169,6 @@ public class EntityLogBrowser extends AbstractWindow {
             companion.enableTextSelection(entityLogAttrTable);
         }
 
-        entityLogAttrTable.getColumn("value").setFormatter(this::getFormattedValue);
-        entityLogAttrTable.getColumn("oldValue").setFormatter(this::getFormattedValue);
-
         systemAttrsList = Arrays.asList("createTs", "createdBy", "updateTs", "updatedBy", "deleteTs", "deletedBy", "version", "id");
         Map<String, Object> changeTypeMap = new LinkedHashMap<>();
         changeTypeMap.put(messages.getMessage(getClass(), "createField"), "C");
@@ -569,26 +566,5 @@ public class EntityLogBrowser extends AbstractWindow {
             loggedEntityTable.setEnabled(true);
             loggedEntityTable.requestFocus();
         }
-    }
-
-    protected String getFormattedValue(Object value) {
-        String stringValue = String.valueOf(value);
-
-        try {
-            DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd");
-            Date dateFormat = formatter.parse(stringValue);
-            String date = formatter.format(dateFormat);
-
-            formatter = new SimpleDateFormat("HH:mm:ss.SSS");
-            Date time = formatter.parse(stringValue, new ParsePosition(11));
-
-            return time != null ? date + " " + formatter.format(time) : date + " 00:00:00.000";
-
-        } catch (ParseException e) {
-            log.debug("Can't parse string to date or time pattern and comparative value will be returned as is. "
-                    + "Returned value: {}", stringValue);
-        }
-
-        return stringValue;
     }
 }
