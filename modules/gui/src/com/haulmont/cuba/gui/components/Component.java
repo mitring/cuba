@@ -16,6 +16,9 @@
  */
 package com.haulmont.cuba.gui.components;
 
+import com.haulmont.chile.core.model.MetaClass;
+import com.haulmont.chile.core.model.MetaPropertyPath;
+import com.haulmont.cuba.core.entity.Entity;
 import com.haulmont.cuba.gui.app.security.role.edit.UiPermissionDescriptor;
 import com.haulmont.cuba.gui.data.ValueListener;
 import com.haulmont.cuba.gui.icons.Icons;
@@ -46,6 +49,7 @@ public interface Component {
     }
 
     // vaadin8 convert to enumeration
+    // todo see com.vaadin.server.Sizeable.Unit
     int UNITS_PIXELS = 0;
     int UNITS_PERCENTAGE = 8;
 
@@ -624,6 +628,64 @@ public interface Component {
         boolean isReadOnly();
 
         Class<T> getType();
+    }
+
+    // todo status change listener
+    enum ValueSourceStatus {
+        ACTIVE,
+        INACTIVE
+    }
+
+    /**
+     * vaadin8 document
+     *
+     * @param <T>
+     */
+    interface EntityValueSource<E extends Entity, T> extends ValueSource<T> {
+        MetaClass getMetaClass();
+        MetaPropertyPath getMetaPropertyPath();
+
+        // todo return registration
+        // todo do not provide removeXXX method
+        void addInstanceChangeListener(Consumer<InstanceChangeEvent<E>> listener);
+    }
+
+    /**
+     * vaadin8 document
+     *
+     * @param <E>
+     */
+    class InstanceChangeEvent<E extends Entity> extends EventObject {
+        private final E prevItem;
+        private final E item;
+
+        public InstanceChangeEvent(EntityValueSource<E, ?> source, E prevItem, E item) {
+            super(source);
+            this.prevItem = prevItem;
+            this.item = item;
+        }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public EntityValueSource<E, ?> getSource() {
+            return (EntityValueSource<E, ?>) super.getSource();
+        }
+
+        /**
+         * @return current item
+         */
+        @Nullable
+        public E getItem() {
+            return item;
+        }
+
+        /**
+         * @return previous selected item
+         */
+        @Nullable
+        public E getPrevItem() {
+            return prevItem;
+        }
     }
 
     /**

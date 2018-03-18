@@ -25,4 +25,8 @@ public class ValueBinder {
         // todo create list of binding features from legacy components
         return null;
     }
+
+    protected void initFieldValue() {
+
+    }
 }

@@ -20,13 +20,15 @@ import com.haulmont.chile.core.model.MetaPropertyPath;
 import com.haulmont.cuba.gui.model.InstanceContainer;
 
 /**
- *
+ * vaadin8 rework !
  */
 public interface PropertyBoundComponent {
-
+    // todo remove
     InstanceContainer getEntityContainer();
 
+    // todo remove
     MetaPropertyPath getMetaPropertyPath();
 
+    // todo remove ? TO_BE_DISCUSSED
     void setContainer(InstanceContainer container, String property);
 }
