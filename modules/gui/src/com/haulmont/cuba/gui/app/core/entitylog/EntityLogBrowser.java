@@ -43,20 +43,12 @@ import com.haulmont.cuba.gui.xml.layout.ComponentsFactory;
 import com.haulmont.cuba.security.entity.*;
 import org.apache.commons.lang.BooleanUtils;
 import org.apache.commons.lang.time.DateUtils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.ParsePosition;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 public class EntityLogBrowser extends AbstractWindow {
-
-    private static final Logger log = LoggerFactory.getLogger(EntityLogBrowser.class);
 
     public interface Companion {
         void enableTextSelection(Table table);

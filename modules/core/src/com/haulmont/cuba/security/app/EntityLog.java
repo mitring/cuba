@@ -707,11 +707,8 @@ public class EntityLog implements EntityLogAPI {
         else if (value instanceof Instance) {
             return ((Instance) value).getInstanceName();
         } else if (value instanceof Date) {
-            if (metaProperty != null) {
-                Datatype datatype = metaProperty.getRange().asDatatype();
-                return datatype.format(value);
-            }
-            return Datatypes.getNN(value.getClass()).format(value);
+            Datatype datatype = metaProperty.getRange().asDatatype();
+            return datatype.format(value);
         } else if (value instanceof Iterable) {
             StringBuilder sb = new StringBuilder();
             sb.append("[");
