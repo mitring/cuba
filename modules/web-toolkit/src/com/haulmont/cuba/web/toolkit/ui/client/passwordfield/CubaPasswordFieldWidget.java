@@ -17,8 +17,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
 
-import com.google.gwt.event.dom.client.KeyPressEvent;
-import com.google.gwt.event.dom.client.KeyPressHandler;
+import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.vaadin.client.BrowserInfo;
@@ -26,12 +25,13 @@ import com.vaadin.client.ui.VPasswordField;
 
 import java.util.function.Consumer;
 
-public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressHandler {
+public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressHandler, KeyDownHandler {
 
-    protected boolean capsLock = false;
+    protected Boolean capsLock;
 
     public Consumer<Boolean> capsLockStateChangeConsumer;
-    protected HandlerRegistration clickHandlerRegistration = null;
+    protected HandlerRegistration pressHandlerRegistration = null;
+    protected HandlerRegistration downHandlerRegistration = null;
 
     public void setAutocomplete(boolean autocomplete) {
         if (autocomplete) {
@@ -51,12 +51,16 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
 
     public void setIndicateCapsLock(boolean indicateCapsLock) {
         if (indicateCapsLock) {
-            if (clickHandlerRegistration == null) {
-                clickHandlerRegistration = addKeyPressHandler(this);
+            if (pressHandlerRegistration == null) {
+                pressHandlerRegistration = addKeyPressHandler(this);
+                downHandlerRegistration = addKeyDownHandler(this);
             }
-        } else if (clickHandlerRegistration != null) {
-            clickHandlerRegistration.removeHandler();
-            clickHandlerRegistration = null;
+        } else if (pressHandlerRegistration != null) {
+            downHandlerRegistration.removeHandler();
+            downHandlerRegistration = null;
+
+            pressHandlerRegistration.removeHandler();
+            pressHandlerRegistration = null;
         }
     }
 
@@ -67,20 +71,44 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
 
     @Override
     public void onKeyPress(KeyPressEvent event) {
-        int charCode = event.getCharCode();
-        boolean shiftKey = event.isShiftKeyDown();
-        boolean prevCapsLock = capsLock;
+        char charCode = event.getCharCode();
 
-        if (charCode >= 97 && charCode <= 122) {
-            capsLock = shiftKey;
-        } else if (charCode >= 65 && charCode <= 90 && !(shiftKey && isMacOS())) {
-            capsLock = !shiftKey;
+        if (charCode == 0) {
+            return;
         }
 
-        if (capsLock != prevCapsLock) {
-            if (capsLockStateChangeConsumer != null) {
+        if (Character.toLowerCase(charCode) == Character.toUpperCase(charCode)) {
+            return;
+        }
+
+        capsLock = (Character.toLowerCase(charCode) == charCode && event.isShiftKeyDown())
+                || (Character.toUpperCase(charCode) == charCode && !event.isShiftKeyDown());
+
+        if (pressHandlerRegistration != null) {
+            capsLockStateChangeConsumer.accept(capsLock);
+        }
+    }
+
+    @Override
+    public void onKeyDown(KeyDownEvent event) {
+        if (event.getNativeKeyCode() == 20 && capsLock != null && !isMacOS()) {
+
+            capsLock = !capsLock;
+
+            if (pressHandlerRegistration != null) {
                 capsLockStateChangeConsumer.accept(capsLock);
             }
         }
+    }
+
+    @Override
+    public void onBlur(BlurEvent event) {
+        capsLock = null;
+
+        if (capsLockStateChangeConsumer != null) {
+            capsLockStateChangeConsumer.accept(false);
+        }
+
+        super.onBlur(event);
     }
 }

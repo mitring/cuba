@@ -18,7 +18,4 @@ package com.haulmont.cuba.gui.components;
 
 public interface CapsLockIndicator extends Component {
     String NAME = "capsLockIndicator";
-
-    void setCapsLock(boolean capsLock);
-    boolean isCapsLock();
 }

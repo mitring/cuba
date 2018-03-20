@@ -24,14 +24,4 @@ public class WebCapsLockIndicator extends WebAbstractComponent<CubaCapsLockIndic
     public WebCapsLockIndicator() {
         component = new CubaCapsLockIndicator();
     }
-
-    @Override
-    public boolean isCapsLock() {
-        return component.isCapsLock();
-    }
-
-    @Override
-    public void setCapsLock(boolean capsLock) {
-        component.setCapsLock(capsLock);
-    }
 }

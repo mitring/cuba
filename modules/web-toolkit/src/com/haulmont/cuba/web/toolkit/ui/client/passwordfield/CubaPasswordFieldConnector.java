@@ -18,7 +18,8 @@
 package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaPasswordField;
-import com.vaadin.client.communication.RpcProxy;
+import com.haulmont.cuba.web.toolkit.ui.client.capslockindicator.CapsLockChangeHandler;
+import com.vaadin.client.ComponentConnector;
 import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.passwordfield.PasswordFieldConnector;
 import com.vaadin.shared.ui.Connect;
@@ -26,10 +27,12 @@ import com.vaadin.shared.ui.Connect;
 @Connect(CubaPasswordField.class)
 public class CubaPasswordFieldConnector extends PasswordFieldConnector {
 
-    protected CubaPasswordFieldServerRpc rpc = RpcProxy.create(CubaPasswordFieldServerRpc.class, this);
-
     public CubaPasswordFieldConnector() {
-        getWidget().capsLockStateChangeConsumer = changedState -> rpc.capsLockStateChanged(changedState);
+        getWidget().capsLockStateChangeConsumer = (isCapsLock) -> {
+            if (getState().capsLockIndicator instanceof CapsLockChangeHandler) {
+                ((CapsLockChangeHandler) getState().capsLockIndicator).changeState(isCapsLock);
+            }
+        };
     }
 
     @Override
@@ -48,6 +51,10 @@ public class CubaPasswordFieldConnector extends PasswordFieldConnector {
 
         getWidget().setAutocomplete(getState().autocomplete);
 
-        getWidget().setIndicateCapsLock(getState().indicateCapsLock);
+        if (stateChangeEvent.hasPropertyChanged("capsLockIndicator")) {
+            ComponentConnector capsLockIndicator = (ComponentConnector) getState().capsLockIndicator;
+
+            getWidget().setIndicateCapsLock(capsLockIndicator != null);
+        }
     }
 }

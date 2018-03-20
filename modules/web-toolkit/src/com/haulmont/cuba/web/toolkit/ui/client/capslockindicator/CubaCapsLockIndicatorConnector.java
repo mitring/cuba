@@ -22,7 +22,7 @@ import com.vaadin.client.ui.label.LabelConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaCapsLockIndicator.class)
-public class CubaCapsLockIndicatorConnector extends LabelConnector {
+public class CubaCapsLockIndicatorConnector extends LabelConnector implements CapsLockChangeHandler {
 
     @Override
     public CubaCapsLockIndicatorWidget getWidget() {
@@ -47,5 +47,11 @@ public class CubaCapsLockIndicatorConnector extends LabelConnector {
         }
 
         super.onStateChanged(stateChangeEvent);
+    }
+
+    @Override
+    public void changeState(boolean isCapsLock) {
+        getState().isCapsLock = isCapsLock;
+        forceStateChange();
     }
 }

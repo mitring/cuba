@@ -23,6 +23,8 @@ import com.haulmont.cuba.web.toolkit.ui.CubaPasswordField;
 
 public class WebPasswordField extends WebAbstractTextField<CubaPasswordField> implements PasswordField {
 
+    protected CapsLockIndicator capsLockIndicator;
+
     @Override
     protected CubaPasswordField createTextFieldImpl() {
         return new CubaPasswordField();
@@ -56,11 +58,13 @@ public class WebPasswordField extends WebAbstractTextField<CubaPasswordField> im
 
     @Override
     public void setCapsLockIndicator(CapsLockIndicator capsLockIndicator) {
+        this.capsLockIndicator = capsLockIndicator;
+
         component.setCapsLockIndicator(capsLockIndicator);
     }
 
     @Override
     public CapsLockIndicator getCapsLockIndicator() {
-        return component.getCapsLockIndicator();
+        return capsLockIndicator;
     }
 }

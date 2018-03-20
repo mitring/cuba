@@ -26,14 +26,6 @@ public class CubaCapsLockIndicator extends Label {
         initCapsLockIndicatorContent();
     }
 
-    public void setCapsLock(boolean capsLock) {
-        getState().isCapsLock = capsLock;
-    }
-
-    public boolean isCapsLock() {
-        return getState(false).isCapsLock;
-    }
-
     @Override
     protected CubaCapsLockIndicatorState getState() {
         return (CubaCapsLockIndicatorState) super.getState();

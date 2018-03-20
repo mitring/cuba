@@ -18,29 +18,20 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.gui.components.CapsLockIndicator;
-import com.haulmont.cuba.web.toolkit.ui.client.passwordfield.CubaPasswordFieldServerRpc;
 import com.vaadin.server.AbstractErrorMessage;
 import com.vaadin.server.CompositeErrorMessage;
 import com.vaadin.server.ErrorMessage;
+import com.vaadin.ui.Component;
 import com.vaadin.ui.PasswordField;
 import com.haulmont.cuba.web.toolkit.ui.client.passwordfield.CubaPasswordFieldState;
 
 public class CubaPasswordField extends PasswordField {
-
-    protected CapsLockIndicator capsLockIndicator;
 
     public CubaPasswordField() {
         setValidationVisible(false);
         setShowBufferedSourceException(false);
         setShowErrorForDisabledState(false);
         setAutocomplete(false);
-
-        CubaPasswordFieldServerRpc rpc = (CubaPasswordFieldServerRpc) newState -> {
-            if (capsLockIndicator != null) {
-                capsLockIndicator.setCapsLock(newState);
-            }
-        };
-        registerRpc(rpc);
     }
 
     @Override
@@ -78,13 +69,8 @@ public class CubaPasswordField extends PasswordField {
         return superError;
     }
 
-    public CapsLockIndicator getCapsLockIndicator() {
-        return capsLockIndicator;
-    }
-
     public void setCapsLockIndicator(CapsLockIndicator capsLockIndicator) {
-        this.capsLockIndicator = capsLockIndicator;
-
-        getState().indicateCapsLock = capsLockIndicator != null;
+        getState().capsLockIndicator = capsLockIndicator == null ? null
+                : capsLockIndicator.unwrapComposition(Component.class);
     }
 }

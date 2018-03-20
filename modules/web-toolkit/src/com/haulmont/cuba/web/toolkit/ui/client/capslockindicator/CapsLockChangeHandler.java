@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
+package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
-import com.vaadin.shared.communication.ServerRpc;
+public interface CapsLockChangeHandler {
 
-public interface CubaPasswordFieldServerRpc extends ServerRpc{
-
-    void capsLockStateChanged(boolean changedState);
+    void changeState(boolean isCapsLock);
 }
