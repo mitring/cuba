@@ -117,7 +117,7 @@ public class EventPublisher {
      * @param event     event object
      * @param <T>       type of event
      */
-    public <T> void notifySubscribers(Class<T> eventType, T event) {
+    public <T> void publish(Class<T> eventType, T event) {
         if (eventType == null) {
             throw new IllegalArgumentException("eventType cannot be null");
         }
