@@ -16,21 +16,8 @@
 
 package com.haulmont.cuba.gui.components.data;
 
-import com.haulmont.cuba.gui.components.Component.HasValue;
-
-/**
- * vaadin8 todo JavaDoc
- * vaadin8 subclasses for EntityValueBinding
- *
- * @param <T>
- */
-public interface ValueBinding<V> {
-    Class<V> getType();
-
-    ValueSource<V> getSource();
-    HasValue<V> getComponent();
-
-    void unbind();
-
-    // todo buffering support
+// todo
+public interface SupportsImplicitValueConversion {
+    // todo
+    void setupValueConversion(ValueSource<?> valueSource);
 }

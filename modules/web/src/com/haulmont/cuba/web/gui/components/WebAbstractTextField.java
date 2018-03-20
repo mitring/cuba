@@ -25,6 +25,8 @@ import com.haulmont.cuba.core.global.MetadataTools;
 import com.haulmont.cuba.core.global.UserSessionSource;
 import com.haulmont.cuba.gui.components.Formatter;
 import com.haulmont.cuba.gui.components.TextInputField;
+import com.haulmont.cuba.gui.components.data.SupportsImplicitValueConversion;
+import com.haulmont.cuba.gui.components.data.ValueSource;
 import com.haulmont.cuba.gui.data.Datasource;
 import com.haulmont.cuba.web.gui.components.converters.StringToDatatypeConverter;
 import com.haulmont.cuba.web.gui.components.converters.StringToEntityConverter;
@@ -42,11 +44,11 @@ import java.text.ParseException;
 import java.util.Locale;
 import java.util.Map;
 
-public abstract class WebAbstractTextField<T extends AbstractTextField>
+public abstract class WebAbstractTextField<T extends AbstractTextField, V>
         extends
-            WebAbstractField<T>
+            WebAbstractField<T, V>
         implements
-            TextInputField {
+            TextInputField<V>, SupportsImplicitValueConversion {
 
     protected Locale locale = AppBeans.<UserSessionSource>get(UserSessionSource.NAME).getLocale();
 
@@ -66,8 +68,9 @@ public abstract class WebAbstractTextField<T extends AbstractTextField>
     protected abstract T createTextFieldImpl();
 
     @Override
-    public <V> V getValue() {
-        String value = super.getValue();
+    public V getValue() {
+        String value = component.getValue();
+
         if (isTrimming()) {
             value = StringUtils.trim(value);
         }
@@ -205,6 +208,11 @@ public abstract class WebAbstractTextField<T extends AbstractTextField>
         } else {
             component.setConverter(new TextFieldStringToDatatypeConverter(Datatypes.getNN(String.class)));
         }
+    }
+
+    @Override
+    public void setupValueConversion(ValueSource<?> valueSource) {
+        // vaadin8
     }
 
     @Override

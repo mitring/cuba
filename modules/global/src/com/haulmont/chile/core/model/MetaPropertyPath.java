@@ -132,6 +132,10 @@ public class MetaPropertyPath implements Serializable {
         return Arrays.equals(subarray, other.metaProperties);
     }
 
+    public String toPathString() {
+        return new StrBuilder().appendWithSeparators(path, ".").toString();
+    }
+
     @Override
     public String toString() {
         return new StrBuilder().appendWithSeparators(path, ".").toString();

@@ -47,8 +47,8 @@ import java.util.function.Consumer;
 
 import static com.haulmont.cuba.gui.ComponentsHelper.handleFilteredAttributes;
 
-public abstract class WebAbstractField<T extends com.vaadin.v7.ui.AbstractField>
-        extends WebAbstractComponent<T> implements Field, PropertyBoundComponent /* todo ds: move to Field */ {
+public abstract class WebAbstractField<T extends com.vaadin.v7.ui.AbstractField, V>
+        extends WebAbstractComponent<T> implements Field<V>, PropertyBoundComponent /* todo ds: move to Field */ {
 
     protected static final int VALIDATORS_LIST_INITIAL_CAPACITY = 4;
 
@@ -236,7 +236,7 @@ public abstract class WebAbstractField<T extends com.vaadin.v7.ui.AbstractField>
     }
 
     @Override
-    public <V> V getValue() {
+    public V getValue() {
         //noinspection unchecked
         return (V) component.getValue();
     }

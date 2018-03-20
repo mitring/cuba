@@ -63,8 +63,12 @@ public interface ComponentsFactory {
     Component createComponent(ComponentGenerationContext context);
 
     /**
+     * //vaadin8 todo remove from here
+     *
+     * @deprecated todo
      * Create a timer instance.
      * @return client-specific implementation of the timer
      */
+    @Deprecated
     Timer createTimer();
 }

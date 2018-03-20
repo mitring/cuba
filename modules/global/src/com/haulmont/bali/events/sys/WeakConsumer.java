@@ -14,23 +14,24 @@
  * limitations under the License.
  */
 
-package com.haulmont.cuba.gui.components.data;
+package com.haulmont.bali.events.sys;
 
-import com.haulmont.cuba.gui.components.Component.HasValue;
+import java.lang.ref.WeakReference;
+import java.util.function.Consumer;
 
-/**
- * vaadin8 todo JavaDoc
- * vaadin8 subclasses for EntityValueBinding
- *
- * @param <T>
- */
-public interface ValueBinding<V> {
-    Class<V> getType();
+public class WeakConsumer<T> implements Consumer<T> {
 
-    ValueSource<V> getSource();
-    HasValue<V> getComponent();
+    private final WeakReference<Consumer<T>> reference;
 
-    void unbind();
+    public WeakConsumer(Consumer<T> consumer) {
+        reference = new WeakReference<>(consumer);
+    }
 
-    // todo buffering support
+    @Override
+    public void accept(T t) {
+        Consumer<T> consumer = reference.get();
+        if (consumer != null) {
+            consumer.accept(t);
+        }
+    }
 }

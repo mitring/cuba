@@ -16,7 +16,78 @@
 
 package com.haulmont.cuba.gui.components.data;
 
-// todo
-public class DatasourceValueSource {
+import com.haulmont.bali.events.Subscription;
+import com.haulmont.chile.core.model.MetaClass;
+import com.haulmont.chile.core.model.MetaPropertyPath;
+import com.haulmont.cuba.core.entity.Entity;
+import com.haulmont.cuba.gui.components.Component;
+import com.haulmont.cuba.gui.data.Datasource;
 
+import java.util.function.Consumer;
+
+// todo
+public class DatasourceValueSource implements EntityValueSource {
+
+    public DatasourceValueSource(Datasource datasource, String property) {
+
+    }
+
+    public Datasource getDatasource() {
+        return null;
+    }
+
+    @Override
+    public MetaClass getMetaClass() {
+        return null;
+    }
+
+    @Override
+    public MetaPropertyPath getMetaPropertyPath() {
+        return null;
+    }
+
+    @Override
+    public Entity getItem() {
+        return null;
+    }
+
+    @Override
+    public Subscription addInstanceChangeListener(Consumer listener) {
+        return null;
+    }
+
+    @Override
+    public Object getValue() {
+        return null;
+    }
+
+    @Override
+    public void setValue(Object value) {
+
+    }
+
+    @Override
+    public boolean isReadOnly() {
+        return false;
+    }
+
+    @Override
+    public Class getType() {
+        return null;
+    }
+
+    @Override
+    public ValueSourceStatus getStatus() {
+        return null;
+    }
+
+    @Override
+    public void addValueChangeListener(Component.ValueChangeListener listener) {
+
+    }
+
+    @Override
+    public void removeValueChangeListener(Component.ValueChangeListener listener) {
+
+    }
 }

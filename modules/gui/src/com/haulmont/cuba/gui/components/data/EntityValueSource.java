@@ -16,21 +16,23 @@
 
 package com.haulmont.cuba.gui.components.data;
 
-import com.haulmont.cuba.gui.components.Component.HasValue;
+import com.haulmont.bali.events.Subscription;
+import com.haulmont.chile.core.model.MetaClass;
+import com.haulmont.chile.core.model.MetaPropertyPath;
+import com.haulmont.cuba.core.entity.Entity;
+
+import java.util.function.Consumer;
 
 /**
- * vaadin8 todo JavaDoc
- * vaadin8 subclasses for EntityValueBinding
+ * vaadin8 document
  *
- * @param <T>
+ * @param <V>
  */
-public interface ValueBinding<V> {
-    Class<V> getType();
+public interface EntityValueSource<E extends Entity, V> extends ValueSource<V> {
+    MetaClass getMetaClass();
+    MetaPropertyPath getMetaPropertyPath();
 
-    ValueSource<V> getSource();
-    HasValue<V> getComponent();
+    Entity<E> getItem();
 
-    void unbind();
-
-    // todo buffering support
+    Subscription addInstanceChangeListener(Consumer<InstanceChangeEvent<E>> listener);
 }
