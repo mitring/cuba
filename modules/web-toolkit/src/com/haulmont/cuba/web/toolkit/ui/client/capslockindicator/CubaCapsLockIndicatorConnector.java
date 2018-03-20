@@ -18,11 +18,11 @@ package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaCapsLockIndicator;
 import com.vaadin.client.communication.StateChangeEvent;
-import com.vaadin.client.ui.button.ButtonConnector;
+import com.vaadin.client.ui.label.LabelConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaCapsLockIndicator.class)
-public class CubaCapsLockIndicatorConnector extends ButtonConnector {
+public class CubaCapsLockIndicatorConnector extends LabelConnector {
 
     @Override
     public CubaCapsLockIndicatorWidget getWidget() {

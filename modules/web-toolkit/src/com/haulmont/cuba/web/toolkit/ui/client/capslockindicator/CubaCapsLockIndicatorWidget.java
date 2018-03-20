@@ -16,13 +16,7 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
-import com.vaadin.client.ui.VButton;
+import com.vaadin.client.ui.VLabel;
 
-public class CubaCapsLockIndicatorWidget extends VButton {
-
-    protected String STYLE_NAME = "c-caps-lock-indicator";
-
-    public CubaCapsLockIndicatorWidget() {
-        addStyleName(STYLE_NAME);
-    }
+public class CubaCapsLockIndicatorWidget extends VLabel {
 }

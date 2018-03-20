@@ -21,12 +21,8 @@ import com.haulmont.cuba.web.toolkit.ui.CubaCapsLockIndicator;
 
 public class WebCapsLockIndicator extends WebAbstractComponent<CubaCapsLockIndicator> implements CapsLockIndicator {
 
-    protected String DEFAULT_ICON = "font-icon:CIRCLE";
-
     public WebCapsLockIndicator() {
         component = new CubaCapsLockIndicator();
-
-        setIcon(DEFAULT_ICON);
     }
 
     @Override

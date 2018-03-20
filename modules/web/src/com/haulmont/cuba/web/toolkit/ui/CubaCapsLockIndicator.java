@@ -17,9 +17,14 @@
 package com.haulmont.cuba.web.toolkit.ui;
 
 import com.haulmont.cuba.web.toolkit.ui.client.capslockindicator.CubaCapsLockIndicatorState;
-import com.vaadin.ui.Button;
+import com.vaadin.shared.ui.label.ContentMode;
+import com.vaadin.ui.Label;
 
-public class CubaCapsLockIndicator extends Button {
+public class CubaCapsLockIndicator extends Label {
+
+    public CubaCapsLockIndicator() {
+        initCapsLockIndicatorContent();
+    }
 
     public void setCapsLock(boolean capsLock) {
         getState().isCapsLock = capsLock;
@@ -37,5 +42,10 @@ public class CubaCapsLockIndicator extends Button {
     @Override
     protected CubaCapsLockIndicatorState getState(boolean markAsDirty) {
         return (CubaCapsLockIndicatorState) super.getState(markAsDirty);
+    }
+
+    protected void initCapsLockIndicatorContent() {
+        getState().contentMode = ContentMode.HTML;
+        getState().text = "<span></span>";
     }
 }

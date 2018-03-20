@@ -2622,7 +2622,6 @@
     <!-- CapsLockIndicator Component-->
     <xs:complexType name="capsLockIndicatorComponent">
         <xs:attributeGroup ref="hasId"/>
-        <xs:attributeGroup ref="hasIcon"/>
         <xs:attributeGroup ref="hasVisibility"/>
         <xs:attributeGroup ref="hasSize"/>
         <xs:attributeGroup ref="hasAlign"/>

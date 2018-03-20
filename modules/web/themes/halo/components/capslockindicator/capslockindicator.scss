@@ -17,15 +17,29 @@
 
 @mixin halo-cuba-caps-lock-indicator($primary-stylename: c-caps-lock-indicator) {
 
+  .#{$primary-stylename} {
+    display: inline-table;
+    text-align: center;
+    height: 30px;
+  }
+
   .#{$primary-stylename}.caps-lock-on {
     color: green;
   }
 
   .#{$primary-stylename}.caps-lock-off {
-    color: grey;
+    color: #c5c5c5;
   }
 
-  .#{$primary-stylename}.v-button {
-    padding: 0 9px;
+  .#{$primary-stylename} span::after {
+    font-family: "FontAwesome";
+    content: "\f111";
+  }
+
+  .#{$primary-stylename} span {
+    display: table-cell;
+    height: 100%;
+    vertical-align: middle;
+    width: 100%;
   }
 }

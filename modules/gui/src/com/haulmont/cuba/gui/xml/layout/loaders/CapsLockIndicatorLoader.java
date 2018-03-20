@@ -32,7 +32,6 @@ public class CapsLockIndicatorLoader extends AbstractComponentLoader<CapsLockInd
     public void loadComponent() {
         loadAlign(resultComponent, element);
         loadStyleName(resultComponent, element);
-        loadIcon(resultComponent, element);
         loadVisible(resultComponent, element);
 
         loadWidth(resultComponent, element, Component.AUTO_SIZE);
