@@ -620,6 +620,7 @@ create table SYS_SENDING_MESSAGE (
     ATTEMPTS_COUNT integer,
     ATTEMPTS_MADE integer,
     ATTACHMENTS_NAME longvarchar,
+    CONTENT_BODY_TYPE integer,
     --
     primary key (ID)
 )^

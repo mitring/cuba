@@ -18,6 +18,7 @@
 package com.haulmont.cuba.core.entity;
 
 import com.haulmont.cuba.core.entity.annotation.SystemLevel;
+import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.SendingStatus;
 import org.apache.commons.lang.StringUtils;
 
@@ -82,6 +83,9 @@ public class SendingMessage extends StandardEntity {
 
     @Column(name = "EMAIL_HEADERS")
     protected String headers;
+
+    @Column(name = "CONTENT_BODY_TYPE")
+    protected Integer contentBodyType;
 
     public String getAddress() {
         return address;
@@ -185,5 +189,13 @@ public class SendingMessage extends StandardEntity {
 
     public void setHeaders(String headers) {
         this.headers = headers;
+    }
+
+    public ContentBodyType getContentBodyType() {
+        return contentBodyType == null ? null : ContentBodyType.fromId(contentBodyType);
+    }
+
+    public void setContentBodyType(ContentBodyType contentBodyType) {
+        this.contentBodyType = contentBodyType == null ? null : contentBodyType.getId();
     }
 }
