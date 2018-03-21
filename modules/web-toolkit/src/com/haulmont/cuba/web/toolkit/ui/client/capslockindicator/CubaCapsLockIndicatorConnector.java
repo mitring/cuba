@@ -17,12 +17,15 @@
 package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
 import com.haulmont.cuba.web.toolkit.ui.CubaCapsLockIndicator;
-import com.vaadin.client.communication.StateChangeEvent;
 import com.vaadin.client.ui.label.LabelConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaCapsLockIndicator.class)
 public class CubaCapsLockIndicatorConnector extends LabelConnector implements CapsLockChangeHandler {
+
+    public CubaCapsLockIndicatorConnector() {
+        showCapsLockStatus(false); // init caps lock-off status by default
+    }
 
     @Override
     public CubaCapsLockIndicatorWidget getWidget() {
@@ -35,23 +38,13 @@ public class CubaCapsLockIndicatorConnector extends LabelConnector implements Ca
     }
 
     @Override
-    public void onStateChanged(StateChangeEvent stateChangeEvent) {
-        if (stateChangeEvent.hasPropertyChanged("isCapsLock")) {
-            if (getState().isCapsLock) {
-                getWidget().removeStyleName("caps-lock-off");
-                getWidget().addStyleName("caps-lock-on");
-            } else {
-                getWidget().removeStyleName("caps-lock-on");
-                getWidget().addStyleName("caps-lock-off");
-            }
+    public void showCapsLockStatus(boolean isCapsLock) {
+        if (isCapsLock) {
+            getWidget().removeStyleName("caps-lock-off");
+            getWidget().addStyleName("caps-lock-on");
+        } else {
+            getWidget().removeStyleName("caps-lock-on");
+            getWidget().addStyleName("caps-lock-off");
         }
-
-        super.onStateChanged(stateChangeEvent);
-    }
-
-    @Override
-    public void changeState(boolean isCapsLock) {
-        getState().isCapsLock = isCapsLock;
-        forceStateChange();
     }
 }

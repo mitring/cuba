@@ -18,5 +18,5 @@ package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
 public interface CapsLockChangeHandler {
 
-    void changeState(boolean isCapsLock);
+    void showCapsLockStatus(boolean isCapsLock);
 }

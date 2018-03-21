@@ -30,7 +30,7 @@ public class CubaPasswordFieldConnector extends PasswordFieldConnector {
     public CubaPasswordFieldConnector() {
         getWidget().capsLockStateChangeConsumer = (isCapsLock) -> {
             if (getState().capsLockIndicator instanceof CapsLockChangeHandler) {
-                ((CapsLockChangeHandler) getState().capsLockIndicator).changeState(isCapsLock);
+                ((CapsLockChangeHandler) getState().capsLockIndicator).showCapsLockStatus(isCapsLock);
             }
         };
     }

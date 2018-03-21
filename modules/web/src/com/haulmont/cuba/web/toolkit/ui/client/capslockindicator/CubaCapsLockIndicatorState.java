@@ -16,15 +16,11 @@
 
 package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
-import com.vaadin.shared.annotations.NoLayout;
 import com.vaadin.shared.ui.label.LabelState;
 
 public class CubaCapsLockIndicatorState extends LabelState {
 
     {
-        primaryStyleName = "c-caps-lock-indicator";
+        primaryStyleName = "c-capslockindicator";
     }
-
-    @NoLayout
-    public boolean isCapsLock = false;
 }

@@ -15,7 +15,7 @@
  *
  */
 
-@mixin halo-cuba-caps-lock-indicator($primary-stylename: c-caps-lock-indicator) {
+@mixin halo-cuba-caps-lock-indicator($primary-stylename: c-capslockindicator) {
 
   .#{$primary-stylename} {
     display: inline-table;
