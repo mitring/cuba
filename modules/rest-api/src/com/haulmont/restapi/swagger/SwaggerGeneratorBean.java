@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-package com.haulmont.restapi.controllers;
+package com.haulmont.restapi.swagger;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.haulmont.bali.datastruct.Pair;
 import com.haulmont.bali.util.ReflectionHelper;
 import com.haulmont.chile.core.annotations.NamePattern;
@@ -32,37 +27,28 @@ import com.haulmont.cuba.core.global.Metadata;
 import com.haulmont.cuba.core.global.MetadataTools;
 import com.haulmont.cuba.core.global.Resources;
 import com.haulmont.restapi.config.RestQueriesConfiguration;
-import com.haulmont.restapi.config.RestQueriesConfiguration.QueryInfo;
-import com.haulmont.restapi.config.RestQueriesConfiguration.QueryParamInfo;
 import com.haulmont.restapi.config.RestServicesConfiguration;
-import com.haulmont.restapi.config.RestServicesConfiguration.RestMethodInfo;
-import com.haulmont.restapi.config.RestServicesConfiguration.RestMethodParamInfo;
 import io.swagger.models.*;
 import io.swagger.models.parameters.*;
 import io.swagger.models.properties.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
 
 import javax.inject.Inject;
 import javax.persistence.Entity;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Collectors;
 
-import static com.fasterxml.jackson.dataformat.yaml.YAMLGenerator.Feature.WRITE_DOC_START_MARKER;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
-@SuppressWarnings("unchecked")
-@RestController("cuba_RestDocsController")
-@RequestMapping("/v2/rest_docs")
-public class RestDocsController {
+@Component(SwaggerGenerator.NAME)
+public class SwaggerGeneratorBean implements SwaggerGenerator {
 
-    private static final Logger log = LoggerFactory.getLogger(RestDocsController.class);
+    private static final Logger log = LoggerFactory.getLogger(SwaggerGeneratorBean.class);
 
     protected static final String ENTITY_PATH = "/entities/%s";
     protected static final String ENTITY_RUD_OPS = "/entities/%s/{entityId}";
@@ -109,8 +95,8 @@ public class RestDocsController {
     protected Map<String, Parameter> parameters = new HashMap<>();
     protected Map<String, Model> definitions = new HashMap<>();
 
-    @RequestMapping(value = "/rest.json", method = RequestMethod.GET, produces = APPLICATION_JSON_VALUE)
-    public String getSwaggerJson() {
+    @Override
+    public Swagger generateSwagger() {
         lock.readLock().lock();
         try {
             checkInitialized();
@@ -118,36 +104,7 @@ public class RestDocsController {
             lock.readLock().unlock();
         }
 
-        ObjectMapper jsonWriter = new ObjectMapper();
-        jsonWriter.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        try {
-            return jsonWriter.writeValueAsString(swagger);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("An error occurred while generating Swagger documentation", e);
-        }
-    }
-
-    @RequestMapping(value = "/rest.yml", method = RequestMethod.GET, produces = "application/yaml")
-    public String getSwaggerYaml() {
-        lock.readLock().lock();
-        try {
-            checkInitialized();
-        } finally {
-            lock.readLock().unlock();
-        }
-
-        ObjectMapper jsonWriter = new ObjectMapper();
-        jsonWriter.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        try {
-            JsonNode jsonNode = jsonWriter.readTree(
-                    jsonWriter.writeValueAsBytes(swagger));
-
-            return new YAMLMapper()
-                    .disable(WRITE_DOC_START_MARKER)
-                    .writeValueAsString(jsonNode);
-        } catch (IOException e) {
-            throw new RuntimeException("An error occurred while generating Swagger documentation", e);
-        }
+        return swagger;
     }
 
     protected void checkInitialized() {
@@ -222,7 +179,7 @@ public class RestDocsController {
 
         List<Tag> queryTags = queriesConfiguration.getQueries()
                 .stream()
-                .map(QueryInfo::getEntityName)
+                .map(RestQueriesConfiguration.QueryInfo::getEntityName)
                 .distinct()
                 .map(queryEntity -> new Tag()
                         .name(queryEntity + " Queries")
@@ -565,7 +522,7 @@ public class RestDocsController {
         for (RestServicesConfiguration.RestServiceInfo serviceInfo : servicesConfiguration.getServiceInfos()) {
             String serviceName = serviceInfo.getName();
 
-            for (RestMethodInfo methodInfo : serviceInfo.getMethods()) {
+            for (RestServicesConfiguration.RestMethodInfo methodInfo : serviceInfo.getMethods()) {
                 String methodName = methodInfo.getName();
                 paths.put(String.format(SERVICE_PATH, serviceName, methodName),
                         generateServiceMethodPath(serviceName, methodInfo));
@@ -575,13 +532,13 @@ public class RestDocsController {
         return paths;
     }
 
-    protected Path generateServiceMethodPath(String service, RestMethodInfo methodInfo) {
+    protected Path generateServiceMethodPath(String service, RestServicesConfiguration.RestMethodInfo methodInfo) {
         return new Path()
                 .get(generateServiceMethodOp(service, methodInfo, RequestMethod.GET))
                 .post(generateServiceMethodOp(service, methodInfo, RequestMethod.POST));
     }
 
-    protected Operation generateServiceMethodOp(String service, RestMethodInfo methodInfo, RequestMethod requestMethod) {
+    protected Operation generateServiceMethodOp(String service, RestServicesConfiguration.RestMethodInfo methodInfo, RequestMethod requestMethod) {
         Operation operation = new Operation()
                 .tag(service)
                 .produces(APPLICATION_JSON_VALUE)
@@ -601,7 +558,7 @@ public class RestDocsController {
         return operation;
     }
 
-    protected List<Parameter> generateServiceMethodParams(String service, RestMethodInfo methodInfo, RequestMethod requestMethod) {
+    protected List<Parameter> generateServiceMethodParams(String service, RestServicesConfiguration.RestMethodInfo methodInfo, RequestMethod requestMethod) {
         if (RequestMethod.GET == requestMethod) {
             return methodInfo.getParams().stream()
                     .map(p -> generateServiceGetOpParam(service, methodInfo.getName(), p, requestMethod))
@@ -615,10 +572,10 @@ public class RestDocsController {
         }
     }
 
-    protected Parameter generateServicePostOpParam(List<RestMethodParamInfo> params) {
+    protected Parameter generateServicePostOpParam(List<RestServicesConfiguration.RestMethodParamInfo> params) {
         Map<String, Property> modelProps = params.stream()
                 .collect(Collectors.toMap(
-                        RestMethodParamInfo::getName,
+                        RestServicesConfiguration.RestMethodParamInfo::getName,
                         p -> getPropertyFromJavaType(p.getType())));
 
         ModelImpl parameterModel = new ModelImpl();
@@ -631,7 +588,7 @@ public class RestDocsController {
         return parameter.schema(parameterModel);
     }
 
-    protected Parameter generateServiceGetOpParam(String service, String method, RestMethodParamInfo param,
+    protected Parameter generateServiceGetOpParam(String service, String method, RestServicesConfiguration.RestMethodParamInfo param,
                                                   RequestMethod requestMethod) {
         String paramName = String.format(GET_PARAM_NAME, service, method, param.getName(), requestMethod.name());
 
@@ -647,7 +604,7 @@ public class RestDocsController {
     protected Map<String, Path> generateQueriesPaths() {
         Map<String, Path> paths = new LinkedHashMap<>();
 
-        for (QueryInfo queryInfo : queriesConfiguration.getQueries()) {
+        for (RestQueriesConfiguration.QueryInfo queryInfo : queriesConfiguration.getQueries()) {
             String entity = queryInfo.getEntityName();
             String queryName = queryInfo.getName();
 
@@ -663,19 +620,19 @@ public class RestDocsController {
         return paths;
     }
 
-    protected Path generateQueryPath(QueryInfo query) {
+    protected Path generateQueryPath(RestQueriesConfiguration.QueryInfo query) {
         return new Path()
                 .get(generateQueryOperation(query, RequestMethod.GET))
                 .post(generateQueryOperation(query, RequestMethod.POST));
     }
 
-    protected Path generateQueryCountPath(QueryInfo query) {
+    protected Path generateQueryCountPath(RestQueriesConfiguration.QueryInfo query) {
         return new Path()
                 .get(generateQueryCountOperation(query, RequestMethod.GET))
                 .post(generateQueryCountOperation(query, RequestMethod.POST));
     }
 
-    protected Operation generateQueryOperation(QueryInfo query, RequestMethod method) {
+    protected Operation generateQueryOperation(RestQueriesConfiguration.QueryInfo query, RequestMethod method) {
         Operation operation = new Operation()
                 .tag(query.getEntityName() + " Queries")
                 .produces(APPLICATION_JSON_VALUE)
@@ -692,7 +649,7 @@ public class RestDocsController {
         return operation;
     }
 
-    protected Operation generateQueryCountOperation(QueryInfo query, RequestMethod method) {
+    protected Operation generateQueryCountOperation(RestQueriesConfiguration.QueryInfo query, RequestMethod method) {
         Operation operation = new Operation()
                 .tag(query.getEntityName() + " Queries")
                 .produces(APPLICATION_JSON_VALUE)
@@ -710,7 +667,7 @@ public class RestDocsController {
         return operation;
     }
 
-    protected List<Parameter> generateQueryOpParams(QueryInfo query, RequestMethod method, boolean generateOptionalParams) {
+    protected List<Parameter> generateQueryOpParams(RestQueriesConfiguration.QueryInfo query, RequestMethod method, boolean generateOptionalParams) {
         List<Parameter> optionalParams = generateOptionalQueryParams(generateOptionalParams);
 
         if (RequestMethod.GET == method) {
@@ -770,7 +727,7 @@ public class RestDocsController {
         );
     }
 
-    protected Parameter generateQueryGetOpParam(QueryInfo query, QueryParamInfo param) {
+    protected Parameter generateQueryGetOpParam(RestQueriesConfiguration.QueryInfo query, RestQueriesConfiguration.QueryParamInfo param) {
         String paramName = String.format(GET_PARAM_NAME, query.getEntityName(), query.getName(), param.getName(),
                 RequestMethod.GET.name());
 
@@ -779,10 +736,10 @@ public class RestDocsController {
         return new RefParameter(PARAMETERS_PREFIX + paramName);
     }
 
-    protected Parameter generateQueryPostOpParam(List<QueryParamInfo> params) {
+    protected Parameter generateQueryPostOpParam(List<RestQueriesConfiguration.QueryParamInfo> params) {
         Map<String, Property> modelProps = params.stream()
                 .collect(Collectors.toMap(
-                        QueryParamInfo::getName,
+                        RestQueriesConfiguration.QueryParamInfo::getName,
                         p -> getPropertyFromJavaType(p.getType())));
 
         ModelImpl parameterModel = new ModelImpl();
