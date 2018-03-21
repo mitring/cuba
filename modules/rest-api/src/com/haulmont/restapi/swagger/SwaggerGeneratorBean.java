@@ -171,6 +171,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         List<Tag> entityTags = metadataTools.getAllPersistentMetaClasses()
                 .stream()
                 .filter(mc -> !metadataTools.isSystemLevel(mc))
+                .sorted(Comparator.comparing(MetadataObject::getName))
                 .map(mc -> new Tag()
                         .name(mc.getName())
                         .description("Entity CRUD operations"))
@@ -181,6 +182,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
                 .stream()
                 .map(RestQueriesConfiguration.QueryInfo::getEntityName)
                 .distinct()
+                .sorted(String::compareTo)
                 .map(queryEntity -> new Tag()
                         .name(queryEntity + " Queries")
                         .description("Predefined queries execution"))
@@ -189,6 +191,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
 
         List<Tag> serviceTags = servicesConfiguration.getServiceInfos()
                 .stream()
+                .sorted(Comparator.comparing(RestServicesConfiguration.RestServiceInfo::getName))
                 .map(serviceInfo -> new Tag()
                         .name(serviceInfo.getName())
                         .description("Middleware services execution"))
@@ -379,8 +382,6 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
                 .response(403, getErrorResponse("Forbidden. The user doesn't have permissions to read the entity."))
                 .response(404, getErrorResponse("Not found. MetaClass for the entity with the given name not found."));
 
-        operation.setParameters(generateEntityOptionalParams(false));
-
         if (RequestMethod.GET == method) {
             QueryParameter parameter = new QueryParameter()
                     .name("filter")
@@ -395,6 +396,8 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
             parameter.setRequired(true);
             operation.parameter(parameter);
         }
+
+        operation.getParameters().addAll(generateEntityOptionalParams(false));
 
         return operation;
     }
@@ -757,18 +760,20 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
      */
 
     protected Parameter generateGetOperationParam(Pair<String, String> param) {
+        boolean paramIsArray = param.getSecond() != null && param.getSecond().contains(ARRAY_SIGNATURE);
+
         return new QueryParameter()
                 .name(param.getFirst())
                 .required(true)
-                .type(param.getSecond().contains(ARRAY_SIGNATURE)
-                        ? "array"
-                        : "string")
-                .items(param.getSecond().contains(ARRAY_SIGNATURE)
-                        ? new StringProperty()
-                        : null);
+                .type(paramIsArray ? "array" : "string")
+                .items(paramIsArray ? new StringProperty() : null);
     }
 
     protected Property getPropertyFromJavaType(String type) {
+        if (type == null) {
+            return new StringProperty();
+        }
+
         if (type.contains(ARRAY_SIGNATURE)) {
             Property itemProperty = getPropertyFromJavaType(type.replace(ARRAY_SIGNATURE, ""));
             return new ArrayProperty(itemProperty);
@@ -788,7 +793,12 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
     }
 
     protected Property getEntityProperty(String classFqn) {
-        Class<Object> clazz = ReflectionHelper.getClass(classFqn);
+        Class<?> clazz;
+        try {
+            clazz = ReflectionHelper.loadClass(classFqn);
+        } catch (ClassNotFoundException e) {
+            return null;
+        }
 
         MetaClass metaClass = metadata.getClass(clazz);
         if (metaClass != null) {
