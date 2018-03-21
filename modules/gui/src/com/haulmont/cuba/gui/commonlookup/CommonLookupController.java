@@ -47,12 +47,16 @@ public class CommonLookupController extends AbstractLookup {
     @WindowParam(name = CLASS_PARAMETER)
     protected MetaClass metaClass;
 
+    @WindowParam(name = MULTI_SELECT)
+    protected Boolean multiSelect;
+
     protected Filter filter;
     protected Table entitiesTable;
     protected CollectionDatasource entitiesDs;
     protected View view;
 
     public static final String CLASS_PARAMETER = "class";
+    public static final String MULTI_SELECT = "multiSelect";
     public static final String SCREEN_ID = "commonLookup";
 
     @Override
@@ -102,7 +106,7 @@ public class CommonLookupController extends AbstractLookup {
         entitiesTable = componentsFactory.createComponent(Table.class);
         entitiesTable.setId("table");
         entitiesTable.setDatasource(entitiesDs);
-        entitiesTable.setMultiSelect(true);
+        entitiesTable.setMultiSelect(multiSelect != null ? multiSelect : true);
         entitiesTable.setSizeFull();
 
         RowsCount rowsCount = componentsFactory.createComponent(RowsCount.class);
