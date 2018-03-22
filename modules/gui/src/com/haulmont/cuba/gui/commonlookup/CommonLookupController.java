@@ -19,6 +19,7 @@ import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.chile.core.model.MetaProperty;
 import com.haulmont.cuba.core.global.*;
 import com.haulmont.cuba.gui.WindowParam;
+import com.haulmont.cuba.gui.WindowParams;
 import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.data.DsBuilder;
@@ -47,16 +48,12 @@ public class CommonLookupController extends AbstractLookup {
     @WindowParam(name = CLASS_PARAMETER)
     protected MetaClass metaClass;
 
-    @WindowParam(name = MULTI_SELECT)
-    protected Boolean multiSelect;
-
     protected Filter filter;
     protected Table entitiesTable;
     protected CollectionDatasource entitiesDs;
     protected View view;
 
     public static final String CLASS_PARAMETER = "class";
-    public static final String MULTI_SELECT = "multiSelect";
     public static final String SCREEN_ID = "commonLookup";
 
     @Override
@@ -106,8 +103,10 @@ public class CommonLookupController extends AbstractLookup {
         entitiesTable = componentsFactory.createComponent(Table.class);
         entitiesTable.setId("table");
         entitiesTable.setDatasource(entitiesDs);
-        entitiesTable.setMultiSelect(multiSelect != null ? multiSelect : true);
         entitiesTable.setSizeFull();
+
+        Boolean multiSelect = WindowParams.MULTI_SELECT.get(getContext());
+        entitiesTable.setMultiSelect(multiSelect != null ? multiSelect : true);
 
         RowsCount rowsCount = componentsFactory.createComponent(RowsCount.class);
         rowsCount.setDatasource(entitiesDs);
@@ -127,7 +126,7 @@ public class CommonLookupController extends AbstractLookup {
     }
 
     protected void copyViewProperties(View src, View target) {
-        for (ViewProperty viewProperty :  src.getProperties()) {
+        for (ViewProperty viewProperty : src.getProperties()) {
             MetaProperty metaProperty = metaClass.getProperty(viewProperty.getName());
             if (metaProperty == null || !metadata.getTools().isSystemLevel(metaProperty)) {
                 if (!target.containsProperty(viewProperty.getName())) {
