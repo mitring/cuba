@@ -28,6 +28,8 @@ public class DesktopPasswordField extends DesktopAbstractTextField<JPasswordFiel
 
     protected Boolean autocomplete = false;
 
+    protected CapsLockIndicator capsLockIndicator;
+
     @Override
     protected JPasswordField createTextComponentImpl() {
         JPasswordField field = new PasswordFlushableField();
@@ -103,12 +105,11 @@ public class DesktopPasswordField extends DesktopAbstractTextField<JPasswordFiel
 
     @Override
     public void setCapsLockIndicator(CapsLockIndicator capsLockIndicator) {
-        // do nothing
+        this.capsLockIndicator = capsLockIndicator;
     }
 
     @Override
     public CapsLockIndicator getCapsLockIndicator() {
-        // do nothing
-        return null;
+        return capsLockIndicator;
     }
 }

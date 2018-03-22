@@ -40,11 +40,11 @@ public class CubaCapsLockIndicatorConnector extends LabelConnector implements Ca
     @Override
     public void showCapsLockStatus(boolean isCapsLock) {
         if (isCapsLock) {
-            getWidget().removeStyleName("caps-lock-off");
-            getWidget().addStyleName("caps-lock-on");
+            getWidget().removeStyleName("capslock-off");
+            getWidget().addStyleName("capslock-on");
         } else {
-            getWidget().removeStyleName("caps-lock-on");
-            getWidget().addStyleName("caps-lock-off");
+            getWidget().removeStyleName("capslock-on");
+            getWidget().addStyleName("capslock-off");
         }
     }
 }

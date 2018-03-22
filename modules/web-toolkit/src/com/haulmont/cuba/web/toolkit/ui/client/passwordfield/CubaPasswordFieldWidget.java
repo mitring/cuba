@@ -29,7 +29,7 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
 
     protected Boolean capsLock;
 
-    public Consumer<Boolean> capsLockStateChangeConsumer;
+    public Consumer<Boolean> capslockStateChangeHandler;
     protected HandlerRegistration pressHandlerRegistration = null;
     protected HandlerRegistration downHandlerRegistration = null;
 
@@ -85,7 +85,7 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
                 || (Character.toUpperCase(charCode) == charCode && !event.isShiftKeyDown());
 
         if (pressHandlerRegistration != null) {
-            capsLockStateChangeConsumer.accept(capsLock);
+            capslockStateChangeHandler.accept(capsLock);
         }
     }
 
@@ -96,7 +96,7 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
             capsLock = !capsLock;
 
             if (pressHandlerRegistration != null) {
-                capsLockStateChangeConsumer.accept(capsLock);
+                capslockStateChangeHandler.accept(capsLock);
             }
         }
     }
@@ -105,8 +105,8 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
     public void onBlur(BlurEvent event) {
         capsLock = null;
 
-        if (capsLockStateChangeConsumer != null) {
-            capsLockStateChangeConsumer.accept(false);
+        if (capslockStateChangeHandler != null) {
+            capslockStateChangeHandler.accept(false);
         }
 
         super.onBlur(event);

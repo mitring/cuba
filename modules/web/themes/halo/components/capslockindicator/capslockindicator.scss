@@ -15,7 +15,7 @@
  *
  */
 
-@mixin halo-cuba-caps-lock-indicator($primary-stylename: c-capslockindicator) {
+@mixin halo-cuba-capslockindicator($primary-stylename: c-capslockindicator) {
 
   .#{$primary-stylename} {
     display: inline-table;
@@ -23,11 +23,11 @@
     height: 30px;
   }
 
-  .#{$primary-stylename}.caps-lock-on {
+  .#{$primary-stylename}.capslock-on {
     color: green;
   }
 
-  .#{$primary-stylename}.caps-lock-off {
+  .#{$primary-stylename}.capslock-off {
     color: #c5c5c5;
   }
 
