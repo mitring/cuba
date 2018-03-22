@@ -85,7 +85,7 @@ public class SendingMessage extends StandardEntity {
     protected String headers;
 
     @Column(name = "CONTENT_BODY_TYPE")
-    protected Integer contentBodyType;
+    protected String contentBodyType;
 
     public String getAddress() {
         return address;

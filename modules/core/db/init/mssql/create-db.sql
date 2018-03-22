@@ -646,7 +646,7 @@ create table SYS_SENDING_MESSAGE (
     ATTEMPTS_COUNT int,
     ATTEMPTS_MADE int,
     ATTACHMENTS_NAME varchar(max),
-    CONTENT_BODY_TYPE integer,
+    CONTENT_BODY_TYPE varchar(26),
     --
     primary key nonclustered (ID),
     constraint FK_SYS_SENDING_MESSAGE_CONTENT_FILE foreign key (CONTENT_TEXT_FILE_ID) references SYS_FILE(ID)

@@ -18,21 +18,21 @@ package com.haulmont.cuba.core.global;
 
 import com.haulmont.chile.core.datatypes.impl.EnumClass;
 
-public enum ContentBodyType implements EnumClass<Integer>{
-    TEXT(10),
-    HTML(20);
+public enum ContentBodyType implements EnumClass<String>{
+    TEXT("text/plain; charset=UTF-8"),
+    HTML("text/html; charset=UTF-8");
 
-    private Integer id;
+    private String id;
 
-    ContentBodyType(Integer integer) {
-        id = integer;
+    ContentBodyType(String id) {
+        this.id = id;
     }
 
-    public Integer getId() {
+    public String getId() {
         return id;
     }
 
-    public static ContentBodyType fromId(Integer id) {
+    public static ContentBodyType fromId(String id) {
         for (ContentBodyType bodyType : ContentBodyType.values()) {
             if (id.equals(bodyType.getId())) {
                 return bodyType;
