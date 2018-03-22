@@ -23,6 +23,7 @@ import com.google.gwt.dom.client.Node;
 import com.google.gwt.dom.client.Style;
 import com.google.gwt.event.dom.client.ContextMenuEvent;
 import com.google.gwt.event.dom.client.DragEndEvent;
+import com.google.gwt.event.dom.client.DragLeaveEvent;
 import com.google.gwt.event.dom.client.DropEvent;
 import com.google.gwt.event.shared.HandlerRegistration;
 import com.google.gwt.user.client.DOM;
@@ -43,6 +44,7 @@ public class CubaTabSheetWidget extends VDDTabSheet {
 
     protected HandlerRegistration dragEndHandler;
     protected HandlerRegistration dropHandler;
+    protected HandlerRegistration dragLeaveHandler;
 
     public CubaTabSheetWidget() {
         RootPanel rootPanel = RootPanel.get();
@@ -54,6 +56,13 @@ public class CubaTabSheetWidget extends VDDTabSheet {
         dropHandler = rootPanel.addBitlessDomHandler(event ->
                         handleBadDD(event.getNativeEvent()),
                         DropEvent.getType());
+
+        dragLeaveHandler = rootPanel.addBitlessDomHandler(event -> {
+            Element element = event.getRelativeElement();
+            if (element == null || element == rootPanel.getElement()) {
+                VDragAndDropManager.get().interruptDrag();
+            }
+        }, DragLeaveEvent.getType());
     }
 
     protected void handleBadDD(NativeEvent event) {
@@ -74,6 +83,7 @@ public class CubaTabSheetWidget extends VDDTabSheet {
         super.onUnload();
         dragEndHandler.removeHandler();
         dropHandler.removeHandler();
+        dragLeaveHandler.removeHandler();
     }
 
     @Override
