@@ -99,6 +99,12 @@ public class Emailer implements EmailerAPI {
     }
 
     @Override
+    public void sendEmail(String addresses, String caption, String body, ContentBodyType bodyType,
+                          EmailAttachment... attachments) throws EmailException {
+        sendEmail(new EmailInfo(addresses, caption, null, body, bodyType, attachments));
+    }
+
+    @Override
     public void sendEmail(EmailInfo info) throws EmailException {
         prepareEmailInfo(info);
         persistAndSendEmail(info);
@@ -155,7 +161,8 @@ public class Emailer implements EmailerAPI {
             address = address.trim();
             if (StringUtils.isNotBlank(address)) {
                 SendingMessage sendingMessage = convertToSendingMessage(address, info.getFrom(), info.getCaption(),
-                        info.getBody(), info.getHeaders(), info.getAttachments(), attemptsCount, deadline);
+                        info.getBody(), info.getBodyType(), info.getHeaders(), info.getAttachments(), attemptsCount,
+                        deadline);
 
                 sendingMessageList.add(sendingMessage);
             }
@@ -535,7 +542,9 @@ public class Emailer implements EmailerAPI {
         }
     }
 
-    protected SendingMessage convertToSendingMessage(String address, String from, String caption, String body, @Nullable List<EmailHeader> headers,
+    protected SendingMessage convertToSendingMessage(String address, String from, String caption, String body,
+                                                     ContentBodyType bodyType,
+                                                     @Nullable List<EmailHeader> headers,
                                                      @Nullable EmailAttachment[] attachments,
                                                      @Nullable Integer attemptsCount, @Nullable Date deadline) {
         SendingMessage sendingMessage = metadata.create(SendingMessage.class);
@@ -543,6 +552,7 @@ public class Emailer implements EmailerAPI {
         sendingMessage.setAddress(address);
         sendingMessage.setFrom(from);
         sendingMessage.setContentText(body);
+        sendingMessage.setContentBodyType(bodyType);
         sendingMessage.setCaption(caption);
         sendingMessage.setAttemptsCount(attemptsCount);
         sendingMessage.setDeadline(deadline);

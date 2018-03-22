@@ -19,6 +19,7 @@ package com.haulmont.cuba.core.app;
 
 import com.haulmont.cuba.core.entity.SendingAttachment;
 import com.haulmont.cuba.core.entity.SendingMessage;
+import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.EmailHeader;
 import com.haulmont.cuba.core.global.FileTypesHelper;
 import com.haulmont.cuba.core.global.TimeSource;
@@ -116,14 +117,20 @@ public class EmailSender implements EmailSenderAPI {
     }
 
     protected String getContentBodyType(SendingMessage sendingMessage) {
-        String text = sendingMessage.getContentText();
-        String bodyContentType;
-        if (text.trim().startsWith("<html>")) {
-            bodyContentType = "text/html; charset=UTF-8";
+        ContentBodyType bodyType = sendingMessage.getContentBodyType();
+
+        if (bodyType != null) {
+            return bodyType.getId();
         } else {
-            bodyContentType = "text/plain; charset=UTF-8";
+            String text = sendingMessage.getContentText();
+            String bodyContentType;
+            if (text.trim().startsWith("<html>")) {
+                bodyContentType = "text/html; charset=UTF-8";
+            } else {
+                bodyContentType = "text/plain; charset=UTF-8";
+            }
+            return bodyContentType;
         }
-        return bodyContentType;
     }
 
     protected void assignFromAddress(SendingMessage sendingMessage, MimeMessage msg) throws MessagingException {

@@ -17,6 +17,7 @@
 package com.haulmont.cuba.core.app;
 
 import com.haulmont.cuba.core.entity.SendingMessage;
+import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.EmailAttachment;
 import com.haulmont.cuba.core.global.EmailException;
 import com.haulmont.cuba.core.global.EmailInfo;
@@ -33,6 +34,9 @@ public interface EmailService {
     String NAME = "cuba_EmailService";
 
     /**
+     * Deprecated. Use {@link #sendEmail(String, String, String, ContentBodyType, EmailAttachment...)} instead.
+     * <p>
+     *
      * Send email synchronously.
      *
      * @param address    comma or semicolon separated list of addresses
@@ -42,7 +46,22 @@ public interface EmailService {
      * @throws com.haulmont.cuba.core.global.EmailException
      *          in case of any errors
      */
+    @Deprecated
     void sendEmail(String address, String caption, String body, EmailAttachment... attachment)
+            throws EmailException;
+
+    /**
+     * Send email synchronously.
+     *
+     * @param address    comma or semicolon separated list of addresses
+     * @param caption    email subject
+     * @param body       email body
+     * @param bodyType   email body type like text or html
+     * @param attachment email attachments
+     * @throws com.haulmont.cuba.core.global.EmailException
+     *          in case of any errors
+     */
+    void sendEmail(String address, String caption, String body, ContentBodyType bodyType, EmailAttachment... attachment)
             throws EmailException;
 
     /**
