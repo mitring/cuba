@@ -18,9 +18,17 @@ package com.haulmont.restapi.swagger;
 
 import io.swagger.models.Swagger;
 
+/**
+ * This bean generates Swagger documentation according to the 2.0 specification.
+ * <p>
+ * Generated documentation includes operations with entities, predefined REST queries and exposed services.
+ */
 public interface SwaggerGenerator {
 
     String NAME = "cuba_SwaggerGenerator";
 
+    /**
+     * @return a {@code Swagger} object that can be transformed to JSON or YAML version of documentation
+     */
     Swagger generateSwagger();
 }

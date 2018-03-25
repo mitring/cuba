@@ -28,6 +28,8 @@ import com.haulmont.cuba.core.global.MetadataTools;
 import com.haulmont.cuba.core.global.Resources;
 import com.haulmont.restapi.config.RestQueriesConfiguration;
 import com.haulmont.restapi.config.RestServicesConfiguration;
+import com.haulmont.restapi.config.RestServicesConfiguration.RestMethodInfo;
+import com.haulmont.restapi.config.RestServicesConfiguration.RestMethodParamInfo;
 import io.swagger.models.*;
 import io.swagger.models.parameters.*;
 import io.swagger.models.properties.*;
@@ -69,6 +71,9 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
     protected static final String ARRAY_SIGNATURE = "[]";
 
     @Inject
+    protected GlobalConfig globalConfig;
+
+    @Inject
     protected Resources resources;
 
     @Inject
@@ -78,19 +83,14 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
     protected MetadataTools metadataTools;
 
     @Inject
-    protected GlobalConfig globalConfig;
-
-    @Inject
     protected RestQueriesConfiguration queriesConfiguration;
 
     @Inject
     protected RestServicesConfiguration servicesConfiguration;
 
+    protected Swagger swagger = null;
     protected ReadWriteLock lock = new ReentrantReadWriteLock();
     protected volatile boolean initialized = false;
-
-    // cache
-    protected Swagger swagger = null;
 
     protected Map<String, Parameter> parameters = new HashMap<>();
     protected Map<String, Model> definitions = new HashMap<>();
@@ -232,14 +232,18 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
     protected Map<String, Path> generateEntityCRUDPaths(ModelImpl entityModel) {
         Map<String, Path> crudPaths = new LinkedHashMap<>();
 
-        Pair<String, Path> createPath = generateEntityCreatePath(entityModel);
-        createPath.getSecond()
-                .get(generateEntityBrowseOperation(entityModel));
-
-        crudPaths.put(createPath.getFirst(), createPath.getSecond());
+        crudPaths.putAll(generateEntityPath(entityModel));
         crudPaths.putAll(generateEntityRUDPaths(entityModel));
 
         return crudPaths;
+    }
+
+    protected Map<String, Path> generateEntityPath(ModelImpl entityModel) {
+        return Collections.singletonMap(
+                String.format(ENTITY_PATH, entityModel.getName()),
+                new Path()
+                        .get(generateEntityBrowseOperation(entityModel))
+                        .post(generateEntityCreateOperation(entityModel)));
     }
 
     protected Map<String, Path> generateEntityRUDPaths(ModelImpl entityModel) {
@@ -259,7 +263,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
                         .post(generateEntitySearchOperation(entityModel, RequestMethod.POST)));
     }
 
-    protected Pair<String, Path> generateEntityCreatePath(ModelImpl entityModel) {
+    protected Operation generateEntityCreateOperation(ModelImpl entityModel) {
         Operation operation = new Operation()
                 .tag(entityModel.getName())
                 .produces(APPLICATION_JSON_VALUE)
@@ -281,9 +285,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
 
         operation.parameter(entityParam);
 
-        return new Pair<>(
-                String.format(ENTITY_PATH, entityModel.getName()),
-                new Path().post(operation));
+        return operation;
     }
 
     protected Operation generateEntityBrowseOperation(ModelImpl entityModel) {
@@ -402,7 +404,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         return operation;
     }
 
-    protected List<Parameter> generateEntityOptionalParams(boolean singleEntity) {
+    protected List<Parameter> generateEntityOptionalParams(boolean singleEntityOperation) {
         List<Parameter> singleEntityParams = Arrays.asList(
                 new QueryParameter()
                         .name("dynamicAttributes")
@@ -420,7 +422,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
                         .property(new StringProperty())
         );
 
-        if (singleEntity) {
+        if (singleEntityOperation) {
             return singleEntityParams;
         }
 
@@ -454,35 +456,25 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
     protected ModelImpl createEntityModel(MetaClass entityClass) {
         Map<String, Property> properties = new LinkedHashMap<>();
 
-        Map<String, MetaProperty> entityProperties = entityClass.getProperties()
-                .stream()
-                .collect(Collectors.toMap(MetadataObject::getName, p -> p));
-
-        MetaProperty idMetaProperty = entityProperties.get("id");
-        if (idMetaProperty != null) {
-            Property idProperty = getPropertyFromJavaType(idMetaProperty.getJavaType().getName());
-            properties.put("id", idProperty);
-        }
-
         StringProperty entityNameProperty = getEntityNameProperty(entityClass);
         properties.put("_entityName", entityNameProperty);
         properties.put("_instanceName", getNamePatternProperty(entityClass));
 
-        for (Map.Entry<String, MetaProperty> fieldEntry : entityProperties.entrySet()) {
-            String fieldName = fieldEntry.getKey();
-            MetaProperty metaProperty = fieldEntry.getValue();
+        for (MetaProperty metaProperty : entityClass.getProperties()) {
+            String fieldName = metaProperty.getName();
+            Class<?> propertyType = metaProperty.getJavaType();
+            String propertyTypeName = propertyType.getName();
 
-            if ("id".equals(fieldName)) {
-                continue;
-            }
+            if (Collection.class.isAssignableFrom(propertyType)) {
+                String collectionItemsType = metaProperty.getRange().asClass().getJavaClass().getName();
+                Property itemsProperty = getPropertyFromJavaType(collectionItemsType);
 
-            if (List.class == metaProperty.getJavaType() || Set.class == metaProperty.getJavaType()) {
-                Property itemsProperty = getPropertyFromJavaType(metaProperty.getRange().asClass().getJavaClass().getName());
                 Property collectionProperty = new ArrayProperty(itemsProperty);
                 properties.put(fieldName, collectionProperty);
+            } else if (Map.class.isAssignableFrom(propertyType)) {
+                properties.put(fieldName, new ObjectProperty(Collections.emptyMap()));
             } else {
-                Property fieldProperty = getPropertyFromJavaType(metaProperty.getJavaType().getName());
-                properties.put(fieldName, fieldProperty);
+                properties.put(fieldName, getPropertyFromJavaType(propertyTypeName));
             }
         }
 
@@ -525,9 +517,10 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         for (RestServicesConfiguration.RestServiceInfo serviceInfo : servicesConfiguration.getServiceInfos()) {
             String serviceName = serviceInfo.getName();
 
-            for (RestServicesConfiguration.RestMethodInfo methodInfo : serviceInfo.getMethods()) {
+            for (RestMethodInfo methodInfo : serviceInfo.getMethods()) {
                 String methodName = methodInfo.getName();
-                paths.put(String.format(SERVICE_PATH, serviceName, methodName),
+                paths.put(
+                        String.format(SERVICE_PATH, serviceName, methodName),
                         generateServiceMethodPath(serviceName, methodInfo));
             }
         }
@@ -535,13 +528,13 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         return paths;
     }
 
-    protected Path generateServiceMethodPath(String service, RestServicesConfiguration.RestMethodInfo methodInfo) {
+    protected Path generateServiceMethodPath(String service, RestMethodInfo methodInfo) {
         return new Path()
                 .get(generateServiceMethodOp(service, methodInfo, RequestMethod.GET))
                 .post(generateServiceMethodOp(service, methodInfo, RequestMethod.POST));
     }
 
-    protected Operation generateServiceMethodOp(String service, RestServicesConfiguration.RestMethodInfo methodInfo, RequestMethod requestMethod) {
+    protected Operation generateServiceMethodOp(String service, RestMethodInfo methodInfo, RequestMethod requestMethod) {
         Operation operation = new Operation()
                 .tag(service)
                 .produces(APPLICATION_JSON_VALUE)
@@ -561,9 +554,10 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         return operation;
     }
 
-    protected List<Parameter> generateServiceMethodParams(String service, RestServicesConfiguration.RestMethodInfo methodInfo, RequestMethod requestMethod) {
+    protected List<Parameter> generateServiceMethodParams(String service, RestMethodInfo methodInfo, RequestMethod requestMethod) {
         if (RequestMethod.GET == requestMethod) {
-            return methodInfo.getParams().stream()
+            return methodInfo.getParams()
+                    .stream()
                     .map(p -> generateServiceGetOpParam(service, methodInfo.getName(), p, requestMethod))
                     .collect(Collectors.toList());
         } else {
@@ -575,29 +569,29 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         }
     }
 
-    protected Parameter generateServicePostOpParam(List<RestServicesConfiguration.RestMethodParamInfo> params) {
+    protected Parameter generateServiceGetOpParam(String service, String method, RestMethodParamInfo param, RequestMethod requestMethod) {
+        String paramName = String.format(GET_PARAM_NAME, service, method, param.getName(), requestMethod.name());
+
+        parameters.put(paramName, generateGetOperationParam(new Pair<>(param.getName(), param.getType())));
+
+        return new RefParameter(PARAMETERS_PREFIX + paramName);
+    }
+
+    protected Parameter generateServicePostOpParam(List<RestMethodParamInfo> params) {
         Map<String, Property> modelProps = params.stream()
                 .collect(Collectors.toMap(
-                        RestServicesConfiguration.RestMethodParamInfo::getName,
+                        RestMethodParamInfo::getName,
                         p -> getPropertyFromJavaType(p.getType())));
 
         ModelImpl parameterModel = new ModelImpl();
         parameterModel.setProperties(modelProps);
 
         BodyParameter parameter = new BodyParameter()
-                .name("paramsObject");
+                .name("paramsObject")
+                .schema(parameterModel);
         parameter.setRequired(true);
 
-        return parameter.schema(parameterModel);
-    }
-
-    protected Parameter generateServiceGetOpParam(String service, String method, RestServicesConfiguration.RestMethodParamInfo param,
-                                                  RequestMethod requestMethod) {
-        String paramName = String.format(GET_PARAM_NAME, service, method, param.getName(), requestMethod.name());
-
-        parameters.put(paramName, generateGetOperationParam(new Pair<>(param.getName(), param.getType())));
-
-        return new RefParameter(PARAMETERS_PREFIX + paramName);
+        return parameter;
     }
 
     /*
@@ -670,11 +664,14 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         return operation;
     }
 
-    protected List<Parameter> generateQueryOpParams(RestQueriesConfiguration.QueryInfo query, RequestMethod method, boolean generateOptionalParams) {
-        List<Parameter> optionalParams = generateOptionalQueryParams(generateOptionalParams);
+    protected List<Parameter> generateQueryOpParams(RestQueriesConfiguration.QueryInfo query, RequestMethod method,
+                                                    boolean generateOptionalParams) {
+        List<Parameter> optionalParams = generateOptionalParams ?
+                generateOptionalQueryParams() : Collections.emptyList();
 
         if (RequestMethod.GET == method) {
-            List<Parameter> queryParams = query.getParams().stream()
+            List<Parameter> queryParams = query.getParams()
+                    .stream()
                     .map(p -> generateQueryGetOpParam(query, p))
                     .collect(Collectors.toList());
 
@@ -694,11 +691,7 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         }
     }
 
-    protected List<Parameter> generateOptionalQueryParams(boolean generateParams) {
-        if (!generateParams) {
-            return Collections.emptyList();
-        }
-
+    protected List<Parameter> generateOptionalQueryParams() {
         return Arrays.asList(
                 new QueryParameter()
                         .name("dynamicAttributes")
@@ -775,8 +768,8 @@ public class SwaggerGeneratorBean implements SwaggerGenerator {
         }
 
         if (type.contains(ARRAY_SIGNATURE)) {
-            Property itemProperty = getPropertyFromJavaType(type.replace(ARRAY_SIGNATURE, ""));
-            return new ArrayProperty(itemProperty);
+            String itemsType = type.replace(ARRAY_SIGNATURE, "");
+            return new ArrayProperty(getPropertyFromJavaType(itemsType));
         }
 
         Property primitiveProperty = getPrimitiveProperty(type);
