@@ -25,7 +25,8 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.io.InputStream;
 
-public class DesktopClasspathResource extends DesktopAbstractStreamSettingsResource implements DesktopResource, ClasspathResource {
+public class DesktopClasspathResource extends DesktopAbstractStreamSettingsResource
+        implements DesktopResource, ClasspathResource {
 
     protected String path;
     // just stub

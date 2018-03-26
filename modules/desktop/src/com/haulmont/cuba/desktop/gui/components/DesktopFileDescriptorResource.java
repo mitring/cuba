@@ -58,7 +58,9 @@ public class DesktopFileDescriptorResource extends DesktopAbstractStreamSettings
     @Override
     protected void createResource() {
         try {
-            ByteArrayDataProvider provider = new ByteArrayDataProvider(AppBeans.get(FileStorageService.class).loadFile(fileDescriptor));
+            byte[] file = AppBeans.get(FileStorageService.class)
+                    .loadFile(fileDescriptor);
+            ByteArrayDataProvider provider = new ByteArrayDataProvider(file);
 
             resource = ImageIO.read(provider.provide());
         } catch (FileStorageException e) {

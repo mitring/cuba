@@ -24,7 +24,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.function.Supplier;
 
-public class DesktopStreamResource extends DesktopAbstractStreamSettingsResource implements DesktopResource, StreamResource {
+public class DesktopStreamResource extends DesktopAbstractStreamSettingsResource
+        implements DesktopResource, StreamResource {
 
     protected Supplier<InputStream> streamSupplier;
     // just stub

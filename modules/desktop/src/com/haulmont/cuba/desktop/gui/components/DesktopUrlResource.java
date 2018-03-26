@@ -23,7 +23,8 @@ import javax.imageio.ImageIO;
 import java.io.IOException;
 import java.net.URL;
 
-public class DesktopUrlResource extends DesktopAbstractResource implements DesktopResource, UrlResource {
+public class DesktopUrlResource extends DesktopAbstractResource
+        implements DesktopResource, UrlResource {
 
     protected URL url;
     // just stub

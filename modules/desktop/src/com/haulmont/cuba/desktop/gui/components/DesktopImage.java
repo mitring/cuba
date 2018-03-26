@@ -52,11 +52,9 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
 
         builder.put(UrlResource.class, DesktopUrlResource.class);
         builder.put(ClasspathResource.class, DesktopClasspathResource.class);
-        builder.put(ThemeResource.class, DesktopThemeResource.class);
         builder.put(FileDescriptorResource.class, DesktopFileDescriptorResource.class);
         builder.put(FileResource.class, DesktopFileResource.class);
         builder.put(StreamResource.class, DesktopStreamResource.class);
-        builder.put(RelativePathResource.class, DesktopRelativePathResource.class);
 
         resourcesClasses = builder.build();
     }
