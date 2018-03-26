@@ -34,6 +34,7 @@ import com.vaadin.client.ComputedStyle;
 import com.vaadin.client.WidgetUtil;
 import com.vaadin.client.ui.VTabsheet;
 import com.vaadin.client.ui.dd.VDragAndDropManager;
+import com.vaadin.client.ui.dd.VDragEvent;
 import com.vaadin.shared.ui.tabsheet.TabState;
 import fi.jasoft.dragdroplayouts.client.ui.tabsheet.VDDTabSheet;
 
@@ -76,6 +77,14 @@ public class CubaTabSheetWidget extends VDDTabSheet {
         if (!getElement().isOrHasChild(targetParent)) {
             VDragAndDropManager.get().interruptDrag();
         }
+    }
+
+    @Override
+    protected void updateDragDetails(VDragEvent event) {
+        if (event == null) {
+            return;
+        }
+        super.updateDragDetails(event);
     }
 
     @Override
