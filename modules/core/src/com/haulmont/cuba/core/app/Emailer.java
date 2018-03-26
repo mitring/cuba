@@ -99,9 +99,9 @@ public class Emailer implements EmailerAPI {
     }
 
     @Override
-    public void sendEmail(String addresses, String caption, String body, ContentBodyType bodyType,
+    public void sendEmail(String addresses, String caption, String body, String bodyContentType,
                           EmailAttachment... attachments) throws EmailException {
-        sendEmail(new EmailInfo(addresses, caption, null, body, bodyType, attachments));
+        sendEmail(new EmailInfo(addresses, caption, null, body, bodyContentType, attachments));
     }
 
     @Override
@@ -161,7 +161,7 @@ public class Emailer implements EmailerAPI {
             address = address.trim();
             if (StringUtils.isNotBlank(address)) {
                 SendingMessage sendingMessage = convertToSendingMessage(address, info.getFrom(), info.getCaption(),
-                        info.getBody(), info.getBodyType(), info.getHeaders(), info.getAttachments(), attemptsCount,
+                        info.getBody(), info.getBodyContentType(), info.getHeaders(), info.getAttachments(), attemptsCount,
                         deadline);
 
                 sendingMessageList.add(sendingMessage);
@@ -543,7 +543,7 @@ public class Emailer implements EmailerAPI {
     }
 
     protected SendingMessage convertToSendingMessage(String address, String from, String caption, String body,
-                                                     ContentBodyType bodyType,
+                                                     String bodyContentType,
                                                      @Nullable List<EmailHeader> headers,
                                                      @Nullable EmailAttachment[] attachments,
                                                      @Nullable Integer attemptsCount, @Nullable Date deadline) {
@@ -552,7 +552,7 @@ public class Emailer implements EmailerAPI {
         sendingMessage.setAddress(address);
         sendingMessage.setFrom(from);
         sendingMessage.setContentText(body);
-        sendingMessage.setContentBodyType(bodyType);
+        sendingMessage.setBodyContentType(bodyContentType);
         sendingMessage.setCaption(caption);
         sendingMessage.setAttemptsCount(attemptsCount);
         sendingMessage.setDeadline(deadline);

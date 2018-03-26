@@ -42,12 +42,12 @@ public class EmailInfo implements Serializable {
     private String templatePath;
     private Map<String, Serializable> templateParameters;
     private String body;
-    private ContentBodyType bodyType;
+    private String bodyContentType;
     private EmailAttachment[] attachments;
     private List<EmailHeader> headers;
 
     /**
-     * Deprecated. Use {@link #EmailInfo(String, String, String, ContentBodyType, String, Map, EmailAttachment...)}
+     * Deprecated. Use {@link #EmailInfo(String, String, String, String, String, Map, EmailAttachment...)}
      * instead.
      * <p>
      *
@@ -88,7 +88,7 @@ public class EmailInfo implements Serializable {
                 "john.doe@company.com,jane.roe@company.com",
                 "Company news",
                 "do-not-reply@company.com",
-                ContentBodyType.HTML,
+                "text/html; charset=UTF-8",
                 "com/company/sample/email_templates/news.txt",
                 Collections.singletonMap("some_var", some_value)
            );
@@ -97,13 +97,13 @@ public class EmailInfo implements Serializable {
      * @param addresses             comma or semicolon separated list of addresses
      * @param caption               email subject
      * @param from                  "from" address. If null, a default provided by {@code cuba.email.fromAddress} app property is used.
-     * @param bodyType              email body like text or html
+     * @param bodyContentType       email body like "text/plain; charset=UTF-8" or "text/html; charset=UTF-8", etc
      * @param templatePath          path to a Freemarker template which is used to create the message body. The template
      *                              is loaded through {@link Resources} in the <b>core</b> module.
      * @param templateParameters    map of parameters to be passed to the template
      * @param attachments           email attachments. Omit this parameter if there are no attachments.
      */
-    public EmailInfo(String addresses, String caption, @Nullable String from, ContentBodyType bodyType,
+    public EmailInfo(String addresses, String caption, @Nullable String from, String bodyContentType,
                      String templatePath, Map<String, Serializable> templateParameters,
                      EmailAttachment... attachments) {
         this.addresses = addresses;
@@ -112,11 +112,11 @@ public class EmailInfo implements Serializable {
         this.attachments = attachments;
         this.templateParameters = templateParameters;
         this.from = from;
-        this.bodyType = bodyType;
+        this.bodyContentType = bodyContentType;
     }
 
     /**
-     * Deprecated. Use {@link #EmailInfo(String, String, String, String, ContentBodyType, EmailAttachment...)}
+     * Deprecated. Use {@link #EmailInfo(String, String, String, String, String, EmailAttachment...)}
      * instead.
      * <p>
      *
@@ -153,7 +153,7 @@ public class EmailInfo implements Serializable {
                 "Company news",
                 null,
                 "Some content",
-                ContentBodyType.TEXT
+                "text/plain; charset=UTF-8"
            );
      * </pre>
      *
@@ -161,21 +161,21 @@ public class EmailInfo implements Serializable {
      * @param caption               email subject
      * @param from                  "from" address. If null, a default provided by {@code cuba.email.fromAddress} app property is used.
      * @param body                  email body
-     * @param bodyType              email body type like text or html
+     * @param bodyContentType       email body like "text/plain; charset=UTF-8" or "text/html; charset=UTF-8", etc
      * @param attachments           email attachments. Omit this parameter if there are no attachments.
      */
-    public EmailInfo(String addresses, String caption, @Nullable String from, String body, ContentBodyType bodyType,
+    public EmailInfo(String addresses, String caption, @Nullable String from, String body, String bodyContentType,
                      EmailAttachment... attachments) {
         this.addresses = addresses;
         this.caption = caption;
         this.body = body;
-        this.bodyType = bodyType;
+        this.bodyContentType = bodyContentType;
         this.attachments = attachments;
         this.from = from;
     }
 
     /**
-     * Deprecated. Use {@link #EmailInfo(String, String, String, ContentBodyType)} instead.
+     * Deprecated. Use {@link #EmailInfo(String, String, String, String)} instead.
      *
      * Constructor. The "from" address is taken from the {@code cuba.email.fromAddress} app property.
      * <pre>
@@ -204,20 +204,20 @@ public class EmailInfo implements Serializable {
                "john.doe@company.com,jane.roe@company.com",
                "Company news",
                "Some content",
-               ContentBodyType.TEXT
+               "text/plain; charset=UTF-8"
            );
      * </pre>
      *
      * @param addresses             comma or semicolon separated list of addresses
      * @param caption               email subject
      * @param body                  email body
-     * @param bodyType              email body type like text or html
+     * @param bodyContentType       email body like "text/plain; charset=UTF-8" or "text/html; charset=UTF-8", etc
      */
-    public EmailInfo(String addresses, String caption, String body, ContentBodyType bodyType) {
+    public EmailInfo(String addresses, String caption, String body, String bodyContentType) {
         this.addresses = addresses;
         this.caption = caption;
         this.body = body;
-        this.bodyType = bodyType;
+        this.bodyContentType = bodyContentType;
     }
 
     public String getAddresses() {
@@ -290,11 +290,11 @@ public class EmailInfo implements Serializable {
         this.headers.add(new EmailHeader(name, value));
     }
 
-    public ContentBodyType getBodyType() {
-        return bodyType;
+    public String getBodyContentType() {
+        return bodyContentType;
     }
 
-    public void setBodyType(ContentBodyType bodyType) {
-        this.bodyType = bodyType;
+    public void setBodyContentType(String bodyContentType) {
+        this.bodyContentType = bodyContentType;
     }
 }

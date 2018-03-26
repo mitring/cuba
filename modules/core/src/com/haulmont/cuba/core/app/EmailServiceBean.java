@@ -17,7 +17,6 @@
 package com.haulmont.cuba.core.app;
 
 import com.haulmont.cuba.core.entity.SendingMessage;
-import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.EmailAttachment;
 import com.haulmont.cuba.core.global.EmailException;
 import com.haulmont.cuba.core.global.EmailInfo;
@@ -38,8 +37,9 @@ public class EmailServiceBean implements EmailService {
     }
 
     @Override
-    public void sendEmail(String address, String caption, String body, ContentBodyType bodyType, EmailAttachment... attachment) throws EmailException {
-        emailer.sendEmail(address, caption, body, bodyType, attachment);
+    public void sendEmail(String address, String caption, String body, String bodyContentType,
+                          EmailAttachment... attachment) throws EmailException {
+        emailer.sendEmail(address, caption, body, bodyContentType, attachment);
     }
 
     @Override

@@ -18,7 +18,6 @@ package com.haulmont.cuba.core.app;
 
 import com.haulmont.cuba.core.entity.SendingAttachment;
 import com.haulmont.cuba.core.entity.SendingMessage;
-import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.EmailAttachment;
 import com.haulmont.cuba.core.global.EmailException;
 import com.haulmont.cuba.core.global.EmailInfo;
@@ -41,7 +40,7 @@ public interface EmailerAPI {
     String NAME = "cuba_Emailer";
 
     /**
-     * Deprecated. Use {@link #sendEmail(String, String, String, ContentBodyType, EmailAttachment...)} instead.
+     * Deprecated. Use {@link #sendEmail(String, String, String, String, EmailAttachment...)} instead.
      * <p>
      *
      * Send email synchronously.
@@ -58,14 +57,14 @@ public interface EmailerAPI {
     /**
      * Send email synchronously.
      *
-     * @param address     comma or semicolon separated list of addresses
-     * @param caption     email subject
-     * @param body        email body
-     * @param bodyType    email body type like text or html
-     * @param attachments email attachments
+     * @param address            comma or semicolon separated list of addresses
+     * @param caption            email subject
+     * @param body               email body
+     * @param bodyContentType    email body like "text/plain; charset=UTF-8" or "text/html; charset=UTF-8", etc
+     * @param attachments        email attachments
      * @throws EmailException in case of any errors
      */
-    void sendEmail(String address, String caption, String body, ContentBodyType bodyType, EmailAttachment... attachments)
+    void sendEmail(String address, String caption, String body, String bodyContentType, EmailAttachment... attachments)
             throws EmailException;
 
     /**

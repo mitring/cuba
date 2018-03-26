@@ -17,9 +17,9 @@
 
 package com.haulmont.cuba.core.app;
 
+import com.google.common.base.Strings;
 import com.haulmont.cuba.core.entity.SendingAttachment;
 import com.haulmont.cuba.core.entity.SendingMessage;
-import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.EmailHeader;
 import com.haulmont.cuba.core.global.FileTypesHelper;
 import com.haulmont.cuba.core.global.TimeSource;
@@ -117,13 +117,12 @@ public class EmailSender implements EmailSenderAPI {
     }
 
     protected String getContentBodyType(SendingMessage sendingMessage) {
-        ContentBodyType bodyType = sendingMessage.getContentBodyType();
+        String bodyContentType = Strings.emptyToNull(sendingMessage.getBodyContentType());
 
-        if (bodyType != null) {
-            return bodyType.getId();
+        if (bodyContentType != null) {
+            return bodyContentType;
         } else {
             String text = sendingMessage.getContentText();
-            String bodyContentType;
             if (text.trim().startsWith("<html>")) {
                 bodyContentType = "text/html; charset=UTF-8";
             } else {

@@ -18,7 +18,6 @@
 package com.haulmont.cuba.core.entity;
 
 import com.haulmont.cuba.core.entity.annotation.SystemLevel;
-import com.haulmont.cuba.core.global.ContentBodyType;
 import com.haulmont.cuba.core.global.SendingStatus;
 import org.apache.commons.lang.StringUtils;
 
@@ -39,6 +38,7 @@ public class SendingMessage extends StandardEntity {
     private static final long serialVersionUID = -8156998515878702538L;
 
     public static final int CAPTION_LENGTH = 500;
+    public static final int BODY_CONTENT_TYPE_LENGTH = 50;
     public static final String HEADERS_SEPARATOR = "\n";
 
     @Column(name = "ADDRESS_TO")
@@ -84,8 +84,8 @@ public class SendingMessage extends StandardEntity {
     @Column(name = "EMAIL_HEADERS")
     protected String headers;
 
-    @Column(name = "CONTENT_BODY_TYPE")
-    protected String contentBodyType;
+    @Column(name = "BODY_CONTENT_TYPE", length = BODY_CONTENT_TYPE_LENGTH)
+    protected String bodyContentType;
 
     public String getAddress() {
         return address;
@@ -191,11 +191,11 @@ public class SendingMessage extends StandardEntity {
         this.headers = headers;
     }
 
-    public ContentBodyType getContentBodyType() {
-        return contentBodyType == null ? null : ContentBodyType.fromId(contentBodyType);
+    public String getBodyContentType() {
+        return bodyContentType;
     }
 
-    public void setContentBodyType(ContentBodyType contentBodyType) {
-        this.contentBodyType = contentBodyType == null ? null : contentBodyType.getId();
+    public void setBodyContentType(String bodyContentType) {
+        this.bodyContentType = bodyContentType;
     }
 }
