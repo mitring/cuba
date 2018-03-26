@@ -18,5 +18,16 @@ package com.haulmont.cuba.web.toolkit.ui.client.capslockindicator;
 
 import com.vaadin.client.ui.VLabel;
 
-public class CubaCapsLockIndicatorWidget extends VLabel {
+public class CubaCapsLockIndicatorWidget extends VLabel implements CapsLockChangeHandler {
+
+    @Override
+    public void showCapsLockStatus(boolean isCapsLock) {
+        if (isCapsLock) {
+            removeStyleName("capslock-off");
+            addStyleName("capslock-on");
+        } else {
+            removeStyleName("capslock-on");
+            addStyleName("capslock-off");
+        }
+    }
 }

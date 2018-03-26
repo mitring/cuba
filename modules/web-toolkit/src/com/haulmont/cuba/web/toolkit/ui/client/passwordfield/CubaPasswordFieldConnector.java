@@ -27,14 +27,6 @@ import com.vaadin.shared.ui.Connect;
 @Connect(CubaPasswordField.class)
 public class CubaPasswordFieldConnector extends PasswordFieldConnector {
 
-    public CubaPasswordFieldConnector() {
-        getWidget().capslockStateChangeHandler = (isCapsLock) -> {
-            if (getState().capsLockIndicator instanceof CapsLockChangeHandler) {
-                ((CapsLockChangeHandler) getState().capsLockIndicator).showCapsLockStatus(isCapsLock);
-            }
-        };
-    }
-
     @Override
     public CubaPasswordFieldState getState() {
         return (CubaPasswordFieldState) super.getState();
@@ -54,7 +46,7 @@ public class CubaPasswordFieldConnector extends PasswordFieldConnector {
         if (stateChangeEvent.hasPropertyChanged("capsLockIndicator")) {
             ComponentConnector capsLockIndicator = (ComponentConnector) getState().capsLockIndicator;
 
-            getWidget().setIndicateCapsLock(capsLockIndicator != null);
+            getWidget().setIndicateCapsLock(capsLockIndicator == null ? null : capsLockIndicator.getWidget());
         }
     }
 }

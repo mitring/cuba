@@ -21,10 +21,10 @@ import com.vaadin.client.ui.label.LabelConnector;
 import com.vaadin.shared.ui.Connect;
 
 @Connect(CubaCapsLockIndicator.class)
-public class CubaCapsLockIndicatorConnector extends LabelConnector implements CapsLockChangeHandler {
+public class CubaCapsLockIndicatorConnector extends LabelConnector {
 
     public CubaCapsLockIndicatorConnector() {
-        showCapsLockStatus(false); // init caps lock-off status by default
+        getWidget().showCapsLockStatus(false); // init caps lock-off status by default
     }
 
     @Override
@@ -35,16 +35,5 @@ public class CubaCapsLockIndicatorConnector extends LabelConnector implements Ca
     @Override
     public CubaCapsLockIndicatorState getState() {
         return (CubaCapsLockIndicatorState) super.getState();
-    }
-
-    @Override
-    public void showCapsLockStatus(boolean isCapsLock) {
-        if (isCapsLock) {
-            getWidget().removeStyleName("capslock-off");
-            getWidget().addStyleName("capslock-on");
-        } else {
-            getWidget().removeStyleName("capslock-on");
-            getWidget().addStyleName("capslock-off");
-        }
     }
 }

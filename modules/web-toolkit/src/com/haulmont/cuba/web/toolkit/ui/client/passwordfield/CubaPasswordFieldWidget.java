@@ -20,6 +20,8 @@ package com.haulmont.cuba.web.toolkit.ui.client.passwordfield;
 import com.google.gwt.event.dom.client.*;
 import com.google.gwt.user.client.Window;
 import com.google.gwt.event.shared.HandlerRegistration;
+import com.google.gwt.user.client.ui.Widget;
+import com.haulmont.cuba.web.toolkit.ui.client.capslockindicator.CapsLockChangeHandler;
 import com.vaadin.client.BrowserInfo;
 import com.vaadin.client.ui.VPasswordField;
 
@@ -28,6 +30,7 @@ import java.util.function.Consumer;
 public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressHandler, KeyDownHandler {
 
     protected Boolean capsLock;
+    protected Widget capslockIndicator;
 
     public Consumer<Boolean> capslockStateChangeHandler;
     protected HandlerRegistration pressHandlerRegistration = null;
@@ -49,11 +52,19 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
         }
     }
 
-    public void setIndicateCapsLock(boolean indicateCapsLock) {
-        if (indicateCapsLock) {
+    public void setIndicateCapsLock(Widget capslockIndicator) {
+        this.capslockIndicator = capslockIndicator;
+
+        if (capslockIndicator != null) {
             if (pressHandlerRegistration == null) {
                 pressHandlerRegistration = addKeyPressHandler(this);
                 downHandlerRegistration = addKeyDownHandler(this);
+
+                capslockStateChangeHandler = isCapsLock -> {
+                    if (capslockIndicator instanceof CapsLockChangeHandler) {
+                        ((CapsLockChangeHandler) capslockIndicator).showCapsLockStatus(isCapsLock);
+                    }
+                };
             }
         } else if (pressHandlerRegistration != null) {
             downHandlerRegistration.removeHandler();
@@ -61,6 +72,8 @@ public class CubaPasswordFieldWidget extends VPasswordField implements KeyPressH
 
             pressHandlerRegistration.removeHandler();
             pressHandlerRegistration = null;
+
+            capslockStateChangeHandler = null;
         }
     }
 
