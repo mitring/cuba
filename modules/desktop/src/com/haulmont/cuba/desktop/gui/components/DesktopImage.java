@@ -18,6 +18,7 @@ package com.haulmont.cuba.desktop.gui.components;
 
 import com.google.common.collect.ImmutableMap;
 import com.haulmont.bali.events.EventRouter;
+import com.haulmont.bali.util.Preconditions;
 import com.haulmont.chile.core.model.MetaPropertyPath;
 import com.haulmont.chile.core.model.utils.InstanceUtils;
 import com.haulmont.cuba.core.entity.FileDescriptor;
@@ -61,6 +62,7 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
     }
 
     protected Resource resource;
+    protected Runnable resourceUpdateHandler;
 
     protected Datasource datasource;
     protected MetaPropertyPath metaPropertyPath;
@@ -71,13 +73,10 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
     protected Datasource.ItemChangeListener itemChangeListener;
     protected WeakItemChangeListener weakItemChangeListener;
 
-    // just stub
     protected ScaleMode scaleMode = ScaleMode.NONE;
 
     protected EventRouter eventRouter;
-
-    protected Runnable resourceUpdateHandler;
-    private MouseListener mouseListener;
+    protected MouseListener mouseListener;
 
     public DesktopImage() {
         impl = new JXImageView();
@@ -85,6 +84,13 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
         impl.setEditable(false);
         impl.setBackgroundPainter((g, object, width, height) ->
                 g.setBackground(Color.gray));
+
+        resourceUpdateHandler = () -> {
+            BufferedImage image = this.resource == null ?
+                    null
+                    : ((DesktopAbstractResource) this.resource).getResource();
+            impl.setImage(scaleImage(image));
+        };
     }
 
     @Override
@@ -156,11 +162,11 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
 
         this.resource = value;
 
-        BufferedImage vResource = null;
+        BufferedImage image = null;
         if (value != null && ((DesktopAbstractResource) value).hasSource()) {
-            vResource = ((DesktopAbstractResource) value).getResource();
+            image = ((DesktopAbstractResource) value).getResource();
         }
-        impl.setImage(vResource);
+        impl.setImage(image);
 
         if (value != null) {
             ((DesktopAbstractResource) value).setResourceUpdatedHandler(resourceUpdateHandler);
@@ -204,16 +210,47 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
         return metaPropertyPath;
     }
 
-    // just stub
     @Override
     public ScaleMode getScaleMode() {
         return scaleMode;
     }
 
-    // just stub
     @Override
     public void setScaleMode(ScaleMode scaleMode) {
+        Preconditions.checkNotNullArgument(scaleMode);
+
         this.scaleMode = scaleMode;
+
+        DesktopAbstractResource desktopResource = (DesktopAbstractResource) this.resource;
+        if (desktopResource.hasSource()) {
+            java.awt.Image scaledImage = scaleImage(desktopResource.getResource());
+            impl.setImage(scaledImage);
+        }
+    }
+
+    protected java.awt.Image scaleImage(BufferedImage image) {
+        switch (scaleMode) {
+            case FILL:
+                return image.getScaledInstance(Math.round(getWidth()), Math.round(getHeight()), java.awt.Image.SCALE_FAST);
+            case CONTAIN:
+            case SCALE_DOWN:
+                int newH = Math.round(getHeight());
+                int newW = Math.round(getWidth());
+
+                float scaleCoef;
+
+                if (getHeight() > getWidth()) {
+                    scaleCoef = getWidth() / image.getWidth();
+
+                    newH = Math.round(image.getHeight() * scaleCoef);
+                } else {
+                    scaleCoef = getHeight() / image.getHeight();
+
+                    newW = Math.round(image.getWidth() * scaleCoef);
+                }
+                return image.getScaledInstance(newW, newH, java.awt.Image.SCALE_DEFAULT);
+        }
+        return image;
     }
 
     protected EventRouter getEventRouter() {
@@ -255,7 +292,8 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
 
     @Override
     public void setSource(Resource resource) {
-        if (this.resource == null && resource == null || (this.resource != null && this.resource.equals(resource))) {
+        if (this.resource == null && resource == null
+                || (this.resource != null && this.resource.equals(resource))) {
             return;
         }
 
@@ -273,6 +311,10 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
 
     @Override
     public <R extends Resource> R createResource(Class<R> type) {
+        if (ThemeResource.class.isAssignableFrom(type) || RelativePathResource.class.isAssignableFrom(type)) {
+            throw new UnsupportedOperationException("Theme and RelativePath Resources are not supported for desktop client.");
+        }
+
         Class<? extends Resource> resourceClass = resourcesClasses.get(type);
         if (resourceClass == null) {
             throw new IllegalStateException(String.format("Can't find resource class for '%s'", type.getTypeName()));
@@ -317,9 +359,7 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
     }
 
     protected MouseEventDetails convertMouseEvent(MouseEvent event) {
-        MouseEventDetails details = new MouseEventDetails();
-
-        MouseEventDetails.MouseButton button;
+        MouseEventDetails.MouseButton button = null;
         switch (event.getButton()) {
             case 1:
                 button = MouseEventDetails.MouseButton.LEFT;
@@ -330,9 +370,9 @@ public class DesktopImage extends DesktopAbstractComponent<JXImageView> implemen
             case 3:
                 button = MouseEventDetails.MouseButton.MIDDLE;
                 break;
-            default:
-                button = MouseEventDetails.MouseButton.LEFT;
         }
+
+        MouseEventDetails details = new MouseEventDetails();
         details.setButton(button);
 
         details.setClientX(event.getXOnScreen());

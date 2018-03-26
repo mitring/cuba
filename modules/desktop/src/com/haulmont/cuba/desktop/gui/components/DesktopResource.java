@@ -16,9 +16,11 @@
 
 package com.haulmont.cuba.desktop.gui.components;
 
+import com.haulmont.cuba.gui.components.Resource;
+
 import java.awt.image.BufferedImage;
 
-public interface DesktopResource {
+public interface DesktopResource extends Resource {
 
     BufferedImage getResource();
 }
