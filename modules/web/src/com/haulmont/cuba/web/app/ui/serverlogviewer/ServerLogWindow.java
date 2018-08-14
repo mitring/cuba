@@ -34,6 +34,7 @@ import com.haulmont.cuba.gui.components.actions.BaseAction;
 import com.haulmont.cuba.gui.data.CollectionDatasource;
 import com.haulmont.cuba.gui.export.ExportDisplay;
 import com.haulmont.cuba.gui.settings.Settings;
+import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.app.ui.jmxinstance.edit.JmxInstanceEditor;
 import com.haulmont.cuba.web.export.LogDataProvider;
 import com.haulmont.cuba.web.gui.components.util.ShortcutListenerDelegate;
@@ -55,16 +56,21 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ServerLogWindow extends AbstractWindow {
 
     private final Logger log = LoggerFactory.getLogger(ServerLogWindow.class);
 
     @Inject
+    protected WebConfig webConfig;
+
+    @Inject
     protected CollectionDatasource<JmxInstance, UUID> jmxInstancesDs;
 
     @Inject
-    protected Label<String> localJmxField;
+    protected Label localJmxField;
 
     @Inject
     protected LookupPickerField<JmxInstance> jmxConnectionField;
@@ -115,12 +121,15 @@ public class ServerLogWindow extends AbstractWindow {
     protected Security security;
 
     protected JmxInstance localJmxInstance;
+    protected List<Pattern> loweredAttentionPatterns = new ArrayList<>();
 
     protected static final String LAST_SELECTED_LOG_FILE_NAME = "lastSelectedLogFileName";
     protected static final String LAST_SELECTED_JMX_CONNECTION_ID = "lastSelectedJmxConnectionId";
 
     @Override
     public void init(Map<String, Object> params) {
+        initLoweredAttentionPatterns();
+
         localJmxField.setValue(jmxControlAPI.getLocalNodeName());
 
         localJmxInstance = jmxControlAPI.getLocalInstance();
@@ -209,6 +218,15 @@ public class ServerLogWindow extends AbstractWindow {
         logContainer.unwrapComposition(CubaScrollBoxLayout.class).setDelayed(true);
     }
 
+    protected void initLoweredAttentionPatterns() {
+        List<String> loweredAttentionPatterns = webConfig.getLoweredAttentionPatterns();
+        for (String loweredAttentionPattern: loweredAttentionPatterns) {
+            String replacedPattern = replaceSpaces(loweredAttentionPattern);
+            Pattern pattern = Pattern.compile(replacedPattern);
+            this.loweredAttentionPatterns.add(pattern);
+        }
+    }
+
     private void refreshHostInfo() {
         JmxRemoteLoggingAPI.LoggingHostInfo hostInfo = jmxRemoteLoggingAPI.getHostInfo(getSelectedConnection());
         refreshLoggers(hostInfo);
@@ -259,7 +277,8 @@ public class ServerLogWindow extends AbstractWindow {
 
             // transform to XHTML
             value = StringEscapeUtils.escapeHtml4(value);
-            value = StringUtils.replace(value, " ", "&nbsp;");
+            value = replaceSpaces(value);
+
 
             // highlight log
             StringBuilder coloredLog = new StringBuilder();
@@ -284,6 +303,13 @@ public class ServerLogWindow extends AbstractWindow {
                             break;
                         }
                     }
+                    for (Pattern pattern : loweredAttentionPatterns) {
+                        String changedLine = highlightLoweredAttention(line, pattern);
+                        if (!Objects.equals(changedLine, line)) {
+                            line = changedLine;
+                            break;
+                        }
+                    }
                     coloredLog.append(line).append("<br/>");
                 }
             } catch (IOException e) {
@@ -296,6 +322,26 @@ public class ServerLogWindow extends AbstractWindow {
         }
 
         logContainer.unwrap(CubaScrollBoxLayout.class).setScrollTop(30000);
+    }
+
+    protected String replaceSpaces(String value) {
+        String space = "&nbsp;";
+        value = StringUtils.replace(value, " ", space);
+        String tab = "&nbsp;&nbsp;&nbsp;&nbsp;";
+        value = StringUtils.replace(value, "\t", tab);
+        return value;
+    }
+
+    protected String highlightLoweredAttention(String line, Pattern pattern) {
+        Matcher matcher = pattern.matcher(line);
+        if (matcher.find()) {
+            return getLoweredAttentionLine(line);
+        }
+        return line;
+    }
+
+    protected String getLoweredAttentionLine(String line) {
+        return "<span class='c-log-lowered-attention'>" + line + "</span>";
     }
 
     public void getLoggerLevel() {
@@ -408,11 +454,11 @@ public class ServerLogWindow extends AbstractWindow {
                     exportDisplay.show(dataProvider, fileName + ".zip");
                 } else {
                     openWindow("serverLogDownloadOptionsDialog",
-                               OpenType.DIALOG,
-                               ParamsMap.of("logFileName", fileName,
-                                            "connection", selectedConnection,
-                                            "logFileSize", size,
-                                            "remoteContextList", availableContexts));
+                            OpenType.DIALOG,
+                            ParamsMap.of("logFileName", fileName,
+                                    "connection", selectedConnection,
+                                    "logFileSize", size,
+                                    "remoteContextList", availableContexts));
                 }
             } catch (RuntimeException | LogControlException e) {
                 showNotification(getMessage("exception.logControl"), NotificationType.ERROR);

@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.core.sys;
 
-import org.apache.commons.lang3.text.StrTokenizer;
+import org.apache.commons.text.StringTokenizer;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,7 +32,7 @@ public class AppPropertiesTest {
     AppProperties appProperties;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         AppComponent cuba = new AppComponent("cuba");
         AppComponent reports = new AppComponent("reports");
 
@@ -46,6 +46,7 @@ public class AppPropertiesTest {
         reports.setProperty("prop3", "prop3_reports_val", false);
         reports.setProperty("prop4", "prop4_reports_val", true);
         reports.setProperty("prop5", "prop5_reports_val", false);
+        reports.setProperty("cronExpr", "*/10 * * * * *", false);
 
         AppComponents appComponents = new AppComponents("core");
         appComponents.add(cuba);
@@ -58,7 +59,7 @@ public class AppPropertiesTest {
     }
 
     @Test
-    public void testGetProperty() throws Exception {
+    public void testGetProperty() {
         assertEquals("prop1_cuba_val", appProperties.getProperty("prop1"));
 
         assertEquals("prop2_cuba_val prop2_reports_val prop2_app_val", appProperties.getProperty("prop2"));
@@ -72,19 +73,21 @@ public class AppPropertiesTest {
         assertEquals("prop6_app_val", appProperties.getProperty("prop6"));
 
         assertNull(appProperties.getProperty("prop7"));
+
+        assertEquals("*/10 * * * * *", appProperties.getProperty("cronExpr"));
     }
 
     @Test
-    public void testInterpolation() throws Exception {
+    public void testInterpolation() {
         appProperties.setProperty("prop10", "abc-${prop1}-${prop2}");
 
         assertEquals("abc-prop1_cuba_val-prop2_cuba_val prop2_reports_val prop2_app_val", appProperties.getProperty("prop10"));
     }
 
     @Test
-    public void testGetPropertyNames() throws Exception {
+    public void testGetPropertyNames() {
         assertArrayEquals(
-                new String[] {"prop1", "prop2", "prop3", "prop4", "prop5", "prop6"},
+                new String[] {"cronExpr", "prop1", "prop2", "prop3", "prop4", "prop5", "prop6"},
                 appProperties.getPropertyNames());
     }
 
@@ -97,7 +100,7 @@ public class AppPropertiesTest {
         String propValue = appProperties.getProperty("refapp.myConfig");
         log.debug("Property value: '" + propValue + "'");
 
-        StrTokenizer tokenizer = new StrTokenizer(propValue);
+        StringTokenizer tokenizer = new StringTokenizer(propValue);
         String[] locations = tokenizer.getTokenArray();
 
         Assert.assertArrayEquals(new String[] {"1.xml", "2.xml"}, locations);

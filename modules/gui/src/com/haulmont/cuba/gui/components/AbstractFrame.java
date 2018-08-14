@@ -107,16 +107,6 @@ public class AbstractFrame implements Frame, Frame.Wrapper, Component.Wrapper, O
     }
 
     @Override
-    public String getDebugId() {
-        return frame.getDebugId();
-    }
-
-    @Override
-    public void setDebugId(String id) {
-        frame.setDebugId(id);
-    }
-
-    @Override
     public boolean isEnabled() {
         return frame.isEnabled();
     }
@@ -411,7 +401,7 @@ public class AbstractFrame implements Frame, Frame.Wrapper, Component.Wrapper, O
     }
 
     /**
-     * Show validation errors alert. Can be overriden in subclasses.
+     * Show validation errors alert. Can be overridden in subclasses.
      *
      * @param errors the list of validation errors. Caller fills it by errors found during the default validation.
      */

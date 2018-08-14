@@ -17,27 +17,22 @@
 package com.haulmont.cuba.web.gui.components;
 
 import com.haulmont.cuba.core.global.AppBeans;
-import com.haulmont.cuba.core.global.Configuration;
 import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.gui.components.ComponentContainer;
-import com.haulmont.cuba.gui.components.DateField;
 import com.haulmont.cuba.gui.components.KeyCombination.Modifier;
 import com.haulmont.cuba.gui.components.TextField;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.xml.layout.ComponentsFactory;
 import com.haulmont.cuba.web.App;
-import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.gui.components.util.ShortcutListenerDelegate;
 import com.haulmont.cuba.web.toolkit.VersionedThemeResource;
 import com.haulmont.cuba.web.widgets.*;
-import com.haulmont.cuba.web.widgets.client.timefield.TimeResolution;
 import com.vaadin.event.Action;
 import com.vaadin.event.ShortcutAction;
 import com.vaadin.server.*;
 import com.vaadin.server.FileResource;
 import com.vaadin.server.Resource;
-import com.vaadin.shared.ui.datefield.DateResolution;
 import com.vaadin.ui.*;
 import com.vaadin.ui.Button;
 import com.vaadin.ui.Component;
@@ -54,6 +49,7 @@ import java.util.stream.Collectors;
 
 public class WebComponentsHelper {
 
+    @Deprecated
     protected static final Map<String, Class<? extends FontIcon>> fontIcons = new ConcurrentHashMap<>();
 
     static {
@@ -61,6 +57,10 @@ public class WebComponentsHelper {
         registerFontIcon("font-awesome-icon", FontAwesome.class);
     }
 
+    /**
+     * @deprecated Use {@link com.haulmont.cuba.web.gui.icons.IconResolver} instead.
+     */
+    @Deprecated
     public static Resource getResource(String resURL) {
         if (StringUtils.isEmpty(resURL)) return null;
 
@@ -71,13 +71,10 @@ public class WebComponentsHelper {
         } else if (resURL.startsWith("theme:")) {
             String resourceId = resURL.substring("theme:".length());
 
-            Configuration configuration = AppBeans.get(Configuration.NAME);
-            WebConfig webConfig = configuration.getConfig(WebConfig.class);
-
-            if (webConfig.getUseFontIcons()) {
+            ThemeConstants themeConstants = App.getInstance().getThemeConstants();
+            if (isFontIconsEnabled(themeConstants)) {
                 String fontIcon;
 
-                ThemeConstants themeConstants = App.getInstance().getThemeConstants();
                 String iconKey = "cuba.web." + StringUtils.replace(resourceId, "/", ".");
                 fontIcon = themeConstants.get(iconKey);
 
@@ -102,6 +99,10 @@ public class WebComponentsHelper {
         } else {
             return new VersionedThemeResource(resURL);
         }
+    }
+
+    protected static boolean isFontIconsEnabled(ThemeConstants themeConstants) {
+        return themeConstants.getBoolean("cuba.web.useFontIcons", true);
     }
 
     @SuppressWarnings("unchecked")
@@ -156,12 +157,12 @@ public class WebComponentsHelper {
     public static void expand(AbstractOrderedLayout layout, Component component, String height, String width) {
         if (!isHorizontalLayout(layout)
                 && (StringUtils.isEmpty(height) || "-1px".equals(height) || height.endsWith("%"))) {
-            component.setHeight("100%");
+            component.setHeight(100, Sizeable.Unit.PERCENTAGE);
         }
 
         if (!isVerticalLayout(layout)
                 && (StringUtils.isEmpty(width) || "-1px".equals(width) || width.endsWith("%"))) {
-            component.setWidth("100%");
+            component.setWidth(100, Sizeable.Unit.PERCENTAGE);
         }
 
         layout.setExpandRatio(component, 1);
@@ -206,16 +207,20 @@ public class WebComponentsHelper {
         }
     }
 
-    public static Button createButton() {
+    public static CubaButton createButton() {
         return createButton(null);
     }
 
-    public static Button createButton(String icon) {
+    /**
+     * todo rework, do not use WebButton here
+     */
+    @Deprecated
+    public static CubaButton createButton(String icon) {
         ComponentsFactory cf = AppBeans.get(ComponentsFactory.NAME);
         com.haulmont.cuba.gui.components.Button button =
                 cf.createComponent(com.haulmont.cuba.gui.components.Button.class);
         button.setIcon(icon);
-        return (Button) unwrap(button);
+        return (CubaButton) unwrap(button);
     }
 
     public static Frame getControllerFrame(Frame frame) {
@@ -254,13 +259,14 @@ public class WebComponentsHelper {
      * @param container any {@link Action.Container}
      * @param actions   map of actions
      */
+    @Deprecated
     public static void setActions(Action.Container container,
                                   Map<Action, Runnable> actions) {
         container.addActionHandler(new Action.Handler() {
             @Override
             public Action[] getActions(Object target, Object sender) {
                 Set<Action> shortcuts = actions.keySet();
-                return shortcuts.toArray(new Action[shortcuts.size()]);
+                return shortcuts.toArray(new Action[0]);
             }
 
             @Override
@@ -354,58 +360,6 @@ public class WebComponentsHelper {
             return false;
     }
 
-    public static DateResolution convertDateResolution(DatePicker.Resolution resolution) {
-        switch (resolution) {
-            case YEAR:
-                return DateResolution.YEAR;
-            case MONTH:
-                return DateResolution.MONTH;
-            case DAY:
-            default:
-                return DateResolution.DAY;
-        }
-    }
-
-    public static DateResolution convertDateTimeResolution(DateField.Resolution resolution) {
-        switch (resolution) {
-            case YEAR:
-                return DateResolution.YEAR;
-            case MONTH:
-                return DateResolution.MONTH;
-            case DAY:
-            case HOUR:
-            case MIN:
-            case SEC:
-            default:
-                return DateResolution.DAY;
-        }
-    }
-
-    public static TimeResolution convertTimeResolution(TimeField.Resolution resolution) {
-        switch (resolution) {
-            case SEC:
-                return TimeResolution.SECOND;
-            case HOUR:
-                return TimeResolution.HOUR;
-            case MIN:
-            default:
-                return TimeResolution.MINUTE;
-        }
-    }
-
-    public static TimeResolution convertTimeResolution(DateField.Resolution resolution) {
-        switch (resolution) {
-            case HOUR:
-                return TimeResolution.HOUR;
-            case MIN:
-                return TimeResolution.MINUTE;
-            case SEC:
-                return TimeResolution.SECOND;
-            default:
-                throw new IllegalArgumentException("Can't be converted to TimeResolution: " + resolution);
-        }
-    }
-
     public static void setClickShortcut(Button button, String shortcut) {
         KeyCombination closeCombination = KeyCombination.create(shortcut);
         int[] closeModifiers = Modifier.codes(closeCombination.getModifiers());
@@ -424,16 +378,13 @@ public class WebComponentsHelper {
             return null;
         }
 
-        Configuration configuration = AppBeans.get(Configuration.NAME);
-        WebConfig webConfig = configuration.getConfig(WebConfig.class);
-
-        if (webConfig.getUseFontIcons()) {
+        ThemeConstants themeConstants = App.getInstance().getThemeConstants();
+        if (isFontIconsEnabled(themeConstants)) {
             String fontIcon;
 
             if (StringUtils.contains(iconName, ":")) {
                 fontIcon = iconName;
             } else {
-                ThemeConstants themeConstants = App.getInstance().getThemeConstants();
                 String iconKey = "cuba.web." + StringUtils.replace(iconName, "/", ".");
                 fontIcon = themeConstants.get(iconKey);
             }

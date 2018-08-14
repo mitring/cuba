@@ -34,6 +34,7 @@
         <class>com.haulmont.cuba.testmodel.selfinherited.RootEntity</class>
         <class>com.haulmont.cuba.testmodel.selfinherited.ChildEntity</class>
         <class>com.haulmont.cuba.testmodel.selfinherited.RootEntityDetail</class>
+        <class>com.haulmont.cuba.testmodel.selfinherited.ChildEntityDetail</class>
         <class>com.haulmont.cuba.testmodel.softdelete_one_to_one.SoftDeleteOneToOneA</class>
         <class>com.haulmont.cuba.testmodel.softdelete_one_to_one.SoftDeleteOneToOneB</class>
         <class>com.haulmont.cuba.testmodel.cascadedelete.CascadeEntity</class>
@@ -48,6 +49,10 @@
         <class>com.haulmont.cuba.testmodel.sales.Customer</class>
         <class>com.haulmont.cuba.testmodel.sales.Order</class>
         <class>com.haulmont.cuba.testmodel.sales.OrderLine</class>
+        <class>com.haulmont.cuba.testmodel.sales_1.Customer</class>
+        <class>com.haulmont.cuba.testmodel.sales_1.Order</class>
+        <class>com.haulmont.cuba.testmodel.sales_1.OrderLine</class>
+        <class>com.haulmont.cuba.testmodel.sales_1.Product</class>
         <class>com.haulmont.cuba.testmodel.fetchsameentity.FetchSameMainEntity</class>
         <class>com.haulmont.cuba.testmodel.fetchsameentity.FetchSameLinkAEntity</class>
         <class>com.haulmont.cuba.testmodel.fetchsameentity.FetchSameLinkBEntity</class>
@@ -71,6 +76,7 @@
 
         <class>com.haulmont.cuba.testmodel.many2many_fetchsameentity.Many2Many_FetchSame1</class>
         <class>com.haulmont.cuba.testmodel.many2many_fetchsameentity.Many2Many_FetchSame2</class>
+        <class>com.haulmont.cuba.testmodel.many2many_fetchsameentity.Many2Many_FetchSame3</class>
 
         <class>com.haulmont.cuba.testmodel.deletepolicy.DeletePolicy_OneToOne_First</class>
         <class>com.haulmont.cuba.testmodel.deletepolicy.DeletePolicy_OneToOne_Second</class>
@@ -92,5 +98,11 @@
         <class>com.haulmont.cuba.testmodel.not_persistent.CustomerWithNonPersistentRef</class>
 
         <class>com.haulmont.cuba.testmodel.localdatetime.LocalDateTimeEntity</class>
+
+        <class>com.haulmont.cuba.testmodel.embedded.AddressEmbedded</class>
+        <class>com.haulmont.cuba.testmodel.embedded.AddressEmbeddedContainer</class>
+
+        <class>com.haulmont.cuba.testmodel.entity_serialization.Serialization_Order</class>
+        <class>com.haulmont.cuba.testmodel.entity_serialization.Serialization_OrderItem</class>
     </persistence-unit>
 </persistence>

@@ -45,6 +45,8 @@ public interface Component {
     String AUTO_SIZE = "-1px";
     int AUTO_SIZE_PX = -1;
 
+    String FULL_SIZE = "100%";
+
     /** Component ID as defined in {@code id} attribute */
     String getId();
     /** Set component ID */
@@ -63,10 +65,6 @@ public interface Component {
      * @param parent Parent component
      */
     void setParent(Component parent);
-
-    String getDebugId();
-    /** INTERNAL. Managed by debug Id system. */
-    void setDebugId(String id);
 
     /**
      * Is the component enabled?
@@ -189,13 +187,13 @@ public interface Component {
 
     /** Set component width to 100% */
     default void setWidthFull() {
-        setWidth("100%");
+        setWidth(FULL_SIZE);
     }
 
     /** Set component width and height to 100% */
     default void setSizeFull() {
-        setWidth("100%");
-        setHeight("100%");
+        setWidth(FULL_SIZE);
+        setHeight(FULL_SIZE);
     }
 
     /** Set component width and height to {@link #AUTO_SIZE} */

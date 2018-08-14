@@ -17,10 +17,13 @@
 package spec.cuba.web
 
 import com.haulmont.cuba.core.app.ConfigStorageService
+import com.haulmont.cuba.core.app.PersistenceManagerService
 import com.haulmont.cuba.core.global.*
 import com.haulmont.cuba.gui.model.DataContextFactory
+import com.haulmont.cuba.gui.theme.ThemeConstants
 import com.haulmont.cuba.gui.xml.layout.ComponentsFactory
 import com.haulmont.cuba.web.App
+import com.haulmont.cuba.web.AppUI
 import com.haulmont.cuba.web.DefaultApp
 import com.haulmont.cuba.web.testsupport.TestContainer
 import com.haulmont.cuba.web.testsupport.TestServiceProxy
@@ -55,11 +58,15 @@ class WebSpec extends Specification {
 
         // all the rest is required for web components
 
+        TestServiceProxy.mock(PersistenceManagerService, Mock(PersistenceManagerService) {
+            isNullsLastSorting() >> false
+        })
+
         TestServiceProxy.mock(ConfigStorageService, Mock(ConfigStorageService) {
             getDbProperties() >> [:]
         })
 
-        App app = new DefaultApp()
+        App app = new TestApp()
 
         VaadinSession vaadinSession = Mock() {
             hasLock() >> true
@@ -70,7 +77,7 @@ class WebSpec extends Specification {
         ConnectorTracker vaadinConnectorTracker = Mock() {
             isWritingResponse() >> false
         }
-        UI vaadinUi = Mock() {
+        AppUI vaadinUi = Mock() {
             getConnectorTracker() >> vaadinConnectorTracker
         }
         UI.setCurrent(vaadinUi)
@@ -78,5 +85,11 @@ class WebSpec extends Specification {
 
     void cleanup() {
         TestServiceProxy.clear()
+    }
+
+    static class TestApp extends DefaultApp {
+        TestApp() {
+            this.themeConstants = new ThemeConstants([:])
+        }
     }
 }

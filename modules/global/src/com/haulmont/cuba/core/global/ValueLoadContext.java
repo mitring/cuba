@@ -16,6 +16,8 @@
 
 package com.haulmont.cuba.core.global;
 
+import com.haulmont.cuba.core.global.queryconditions.Condition;
+
 import javax.annotation.Nullable;
 import javax.persistence.TemporalType;
 import java.io.Serializable;
@@ -39,6 +41,8 @@ public class ValueLoadContext implements DataLoadContext, Serializable {
     protected boolean softDeletion = true;
     protected String idName;
     protected List<String> properties = new ArrayList<>();
+    protected boolean authorizationRequired;
+    protected boolean joinTransaction;
 
     /**
      * Creates an instance of ValueLoadContext
@@ -155,6 +159,24 @@ public class ValueLoadContext implements DataLoadContext, Serializable {
         return properties;
     }
 
+    public boolean isAuthorizationRequired() {
+        return authorizationRequired;
+    }
+
+    public ValueLoadContext setAuthorizationRequired(boolean authorizationRequired) {
+        this.authorizationRequired = authorizationRequired;
+        return this;
+    }
+
+    public boolean isJoinTransaction() {
+        return joinTransaction;
+    }
+
+    public ValueLoadContext setJoinTransaction(boolean joinTransaction) {
+        this.joinTransaction = joinTransaction;
+        return this;
+    }
+
     @Override
     public String toString() {
         return String.format("ValuesContext{query=%s, softDeletion=%s, keys=%s}", query, softDeletion, properties);
@@ -170,6 +192,8 @@ public class ValueLoadContext implements DataLoadContext, Serializable {
         private int maxResults;
         private Map<String, Object> parameters = new HashMap<>();
         private String[] noConversionParams;
+        private Condition condition;
+        private Sort sort;
 
         /**
          * @param queryString JPQL query string. Only named parameters are supported.
@@ -264,6 +288,38 @@ public class ValueLoadContext implements DataLoadContext, Serializable {
          */
         public Query setMaxResults(int maxResults) {
             this.maxResults = maxResults;
+            return this;
+        }
+
+        /**
+         * @return root query condition
+         */
+        public Condition getCondition() {
+            return condition;
+        }
+
+        /**
+         * @param condition root query condition
+         * @return this query instance for chaining
+         */
+        public Query setCondition(Condition condition) {
+            this.condition = condition;
+            return this;
+        }
+
+        /**
+         * @return query sort
+         */
+        public Sort getSort() {
+            return sort;
+        }
+
+        /**
+         * @param sort query sort
+         * @return this query instance for chaining
+         */
+        public Query setSort(Sort sort) {
+            this.sort = sort;
             return this;
         }
 

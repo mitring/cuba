@@ -412,9 +412,9 @@ public abstract class AbstractComponentLoader<T extends Component> implements Co
     }
 
     protected void loadAction(ActionOwner component, Element element) {
-        final String actionName = element.attributeValue("action");
-        if (!StringUtils.isEmpty(actionName)) {
-            context.addPostInitTask(new AssignActionPostInitTask(component, actionName, context.getFrame()));
+        final String actionId = element.attributeValue("action");
+        if (!StringUtils.isEmpty(actionId)) {
+            context.addPostInitTask(new ActionOwnerAssignActionPostInitTask(component, actionId, context.getFrame()));
         }
     }
 
@@ -545,8 +545,10 @@ public abstract class AbstractComponentLoader<T extends Component> implements Co
         String shortcut = StringUtils.trimToNull(element.attributeValue("shortcut"));
         shortcut = loadShortcut(shortcut);
 
+        DeclarativeAction action;
+
         if (Boolean.parseBoolean(trackSelection)) {
-            DeclarativeTrackingAction action = new DeclarativeTrackingAction(
+            action = new DeclarativeTrackingAction(
                     id,
                     loadResourceString(element.attributeValue("caption")),
                     loadResourceString(element.attributeValue("description")),
@@ -562,7 +564,7 @@ public abstract class AbstractComponentLoader<T extends Component> implements Co
 
             return action;
         } else {
-            return new DeclarativeAction(
+            action = new DeclarativeAction(
                     id,
                     loadResourceString(element.attributeValue("caption")),
                     loadResourceString(element.attributeValue("description")),
@@ -574,6 +576,10 @@ public abstract class AbstractComponentLoader<T extends Component> implements Co
                     actionsHolder
             );
         }
+
+        action.setPrimary(Boolean.parseBoolean(element.attributeValue("primary")));
+
+        return action;
     }
 
     protected void loadActionConstraint(Action action, Element element) {
@@ -747,19 +753,35 @@ public abstract class AbstractComponentLoader<T extends Component> implements Co
                 try {
                     return (Formatter) constructor.newInstance(formatterElement);
                 } catch (Throwable e) {
-                    throw new GuiDevelopmentException("Unable to instatiate class " + className + ": " + e.toString(),
+                    throw new GuiDevelopmentException("Unable to instantiate class " + className + ": " + e.toString(),
                             context.getFullFrameId());
                 }
             } catch (NoSuchMethodException e) {
                 try {
-                    return (Formatter) aClass.newInstance();
+                    return (Formatter) aClass.getDeclaredConstructor().newInstance();
                 } catch (Exception e1) {
-                    throw new GuiDevelopmentException("Unable to instatiate class " + className + ": " + e1.toString(),
+                    throw new GuiDevelopmentException("Unable to instantiate class " + className + ": " + e1.toString(),
                             context.getFullFrameId());
                 }
             }
         } else {
             return null;
+        }
+    }
+
+    protected void loadOrientation(HasOrientation component, Element element) {
+        String orientation = element.attributeValue("orientation");
+        if (orientation == null) {
+            return;
+        }
+
+        if ("horizontal".equalsIgnoreCase(orientation)) {
+            component.setOrientation(HasOrientation.Orientation.HORIZONTAL);
+        } else if ("vertical".equalsIgnoreCase(orientation)) {
+            component.setOrientation(HasOrientation.Orientation.VERTICAL);
+        } else {
+            throw new GuiDevelopmentException("Invalid orientation value: " + orientation,
+                    context.getFullFrameId(), "Component ID", ((Component) component).getId());
         }
     }
 
@@ -785,7 +807,7 @@ public abstract class AbstractComponentLoader<T extends Component> implements Co
             loader.setFactory(factory);
             loader.setElement(element);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | InstantiationException e) {
-            throw new GuiDevelopmentException("Loader instatiation error: " + e, context.getFullFrameId());
+            throw new GuiDevelopmentException("Loader instantiation error: " + e, context.getFullFrameId());
         }
 
         return loader;

@@ -136,7 +136,8 @@ public class QueryCacheManager {
     /**
      * Put query results into query cache for specified query {@code queryKey}.
      * Results are extracted as identifiers from {@code resultList}
-     * @param type - result entity type (metaClass name)
+     *
+     * @param type         - result entity type (metaClass name)
      * @param relatedTypes - query dependent types (metaClass names). It's a list of entity types used in query
      */
     @SuppressWarnings("unchecked")
@@ -158,9 +159,10 @@ public class QueryCacheManager {
     /**
      * Put query results into query cache for specified query {@code queryKey}.
      * Results are extracted as identifiers from entity {@code result}
-     * @param type - result entity type (metaClass name)
+     *
+     * @param type         - result entity type (metaClass name)
      * @param relatedTypes - query dependent types (metaClass names). It's a list of entity types used in query
-     * @param exception - store exception in the query cache if {@link TypedQuery#getSingleResult()} throws exception
+     * @param exception    - store exception in the query cache if {@link TypedQuery#getSingleResult()} throws exception
      */
     @SuppressWarnings("unchecked")
     public <T> void putResultToCache(QueryKey queryKey, T result, String type, Set<String> relatedTypes, RuntimeException exception) {
@@ -176,57 +178,81 @@ public class QueryCacheManager {
 
     /**
      * Discards cached query results for java class (associated with metaClass) {@code typeClass}
+     *
      * @param sendInCluster - if true - discard queries results in all query caches in cluster
      */
     public void invalidate(Class typeClass, boolean sendInCluster) {
-        MetaClass metaClass = metadata.getClassNN(typeClass);
-        invalidate(metaClass.getName(), sendInCluster);
+        if (isEnabled()) {
+            MetaClass metaClass = metadata.getClassNN(typeClass);
+            invalidate(metaClass.getName(), sendInCluster);
+        }
     }
 
     /**
      * Discards cached query results for metaClass name {@code typeName}
+     *
      * @param sendInCluster - if true - discard queries results in all query caches in cluster
      */
     public void invalidate(String typeName, boolean sendInCluster) {
-        queryCache.invalidate(typeName);
-        if (sendInCluster) {
-            clusterManager.send(new InvalidateQueryCacheMsg(Sets.newHashSet(typeName)));
+        if (isEnabled()) {
+            queryCache.invalidate(typeName);
+            if (sendInCluster) {
+                MetaClass metaClass = metadata.getClass(typeName);
+                if (metaClass != null && metadata.getTools().isCacheable(metaClass)) {
+                    clusterManager.send(new InvalidateQueryCacheMsg(Sets.newHashSet(typeName)));
+                }
+            }
         }
     }
 
     /**
      * Discards cached query results for metaClass names {@code typeNames}
+     *
      * @param sendInCluster - if true - discard queries results in all query caches in cluster
      */
     public void invalidate(Set<String> typeNames, boolean sendInCluster) {
-        if (typeNames != null && typeNames.size() > 0) {
-            queryCache.invalidate(typeNames);
-            if (sendInCluster) {
-                clusterManager.send(new InvalidateQueryCacheMsg(typeNames));
+        if (isEnabled()) {
+            if (typeNames != null && typeNames.size() > 0) {
+                queryCache.invalidate(typeNames);
+                if (sendInCluster) {
+                    boolean hasCacheable = typeNames.stream().anyMatch(typeName -> {
+                        MetaClass metaClass = metadata.getClass(typeName);
+                        return metaClass != null && metadata.getTools().isCacheable(metaClass);
+                    });
+                    if (hasCacheable) {
+                        clusterManager.send(new InvalidateQueryCacheMsg(typeNames));
+                    }
+                }
             }
         }
     }
 
     /**
      * Discards cached query results for query identifier {@code queryId}
+     *
      * @param sendInCluster - if true - discard queries results in all query caches in cluster
      */
     public void invalidate(UUID queryId, boolean sendInCluster) {
         Preconditions.checkNotNull(queryId, "Query identifier is null");
-        QueryKey queryKey = queryCache.invalidate(queryId);
-        if (queryKey != null && sendInCluster) {
-            clusterManager.send(new InvalidateQueryCacheMsg(queryKey));
+        if (isEnabled()) {
+            QueryKey queryKey = queryCache.invalidate(queryId);
+            if (queryKey != null && sendInCluster) {
+                clusterManager.send(new InvalidateQueryCacheMsg(queryKey));
+            }
         }
     }
 
     /**
      * Discards all query results in the cache.
+     *
      * @param sendInCluster - if true - discard queries results in all query caches in cluster
      */
     public void invalidateAll(boolean sendInCluster) {
-        queryCache.invalidateAll();
-        if (sendInCluster) {
-            clusterManager.send(new InvalidateQueryCacheMsg(true));
+        if (isEnabled()) {
+            queryCache.invalidateAll();
+            if (sendInCluster) {
+                clusterManager.send(new InvalidateQueryCacheMsg(true));
+            }
         }
     }
 

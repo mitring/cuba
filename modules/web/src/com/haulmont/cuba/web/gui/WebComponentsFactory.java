@@ -78,6 +78,7 @@ public class WebComponentsFactory implements ComponentsFactory {
         classes.put(TreeTable.NAME, WebTreeTable.class);
         classes.put(GroupTable.NAME, WebGroupTable.class);
         classes.put(DataGrid.NAME, WebDataGrid.class);
+        classes.put(TreeDataGrid.NAME, WebTreeDataGrid.class);
         classes.put(DateField.NAME, WebDateField.class);
         classes.put(TimeField.NAME, WebTimeField.class);
         classes.put(LookupField.NAME, WebLookupField.class);
@@ -89,6 +90,8 @@ public class WebComponentsFactory implements ComponentsFactory {
         classes.put(LookupPickerField.NAME, WebLookupPickerField.class);
         classes.put(SearchPickerField.NAME, WebSearchPickerField.class);
         classes.put(OptionsGroup.NAME, WebOptionsGroup.class);
+        classes.put(CheckBoxGroup.NAME, WebCheckBoxGroup.class);
+        classes.put(RadioButtonGroup.NAME, WebRadioButtonGroup.class);
         classes.put(OptionsList.NAME, WebOptionsList.class);
         classes.put(FileUploadField.NAME, WebFileUploadField.class);
         classes.put(FileMultiUploadField.NAME, WebFileMultiUploadField.class);

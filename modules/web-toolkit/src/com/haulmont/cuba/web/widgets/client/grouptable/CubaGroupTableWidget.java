@@ -264,7 +264,7 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
             @Override
             protected boolean addSpecificCell(String columnId, int colIndex) {
                 if (GROUP_DIVIDER_COLUMN_KEY.equals(columnId)) {
-                    addCell("", aligns[colIndex], "", false);
+                    addCell("", aligns[colIndex], CLASSNAME + "-group-divider", false);
                     return true;
                 }
                 if (showRowHeaders && colIndex == 0) {
@@ -348,6 +348,27 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
         protected void fillAdditionalUpdatedCells(HashSet<String> updated) {
             updated.add(GROUP_DIVIDER_COLUMN_KEY);
         }
+
+        @Override
+        protected HeaderCell createHeaderCell(String cid, String caption) {
+            return new CubaGroupTableHeaderCell(cid, caption);
+        }
+    }
+
+    protected class CubaGroupTableHeaderCell extends CubaScrollTableHeaderCell {
+
+        public CubaGroupTableHeaderCell(String colId, String headerText) {
+            super(colId, headerText);
+        }
+
+        @Override
+        public void setWidth(int w, boolean ensureDefinedWidth) {
+            super.setWidth(w, ensureDefinedWidth);
+
+            Style style = this.getElement().getStyle();
+            style.setProperty("minWidth", this.getWidth() + "px");
+            style.setProperty("maxWidth", this.getWidth() + "px");
+        }
     }
 
     protected class GroupTableFooter extends TableFooter {
@@ -427,6 +448,7 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
             public CubaGroupTableGroupRow(UIDL uidl, char[] aligns) {
                 super(uidl, aligns);
                 selectable = false;
+                addStyleName("c-group-row");
             }
 
             @Override
@@ -613,7 +635,7 @@ public class CubaGroupTableWidget extends CubaScrollTableWidget {
                 final TableCellElement td = tdElement.cast();
                 initCellWithText(text, ALIGN_LEFT, "", false, true, null, td);
 
-                // Enchance DOM for table cell
+                // Enhance DOM for table cell
                 Element container = (Element) td.getChild(0);
                 String containerInnerHTML = container.getInnerHTML();
 

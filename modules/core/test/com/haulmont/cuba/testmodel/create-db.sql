@@ -128,6 +128,21 @@ create table TEST_ROOT_ENTITY_DETAIL (
     primary key (ID)
 )^
 
+
+create table TEST_CHILD_ENTITY_DETAIL (
+    ID varchar(36) not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    VERSION integer,
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    INFO varchar(255),
+    CHILD_ENTITY_ID varchar(36) not null,
+    constraint TEST_CHILD_ENTITY_DETAIL_CHILD_ENTITY foreign key (CHILD_ENTITY_ID) references TEST_CHILD_ENTITY(ENTITY_ID),
+    primary key (ID)
+)^
 ------------------------------------------------------------------------------------------------------------
 
 create table TEST_SOFT_DELETE_OTO_B (
@@ -320,6 +335,74 @@ create table TEST_ORDER_LINE (
     --
     primary key (ID),
     constraint FK_TEST_ORDER_LINE_ORDER foreign key (ORDER_ID) references TEST_ORDER(ID)
+)^
+
+----------------------------------------------------------------------------------------------------------------
+
+create table SALES1_CUSTOMER (
+    ID varchar(36) not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    VERSION integer,
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    NAME varchar(255),
+    STATUS varchar(5),
+    primary key (ID)
+)^
+
+create table SALES1_ORDER (
+    ID varchar(36) not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    VERSION integer,
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    NUM varchar(50),
+    DATE_ timestamp,
+    AMOUNT numeric(19,2),
+    CUSTOMER_ID varchar(36),
+    USER_ID varchar(36),
+    primary key (ID),
+    constraint SALES1_ORDER_CUSTOMER foreign key (CUSTOMER_ID) references SALES1_CUSTOMER(ID),
+    constraint SALES1_ORDER_USER foreign key (USER_ID) references SEC_USER(ID)
+)^
+
+create table SALES1_PRODUCT (
+    ID varchar(36) not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    VERSION integer,
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    NAME varchar(255),
+    QUANTITY integer,
+    primary key (ID)
+)^
+
+create table SALES1_ORDER_LINE (
+    ID varchar(36) not null,
+    VERSION integer not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    --
+    PRODUCT_ID varchar(36),
+    QUANTITY integer,
+    ORDER_ID varchar(36),
+    --
+    primary key (ID),
+    constraint FK_SALES1_ORDER_LINE_PRODUCT foreign key (PRODUCT_ID) references SALES1_PRODUCT(ID),
+    constraint FK_SALES1_ORDER_LINE_ORDER foreign key (ORDER_ID) references SALES1_ORDER(ID)
 )^
 
 ----------------------------------------------------------------------------------------------------------------
@@ -692,9 +775,25 @@ create table TEST_MANY2_MANY_FETCH_SAME1 (
     --
     primary key (ID)
 )^
--- end TEST_MANY2_MANY_FETCH_SAME1
--- begin TEST_MANY2_MANY_FETCH_SAME2
+
 create table TEST_MANY2_MANY_FETCH_SAME2 (
+    ID varchar(36) not null,
+    VERSION integer not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    --
+    NAME varchar(255),
+    MANY3_ID varchar(36),
+    MANY_TO_ONE1_ID varchar(36),
+    --
+    primary key (ID)
+)^
+
+create table TEST_MANY2_MANY_FETCH_SAME3 (
     ID varchar(36) not null,
     VERSION integer not null,
     CREATE_TS timestamp,
@@ -708,8 +807,7 @@ create table TEST_MANY2_MANY_FETCH_SAME2 (
     --
     primary key (ID)
 )^
--- end TEST_MANY2_MANY_FETCH_SAME2
--- begin TEST_MANY2_MANY_FETCH_SAME1_MANY2_MANY_FETCH_SAME2_LINK
+
 create table TEST_MANY2_MANY_FETCH_SAME1_MANY2_MANY_FETCH_SAME2_LINK (
     MANY2_MANY__FETCH_SAME2_ID varchar(36) not null,
     MANY2_MANY__FETCH_SAME1_ID varchar(36) not null,
@@ -930,3 +1028,23 @@ create table TEST_LOCAL_DATE_TIME_ENTITY (
     --
     primary key (ID)
 )^
+-- begin TEST_ADDRESS_EMBEDDED_CONTAINER
+create table TEST_ADDRESS_EMBEDDED_CONTAINER (
+    ID varchar(36) not null,
+    VERSION integer not null,
+    CREATE_TS timestamp,
+    CREATED_BY varchar(50),
+    UPDATE_TS timestamp,
+    UPDATED_BY varchar(50),
+    DELETE_TS timestamp,
+    DELETED_BY varchar(50),
+    --
+    ADDRESS_STREET varchar(255),
+    ADDRESS_COUNTRY varchar(255),
+    ADDRESS_INDEX_ integer,
+    --
+    NAME varchar(255),
+    --
+    primary key (ID)
+)^
+-- end TEST_ADDRESS_EMBEDDED_CONTAINER

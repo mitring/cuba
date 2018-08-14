@@ -31,6 +31,7 @@ import com.haulmont.cuba.desktop.sys.DesktopToolTipManager;
 import com.haulmont.cuba.desktop.sys.vcl.SearchAutoCompleteSupport;
 import com.haulmont.cuba.desktop.sys.vcl.SearchComboBox;
 import com.haulmont.cuba.gui.components.Frame;
+import com.haulmont.cuba.gui.components.OptionsStyleProvider;
 import com.haulmont.cuba.gui.components.SearchField;
 import com.haulmont.cuba.gui.data.Datasource;
 import org.apache.commons.lang3.StringUtils;
@@ -217,7 +218,7 @@ public class DesktopSearchField extends DesktopAbstractOptionsField<JComponent> 
                     @Override
                     public void popupMenuWillBecomeInvisible(PopupMenuEvent e) {
                         if (!autoComplete.isEditableState()) {
-                            // Only if realy item changed
+                            // Only if really item changed
                             if (!enterHandling) {
                                 Object selectedItem = comboBox.getSelectedItem();
                                 if (selectedItem instanceof ValueWrapper) {

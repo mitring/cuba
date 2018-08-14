@@ -91,7 +91,7 @@ public class TestDataSupplier implements DataSupplier {
     }
 
     @Override
-    public <E extends Entity> E reload(E entity, View view, MetaClass metaClass, boolean loadDynamicEttributes) {
+    public <E extends Entity> E reload(E entity, View view, MetaClass metaClass, boolean loadDynamicAttributes) {
         return null;
     }
 
@@ -108,6 +108,11 @@ public class TestDataSupplier implements DataSupplier {
     @Override
     public <E extends Entity> E commit(E instance) {
         return commit(instance, (View) null);
+    }
+
+    @Override
+    public EntitySet commit(Entity... entities) {
+        return commit(new CommitContext(entities));
     }
 
     @Override

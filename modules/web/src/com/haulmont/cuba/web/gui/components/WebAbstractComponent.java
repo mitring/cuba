@@ -16,12 +16,13 @@
  */
 package com.haulmont.cuba.web.gui.components;
 
-import com.haulmont.bali.events.EventPublisher;
+import com.haulmont.bali.events.EventHub;
 import com.haulmont.bali.events.EventRouter;
 import com.haulmont.cuba.core.global.AppBeans;
 import com.haulmont.cuba.gui.ComponentsHelper;
 import com.haulmont.cuba.gui.components.Component;
 import com.haulmont.cuba.gui.components.Frame;
+import com.haulmont.cuba.gui.components.HasDebugId;
 import com.haulmont.cuba.gui.components.SizeUnit;
 import com.haulmont.cuba.gui.icons.Icons;
 import com.haulmont.cuba.web.AppUI;
@@ -40,9 +41,9 @@ import java.util.List;
 import java.util.Objects;
 
 public abstract class WebAbstractComponent<T extends com.vaadin.ui.Component>
-        extends EventPublisher
+        extends EventHub
         implements Component, Component.Wrapper, Component.HasXmlDescriptor, Component.BelongToFrame, Component.HasIcon,
-                   Component.HasCaption {
+                   Component.HasCaption, HasDebugId {
 
     @Deprecated
     public static final List<Sizeable.Unit> UNIT_SYMBOLS = Collections.unmodifiableList(Arrays.asList(
@@ -289,7 +290,14 @@ public abstract class WebAbstractComponent<T extends com.vaadin.ui.Component>
 
     @Override
     public void setHeight(String height) {
-        getComposition().setHeight(height);
+        // do not try to parse string if constant passed
+        if (Component.AUTO_SIZE.equals(height)) {
+            getComposition().setHeight(-1, Sizeable.Unit.PIXELS);
+        } else if (Component.FULL_SIZE.equals(height)) {
+            getComposition().setHeight(100, Sizeable.Unit.PERCENTAGE);
+        } else {
+            getComposition().setHeight(height);
+        }
     }
 
     @Override
@@ -309,7 +317,14 @@ public abstract class WebAbstractComponent<T extends com.vaadin.ui.Component>
 
     @Override
     public void setWidth(String width) {
-        getComposition().setWidth(width);
+        // do not try to parse string if constant passed
+        if (Component.AUTO_SIZE.equals(width)) {
+            getComposition().setWidth(-1, Sizeable.Unit.PIXELS);
+        } else if (Component.FULL_SIZE.equals(width)) {
+            getComposition().setWidth(100, Sizeable.Unit.PERCENTAGE);
+        } else {
+            getComposition().setWidth(width);
+        }
     }
 
     @Override

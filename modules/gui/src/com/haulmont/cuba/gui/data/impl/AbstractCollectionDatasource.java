@@ -219,7 +219,7 @@ public abstract class AbstractCollectionDatasource<T extends Entity<K>, K>
                     if (datasource.getState() == State.VALID) {
                         final Entity item = datasource.getItem();
                         if (elements.length > 1) {
-                            String[] valuePath = (String[]) ArrayUtils.subarray(elements, 1, elements.length);
+                            String[] valuePath = ArrayUtils.subarray(elements, 1, elements.length);
                             String propertyName = InstanceUtils.formatValuePath(valuePath);
                             Object value = InstanceUtils.getValueEx(item, propertyName);
                             map.put(name, value);
@@ -242,7 +242,7 @@ public abstract class AbstractCollectionDatasource<T extends Entity<K>, K>
                         if (value == null && elements.length > 1) {
                             Instance instance = (Instance) windowParams.get(elements[0]);
                             if (instance != null) {
-                                String[] valuePath = (String[]) ArrayUtils.subarray(elements, 1, elements.length);
+                                String[] valuePath = ArrayUtils.subarray(elements, 1, elements.length);
                                 String propertyName = InstanceUtils.formatValuePath(valuePath);
                                 value = InstanceUtils.getValueEx(instance, propertyName);
                             }
@@ -261,7 +261,7 @@ public abstract class AbstractCollectionDatasource<T extends Entity<K>, K>
                         if (value instanceof String && info.isCaseInsensitive()) {
                             value = makeCaseInsensitive((String) value);
                         }
-                        if (java.sql.Date.class.equals(info.getJavaClass()) && value != null && value instanceof Date) {
+                        if (java.sql.Date.class.equals(info.getJavaClass()) && value instanceof Date) {
                             value = new java.sql.Date(((Date)value).getTime());
                         }
                         if (refreshOnComponentValueChange) {
@@ -377,26 +377,26 @@ public abstract class AbstractCollectionDatasource<T extends Entity<K>, K>
 
         Map<String, Object> templateParams = new HashMap<>();
 
-        String compPerfix = ParameterInfo.Type.COMPONENT.getPrefix() + "$";
+        String compPrefix = ParameterInfo.Type.COMPONENT.getPrefix() + "$";
         for (ParameterInfo info : queryParameters) {
             if (info.getType() == ParameterInfo.Type.COMPONENT) {
                 Object value = dsContext.getFrameContext() == null ?
                         null : dsContext.getFrameContext().getValue(info.getPath());
-                templateParams.put(compPerfix + info.getPath(), value);
+                templateParams.put(compPrefix + info.getPath(), value);
             }
         }
 
-        String customPerfix = ParameterInfo.Type.CUSTOM.getPrefix() + "$";
+        String customPrefix = ParameterInfo.Type.CUSTOM.getPrefix() + "$";
         for (Map.Entry<String, Object> entry : customParams.entrySet()) {
-            templateParams.put(customPerfix + entry.getKey(), entry.getValue());
+            templateParams.put(customPrefix + entry.getKey(), entry.getValue());
         }
 
         if (dsContext != null) {
             FrameContext windowContext = dsContext.getFrameContext();
             if (windowContext != null) {
-                String paramPerfix = ParameterInfo.Type.PARAM.getPrefix() + "$";
+                String paramPrefix = ParameterInfo.Type.PARAM.getPrefix() + "$";
                 for (Map.Entry<String, Object> entry : windowContext.getParams().entrySet()) {
-                    templateParams.put(paramPerfix + entry.getKey(), entry.getValue());
+                    templateParams.put(paramPrefix + entry.getKey(), entry.getValue());
                 }
             }
         }

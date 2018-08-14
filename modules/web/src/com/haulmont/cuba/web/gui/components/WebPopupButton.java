@@ -22,6 +22,7 @@ import com.haulmont.cuba.gui.TestIdManager;
 import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.gui.components.security.ActionsPermissions;
 import com.haulmont.cuba.gui.icons.Icons;
+import com.haulmont.cuba.gui.theme.ThemeConstants;
 import com.haulmont.cuba.gui.theme.ThemeConstantsManager;
 import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.widgets.CubaPopupButton;
@@ -79,7 +80,8 @@ public class WebPopupButton extends WebAbstractComponent<CubaPopupButton>
 
     @Inject
     public void setThemeConstantsManager(ThemeConstantsManager themeConstantsManager) {
-        this.showActionIcons = themeConstantsManager.getThemeValueBoolean("cuba.gui.showIconsForPopupMenuActions");
+        ThemeConstants theme = themeConstantsManager.getConstants();
+        this.showActionIcons = theme.getBoolean("cuba.gui.showIconsForPopupMenuActions", false);
     }
 
     protected CubaPopupButtonLayout createActionsContainer() {
@@ -283,14 +285,15 @@ public class WebPopupButton extends WebAbstractComponent<CubaPopupButton>
         vButton.setSizeFull();
         vButton.setStyleName(CONTEXT_MENU_BUTTON_STYLENAME);
 
-        AppUI ui = AppUI.getCurrent();
+        if (AppUI.getCurrent().isTestMode()) {
+            button.setId(action.getId());
+        }
 
-        if (ui.isTestMode()) {
+        if (AppUI.getCurrent().isPerformanceTestMode()) {
             String debugId = getDebugId();
             if (debugId != null) {
-                button.setDebugId(ui.getTestIdManager().getTestId(debugId + "_" + action.getId()));
+                button.setDebugId(AppUI.getCurrent().getTestIdManager().getTestId(debugId + "_" + action.getId()));
             }
-            button.setId(action.getId());
         }
         return vButton;
     }

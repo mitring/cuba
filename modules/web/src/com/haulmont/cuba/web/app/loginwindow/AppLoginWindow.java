@@ -32,8 +32,8 @@ import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.Connection;
 import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.auth.WebAuthConfig;
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,13 +103,7 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
     protected CheckBox rememberMeCheckBox;
 
     @Inject
-    protected Label rememberMeSpacer;
-
-    @Inject
     protected PasswordField passwordField;
-
-    @Inject
-    protected Label localesSelectLabel;
 
     @Inject
     protected LookupField<Locale> localesSelect;
@@ -148,8 +142,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
 
         boolean localeSelectVisible = globalConfig.getLocaleSelectVisible();
         localesSelect.setVisible(localeSelectVisible);
-        localesSelectLabel.setVisible(localeSelectVisible);
-
         localesSelect.addValueChangeListener(e -> {
             Locale selectedLocale = (Locale) e.getValue();
 
@@ -179,8 +171,6 @@ public class AppLoginWindow extends AbstractWindow implements Window.TopLevelWin
 
         if (!webConfig.getRememberMeEnabled()) {
             rememberMeCheckBox.setValue(false);
-
-            rememberMeSpacer.setVisible(false);
             rememberMeCheckBox.setVisible(false);
             return;
         }

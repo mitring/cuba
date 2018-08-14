@@ -580,7 +580,7 @@ public abstract class WindowManager {
         componentLoaderContext.setFrame(windowWrapper);
         componentLoaderContext.executePostInitTasks();
 
-        if (configuration.getConfig(GlobalConfig.class).getTestMode()) {
+        if (configuration.getConfig(GlobalConfig.class).getPerformanceTestMode()) {
             initDebugIds(clientSpecificWindow);
         }
 
@@ -661,7 +661,7 @@ public abstract class WindowManager {
         }
 
         //noinspection UnnecessaryLocalVariable
-        DsContext dsContext = new DsContextLoader(dataSupplier).loadDatasources(element.element("dsContext"), null);
+        DsContext dsContext = new DsContextLoader(dataSupplier).loadDatasources(element.element("dsContext"), null, null);
         return dsContext;
     }
 
@@ -768,6 +768,12 @@ public abstract class WindowManager {
     }
 
     protected boolean isOpenAsNewTab(OpenType openType) {
+        // todo check only if there are no opened tabbed windows
+        if (getOpenWindows().isEmpty()
+                && openType.getOpenMode() == OpenMode.THIS_TAB) {
+            return true;
+        }
+
         return openType.getOpenMode() == OpenMode.NEW_TAB;
     }
 

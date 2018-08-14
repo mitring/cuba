@@ -53,19 +53,19 @@ import com.haulmont.cuba.gui.data.impl.DatasourceImplementation;
 import com.haulmont.cuba.gui.presentations.Presentations;
 import com.haulmont.cuba.gui.presentations.PresentationsImpl;
 import com.haulmont.cuba.gui.theme.ThemeConstants;
+import com.haulmont.cuba.gui.theme.ThemeConstantsManager;
 import com.haulmont.cuba.security.entity.Presentation;
-import com.haulmont.cuba.web.App;
 import com.haulmont.cuba.web.AppUI;
 import com.haulmont.cuba.web.WebConfig;
 import com.haulmont.cuba.web.gui.components.presentations.TablePresentations;
 import com.haulmont.cuba.web.gui.components.table.*;
 import com.haulmont.cuba.web.gui.components.util.ShortcutListenerDelegate;
-import com.haulmont.cuba.web.gui.data.ItemWrapper;
 import com.haulmont.cuba.web.gui.icons.IconResolver;
 import com.haulmont.cuba.web.widgets.CubaEnhancedTable;
 import com.haulmont.cuba.web.widgets.data.AggregationContainer;
 import com.vaadin.event.ShortcutAction.KeyCode;
 import com.vaadin.server.Resource;
+import com.vaadin.server.Sizeable;
 import com.vaadin.server.VaadinSession;
 import com.vaadin.ui.Component;
 import com.vaadin.ui.HorizontalLayout;
@@ -125,7 +125,7 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
     protected Locale locale;
 
     // Style names used by table itself
-    protected List<String> internalStyles = new ArrayList<>();
+    protected List<String> internalStyles = new ArrayList<>(2);
 
     protected Map<Object, Table.Column<E>> columns = new HashMap<>();
     protected List<Table.Column<E>> columnsOrder = new ArrayList<>();
@@ -878,9 +878,11 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
         setClientCaching(component);
 
         int defaultRowHeaderWidth = 16;
-        ThemeConstants theme = App.getInstance().getThemeConstants();
+        ThemeConstantsManager themeConstantsManager =
+                applicationContext.getBean(ThemeConstantsManager.NAME, ThemeConstantsManager.class);
+        ThemeConstants theme = themeConstantsManager.getConstants();
         if (theme != null) {
-            defaultRowHeaderWidth = theme.getInt("cuba.web.Table.defaultRowHeaderWidth");
+            defaultRowHeaderWidth = theme.getInt("cuba.web.Table.defaultRowHeaderWidth", 16);
         }
 
         component.setColumnWidth(ROW_HEADER_PROPERTY_ID, defaultRowHeaderWidth);
@@ -899,6 +901,15 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
                                 } else {
                                     handleClickAction();
                                 }
+                            }
+                        }));
+
+        component.addShortcutListener(
+                new ShortcutListenerDelegate("tableSelectAll", KeyCode.A,
+                        new int[] { com.vaadin.event.ShortcutAction.ModifierKey.CTRL })
+                        .withHandler((sender, target) -> {
+                            if (target == this.component) {
+                                selectAll();
                             }
                         }));
 
@@ -1393,8 +1404,9 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
     public void setDebugId(String id) {
         super.setDebugId(id);
 
-        if (id != null) {
-            componentComposition.setId(AppUI.getCurrent().getTestIdManager().getTestId(id + "_composition"));
+        AppUI ui = AppUI.getCurrent();
+        if (id != null && ui != null) {
+            componentComposition.setId(ui.getTestIdManager().getTestId(id + "_composition"));
         }
     }
 
@@ -1832,7 +1844,7 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
 
             if (topPanel == null) {
                 topPanel = createTopPanel();
-                topPanel.setWidth("100%");
+                topPanel.setWidth(100, Sizeable.Unit.PERCENTAGE);
                 componentComposition.addComponentAsFirst(topPanel);
             }
             topPanel.addComponent(panel.unwrap(Component.class));
@@ -2148,19 +2160,23 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
     }
 
     protected void checkAggregation(AggregationInfo aggregationInfo) {
+        AggregationInfo.Type aggregationType = aggregationInfo.getType();
+
+        if (aggregationType == AggregationInfo.Type.CUSTOM) {
+            return;
+        }
+
         MetaPropertyPath propertyPath = aggregationInfo.getPropertyPath();
         Class<?> javaType = propertyPath.getMetaProperty().getJavaType();
         Aggregation<?> aggregation = Aggregations.get(javaType);
-        AggregationInfo.Type aggregationType = aggregationInfo.getType();
 
-        if (aggregationType == AggregationInfo.Type.CUSTOM)
+        if (aggregation != null && aggregation.getSupportedAggregationTypes().contains(aggregationType)) {
             return;
-
-        if (aggregation != null && aggregation.getSupportedAggregationTypes().contains(aggregationType))
-            return;
+        }
 
         String msg = String.format("Unable to aggregate column \"%s\" with data type %s with default aggregation strategy: %s",
                 propertyPath, propertyPath.getRange(), aggregationInfo.getType());
+
         throw new IllegalArgumentException(msg);
     }
 
@@ -2394,6 +2410,8 @@ public abstract class WebAbstractTable<T extends com.vaadin.v7.ui.Table & CubaEn
 
     @Override
     public void setClickListener(String columnId, CellClickListener<? super E> clickListener) {
+        checkNotNullArgument(getColumn(columnId), String.format("column with id '%s' not found", columnId));
+
         component.setClickListener(getColumn(columnId).getId(), (itemId, columnId1) -> {
 //            TableItemWrapper wrapper = (TableItemWrapper) component.getItem(itemId);
 //            Object itemId2 = wrapper.getItemId();

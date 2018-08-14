@@ -19,6 +19,7 @@ package com.haulmont.cuba.core.global;
 import com.haulmont.bali.util.Preconditions;
 import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.cuba.core.entity.Entity;
+import com.haulmont.cuba.core.global.queryconditions.Condition;
 
 import javax.annotation.Nullable;
 import javax.persistence.TemporalType;
@@ -50,8 +51,10 @@ public class LoadContext<E extends Entity> implements DataLoadContext, Serializa
     protected List<Query> prevQueries = new ArrayList<>();
     protected int queryKey;
 
-    protected boolean loadDynamicAttributes = false;
+    protected boolean loadDynamicAttributes;
     protected boolean loadPartialEntities = true;
+    protected boolean authorizationRequired;
+    protected boolean joinTransaction;
 
     protected Map<String, Object> dbHints; // lazy initialized map
 
@@ -250,6 +253,24 @@ public class LoadContext<E extends Entity> implements DataLoadContext, Serializa
         return this;
     }
 
+    public boolean isAuthorizationRequired() {
+        return authorizationRequired;
+    }
+
+    public LoadContext<E> setAuthorizationRequired(boolean authorizationRequired) {
+        this.authorizationRequired = authorizationRequired;
+        return this;
+    }
+
+    public boolean isJoinTransaction() {
+        return joinTransaction;
+    }
+
+    public LoadContext<E> setJoinTransaction(boolean joinTransaction) {
+        this.joinTransaction = joinTransaction;
+        return this;
+    }
+
     /**
      * Creates a copy of this LoadContext instance.
      */
@@ -261,7 +282,7 @@ public class LoadContext<E extends Entity> implements DataLoadContext, Serializa
             throw new RuntimeException("Error copying LoadContext", e);
         }
         ctx.metaClass = metaClass;
-        ctx.setQuery(query.copy());
+        ctx.setQuery(query != null ? query.copy() : null);
         ctx.view = view;
         ctx.id = id;
         ctx.softDeletion = softDeletion;
@@ -271,6 +292,8 @@ public class LoadContext<E extends Entity> implements DataLoadContext, Serializa
             ctx.getDbHints().putAll(dbHints);
         }
         ctx.loadDynamicAttributes = loadDynamicAttributes;
+        ctx.authorizationRequired = authorizationRequired;
+        ctx.joinTransaction = joinTransaction;
         return ctx;
     }
 
@@ -295,6 +318,8 @@ public class LoadContext<E extends Entity> implements DataLoadContext, Serializa
         private int firstResult;
         private int maxResults;
         private boolean cacheable;
+        private Condition condition;
+        private Sort sort;
 
         /**
          * @param queryString JPQL query string. Only named parameters are supported.
@@ -390,6 +415,38 @@ public class LoadContext<E extends Entity> implements DataLoadContext, Serializa
          */
         public Query setMaxResults(int maxResults) {
             this.maxResults = maxResults;
+            return this;
+        }
+
+        /**
+         * @return root query condition
+         */
+        public Condition getCondition() {
+            return condition;
+        }
+
+        /**
+         * @param condition root query condition
+         * @return this query instance for chaining
+         */
+        public Query setCondition(Condition condition) {
+            this.condition = condition;
+            return this;
+        }
+
+        /**
+         * @return query sort
+         */
+        public Sort getSort() {
+            return sort;
+        }
+
+        /**
+         * @param sort query sort
+         * @return this query instance for chaining
+         */
+        public Query setSort(Sort sort) {
+            this.sort = sort;
             return this;
         }
 

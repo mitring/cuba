@@ -24,15 +24,17 @@ import com.haulmont.chile.core.model.Session;
 import com.haulmont.chile.core.model.impl.AbstractInstance;
 import com.haulmont.cuba.core.*;
 import com.haulmont.cuba.core.app.dynamicattributes.DynamicAttributesManagerAPI;
+import com.haulmont.cuba.core.app.events.EntityChangedEvent;
 import com.haulmont.cuba.core.app.queryresults.QueryResultsManagerAPI;
 import com.haulmont.cuba.core.entity.*;
 import com.haulmont.cuba.core.global.*;
-import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.EntityFetcher;
+import com.haulmont.cuba.core.sys.persistence.EntityChangedEventManager;
 import com.haulmont.cuba.security.entity.ConstraintOperationType;
 import com.haulmont.cuba.security.entity.EntityAttrAccess;
 import com.haulmont.cuba.security.entity.EntityOp;
 import com.haulmont.cuba.security.entity.PermissionType;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Scope;
@@ -44,8 +46,6 @@ import javax.persistence.NoResultException;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static org.apache.commons.lang3.StringUtils.isBlank;
 
 /**
  * INTERNAL.
@@ -61,6 +61,9 @@ public class RdbmsStore implements DataStore {
 
     @Inject
     protected Metadata metadata;
+
+    @Inject
+    protected MetadataTools metadataTools;
 
     @Inject
     protected ViewRepository viewRepository;
@@ -84,9 +87,6 @@ public class RdbmsStore implements DataStore {
     protected QueryResultsManagerAPI queryResultsManager;
 
     @Inject
-    protected EntityLoadInfoBuilder entityLoadInfoBuilder;
-
-    @Inject
     protected DynamicAttributesManagerAPI dynamicAttributesManagerAPI;
 
     @Inject
@@ -94,6 +94,12 @@ public class RdbmsStore implements DataStore {
 
     @Inject
     protected EntityFetcher entityFetcher;
+
+    @Inject
+    protected EntityStates entityStates;
+
+    @Inject
+    protected EntityChangedEventManager entityChangedEventManager;
 
     protected String storeName;
 
@@ -110,14 +116,14 @@ public class RdbmsStore implements DataStore {
 
         final MetaClass metaClass = metadata.getSession().getClassNN(context.getMetaClass());
 
-        if (!isEntityOpPermitted(metaClass, EntityOp.READ)) {
+        if (isAuthorizationRequired(context) && !isEntityOpPermitted(metaClass, EntityOp.READ)) {
             log.debug("reading of {} not permitted, returning null", metaClass);
             return null;
         }
 
         E result = null;
-        boolean needToApplyConstraints = needToApplyByPredicate(context);
-        try (Transaction tx = createLoadTransaction()) {
+        boolean needToApplyInMemoryReadConstraints = needToApplyInMemoryReadConstraints(context);
+        try (Transaction tx = getLoadTransaction(context.isJoinTransaction())) {
             final EntityManager em = persistence.getEntityManager(storeName);
 
             if (!context.isSoftDeletion())
@@ -125,8 +131,10 @@ public class RdbmsStore implements DataStore {
             persistence.getEntityManagerContext(storeName).setDbHints(context.getDbHints());
 
             // If maxResults=1 and the query is not by ID we should not use getSingleResult() for backward compatibility
-            boolean singleResult = !(context.getQuery() != null && context.getQuery().getMaxResults() == 1
-                    && context.getQuery().getQueryString() != null);
+            boolean singleResult = !(context.getQuery() != null
+                        && context.getQuery().getMaxResults() == 1
+                        && context.getQuery().getQueryString() != null)
+                    && context.getId() != null;
 
             View view = createRestrictedView(context);
             com.haulmont.cuba.core.Query query = createQuery(em, context, singleResult);
@@ -138,7 +146,7 @@ public class RdbmsStore implements DataStore {
                 result = resultList.get(0);
             }
 
-            if (result != null && needToApplyInMemoryReadConstraints(context) && security.filterByConstraints(result)) {
+            if (result != null && needToFilterByInMemoryReadConstraints(context) && security.filterByConstraints(result)) {
                 result = null;
             }
 
@@ -147,7 +155,7 @@ public class RdbmsStore implements DataStore {
                         collectEntityClassesWithDynamicAttributes(context.getView()));
             }
 
-            if (result != null && needToApplyConstraints) {
+            if (result != null && needToApplyInMemoryReadConstraints) {
                 security.calculateFilteredData(result);
             }
 
@@ -155,14 +163,21 @@ public class RdbmsStore implements DataStore {
                 attributeSecurity.onLoad(result, view);
             }
 
+            if (context.isJoinTransaction()) {
+                em.flush();
+                detachEntity(em, result, view);
+            }
+
             tx.commit();
         }
 
         if (result != null) {
-            if (needToApplyConstraints) {
+            if (needToApplyInMemoryReadConstraints) {
                 security.applyConstraints(result);
             }
-            attributeSecurity.afterLoad(result);
+            if (isAuthorizationRequired(context)) {
+                attributeSecurity.afterLoad(result);
+            }
         }
 
         return result;
@@ -174,13 +189,13 @@ public class RdbmsStore implements DataStore {
         if (log.isDebugEnabled())
             log.debug("loadList: metaClass=" + context.getMetaClass() + ", view=" + context.getView()
                     + (context.getPrevQueries().isEmpty() ? "" : ", from selected")
-                    + ", query=" + (context.getQuery() == null ? null : DataServiceQueryBuilder.printQuery(context.getQuery().getQueryString()))
+                    + ", query=" + (context.getQuery() == null ? null : RdbmsQueryBuilder.printQuery(context.getQuery().getQueryString()))
                     + (context.getQuery() == null || context.getQuery().getFirstResult() == 0 ? "" : ", first=" + context.getQuery().getFirstResult())
                     + (context.getQuery() == null || context.getQuery().getMaxResults() == 0 ? "" : ", max=" + context.getQuery().getMaxResults()));
 
         MetaClass metaClass = metadata.getClassNN(context.getMetaClass());
 
-        if (!isEntityOpPermitted(metaClass, EntityOp.READ)) {
+        if (isAuthorizationRequired(context) && !isEntityOpPermitted(metaClass, EntityOp.READ)) {
             log.debug("reading of {} not permitted, returning empty list", metaClass);
             return Collections.emptyList();
         }
@@ -188,8 +203,8 @@ public class RdbmsStore implements DataStore {
         queryResultsManager.savePreviousQueryResults(context);
 
         List<E> resultList;
-        boolean needToApplyConstraints = needToApplyByPredicate(context);
-        try (Transaction tx = createLoadTransaction()) {
+        boolean needToApplyInMemoryReadConstraints = needToApplyInMemoryReadConstraints(context);
+        try (Transaction tx = getLoadTransaction(context.isJoinTransaction())) {
             EntityManager em = persistence.getEntityManager(storeName);
             em.setSoftDeletion(context.isSoftDeletion());
             persistence.getEntityManagerContext(storeName).setDbHints(context.getDbHints());
@@ -215,20 +230,29 @@ public class RdbmsStore implements DataStore {
                         collectEntityClassesWithDynamicAttributes(context.getView()));
             }
 
-            if (needToApplyConstraints) {
-                security.calculateFilteredData((Collection<Entity>)resultList);
+            if (needToApplyInMemoryReadConstraints) {
+                security.calculateFilteredData((Collection<Entity>) resultList);
             }
 
             attributeSecurity.onLoad(resultList, view);
 
+            if (context.isJoinTransaction()) {
+                em.flush();
+                for (E entity : resultList) {
+                    detachEntity(em, entity, view);
+                }
+            }
+
             tx.commit();
         }
 
-        if (needToApplyConstraints) {
+        if (needToApplyInMemoryReadConstraints) {
             security.applyConstraints((Collection<Entity>) resultList);
         }
 
-        attributeSecurity.afterLoad(resultList);
+        if (context.isAuthorizationRequired()) {
+            attributeSecurity.afterLoad(resultList);
+        }
 
         return resultList;
     }
@@ -238,21 +262,28 @@ public class RdbmsStore implements DataStore {
         if (log.isDebugEnabled())
             log.debug("getCount: metaClass=" + context.getMetaClass()
                     + (context.getPrevQueries().isEmpty() ? "" : ", from selected")
-                    + ", query=" + (context.getQuery() == null ? null : DataServiceQueryBuilder.printQuery(context.getQuery().getQueryString())));
+                    + ", query=" + (context.getQuery() == null ? null : RdbmsQueryBuilder.printQuery(context.getQuery().getQueryString())));
 
         MetaClass metaClass = metadata.getClassNN(context.getMetaClass());
 
-        if (!isEntityOpPermitted(metaClass, EntityOp.READ)) {
+        if (isAuthorizationRequired(context) && !isEntityOpPermitted(metaClass, EntityOp.READ)) {
             log.debug("reading of {} not permitted, returning 0", metaClass);
             return 0;
         }
 
         queryResultsManager.savePreviousQueryResults(context);
 
+        context = context.copy();
+        if (context.getQuery() == null) {
+            context.setQuery(LoadContext.createQuery(null));
+        }
+        if (StringUtils.isBlank(context.getQuery().getQueryString())) {
+            context.getQuery().setQueryString("select e from " + metaClass.getName() + " e");
+        }
+
         if (security.hasInMemoryConstraints(metaClass, ConstraintOperationType.READ, ConstraintOperationType.ALL)) {
-            context = context.copy();
             List resultList;
-            try (Transaction tx = createLoadTransaction()) {
+            try (Transaction tx = getLoadTransaction(context.isJoinTransaction())) {
                 EntityManager em = persistence.getEntityManager(storeName);
                 em.setSoftDeletion(context.isSoftDeletion());
                 persistence.getEntityManagerContext(storeName).setDbHints(context.getDbHints());
@@ -280,11 +311,10 @@ public class RdbmsStore implements DataStore {
         } else {
             QueryTransformer transformer = QueryTransformerFactory.createTransformer(context.getQuery().getQueryString());
             transformer.replaceWithCount();
-            context = context.copy();
             context.getQuery().setQueryString(transformer.getResult());
 
             Number result;
-            try (Transaction tx = createLoadTransaction()) {
+            try (Transaction tx = getLoadTransaction(context.isJoinTransaction())) {
                 EntityManager em = persistence.getEntityManager(storeName);
                 em.setSoftDeletion(context.isSoftDeletion());
                 persistence.getEntityManagerContext(storeName).setDbHints(context.getDbHints());
@@ -306,12 +336,12 @@ public class RdbmsStore implements DataStore {
             log.debug("commit: commitInstances=" + context.getCommitInstances()
                     + ", removeInstances=" + context.getRemoveInstances());
 
-        Set<Entity> res = new HashSet<>();
+        Set<Entity> saved = new HashSet<>();
         List<Entity> persisted = new ArrayList<>();
         List<BaseGenericIdEntity> identityEntitiesToStoreDynamicAttributes = new ArrayList<>();
         List<CategoryAttributeValue> attributeValuesToRemove = new ArrayList<>();
 
-        try (Transaction tx = persistence.createTransaction(storeName)) {
+        try (Transaction tx = getSaveTransaction(storeName, context.isJoinTransaction())) {
             EntityManager em = persistence.getEntityManager(storeName);
             checkPermissions(context);
 
@@ -324,17 +354,22 @@ public class RdbmsStore implements DataStore {
 
             // persist new
             for (Entity entity : context.getCommitInstances()) {
-                if (PersistenceHelper.isNew(entity)) {
-                    attributeSecurity.beforePersist(entity);
+                if (entityStates.isNew(entity)) {
+                    if (isAuthorizationRequired(context)) {
+                        attributeSecurity.beforePersist(entity);
+                    }
                     em.persist(entity);
-                    checkOperationPermitted(entity, ConstraintOperationType.CREATE);
+                    saved.add(entity);
+                    persisted.add(entity);
+
+                    if (isAuthorizationRequired(context))
+                        checkOperationPermitted(entity, ConstraintOperationType.CREATE);
+
                     if (!context.isDiscardCommitted()) {
                         View view = getViewFromContextOrNull(context, entity);
                         entityFetcher.fetch(entity, view, true);
                         attributeSecurity.afterPersist(entity, view);
-                        res.add(entity);
                     }
-                    persisted.add(entity);
 
                     if (entityHasDynamicAttributes(entity)) {
                         if (entity instanceof BaseDbGeneratedIdEntity) {
@@ -348,21 +383,24 @@ public class RdbmsStore implements DataStore {
 
             // merge the rest - instances can be detached or not
             for (Entity entity : context.getCommitInstances()) {
-                if (!PersistenceHelper.isNew(entity)) {
-                    if (isAuthorizationRequired()) {
+                if (!entityStates.isNew(entity)) {
+                    if (isAuthorizationRequired(context)) {
                         security.assertToken(entity);
                     }
                     security.restoreSecurityStateAndFilteredData(entity);
-                    attributeSecurity.beforeMerge(entity);
+                    if (isAuthorizationRequired(context)) {
+                        attributeSecurity.beforeMerge(entity);
+                    }
 
                     Entity merged = em.merge(entity);
+                    saved.add(merged);
+
                     entityFetcher.fetch(merged, getViewFromContext(context, entity));
                     attributeSecurity.afterMerge(merged);
 
-                    checkOperationPermitted(merged, ConstraintOperationType.UPDATE);
-                    if (!context.isDiscardCommitted()) {
-                        res.add(merged);
-                    }
+                    if (isAuthorizationRequired(context))
+                        checkOperationPermitted(merged, ConstraintOperationType.UPDATE);
+
                     if (entityHasDynamicAttributes(entity)) {
                         BaseGenericIdEntity originalBaseGenericIdEntity = (BaseGenericIdEntity) entity;
                         BaseGenericIdEntity mergedBaseGenericIdEntity = (BaseGenericIdEntity) merged;
@@ -378,7 +416,7 @@ public class RdbmsStore implements DataStore {
 
             // remove
             for (Entity entity : context.getRemoveInstances()) {
-                if (isAuthorizationRequired()) {
+                if (isAuthorizationRequired(context)) {
                     security.assertToken(entity);
                 }
                 security.restoreSecurityStateAndFilteredData(entity);
@@ -392,41 +430,52 @@ public class RdbmsStore implements DataStore {
                 } else {
                     e = em.merge(entity);
                 }
-                checkOperationPermitted(e, ConstraintOperationType.DELETE);
+
+                if (isAuthorizationRequired(context))
+                    checkOperationPermitted(e, ConstraintOperationType.DELETE);
+
                 em.remove(e);
-                if (!context.isDiscardCommitted()) {
-                    res.add(e);
-                }
+                saved.add(e);
 
                 if (entityHasDynamicAttributes(entity)) {
                     Map<String, CategoryAttributeValue> dynamicAttributes = ((BaseGenericIdEntity) entity).getDynamicAttributes();
 
+                    // old values of dynamic attributes on deleted entity are used in EntityChangedEvent
+                    ((BaseGenericIdEntity) e).setDynamicAttributes(dynamicAttributes);
+
                     //dynamicAttributes checked for null in entityHasDynamicAttributes()
                     //noinspection ConstantConditions
                     for (CategoryAttributeValue categoryAttributeValue : dynamicAttributes.values()) {
-                        if (!PersistenceHelper.isNew(categoryAttributeValue)) {
+                        if (!entityStates.isNew(categoryAttributeValue)) {
                             if (Stores.isMain(storeName)) {
                                 em.remove(categoryAttributeValue);
                             } else {
                                 attributeValuesToRemove.add(categoryAttributeValue);
                             }
-                            if (!context.isDiscardCommitted()) {
-                                res.add(categoryAttributeValue);
-                            }
+                            saved.add(categoryAttributeValue);
                         }
                     }
                 }
             }
 
-            if (!context.isDiscardCommitted() && isAuthorizationRequired() && userSessionSource.getUserSession().hasConstraints()) {
-                security.calculateFilteredData(res);
+            if (!context.isDiscardCommitted() && isAuthorizationRequired(context) && userSessionSource.getUserSession().hasConstraints()) {
+                security.calculateFilteredData(saved);
+            }
+
+            if (context.isJoinTransaction()) {
+                List<EntityChangedEvent> events = entityChangedEventManager.collect(saved);
+                em.flush();
+                for (Entity entity : saved) {
+                    em.detach(entity);
+                }
+                entityChangedEventManager.publish(events);
             }
 
             tx.commit();
         }
 
         if (!attributeValuesToRemove.isEmpty()) {
-            try (Transaction tx = persistence.createTransaction()) {
+            try (Transaction tx = getSaveTransaction(Stores.MAIN, context.isJoinTransaction())) {
                 EntityManager em = persistence.getEntityManager();
                 for (CategoryAttributeValue entity : attributeValuesToRemove) {
                     em.remove(entity);
@@ -435,27 +484,31 @@ public class RdbmsStore implements DataStore {
             }
         }
 
-        try (Transaction tx = persistence.createTransaction(storeName)) {
-            for (BaseGenericIdEntity entity : identityEntitiesToStoreDynamicAttributes) {
-                dynamicAttributesManagerAPI.storeDynamicAttributes(entity);
+        if (!identityEntitiesToStoreDynamicAttributes.isEmpty()) {
+            try (Transaction tx = getSaveTransaction(storeName, context.isJoinTransaction())) {
+                for (BaseGenericIdEntity entity : identityEntitiesToStoreDynamicAttributes) {
+                    dynamicAttributesManagerAPI.storeDynamicAttributes(entity);
+                }
+                tx.commit();
             }
-            tx.commit();
         }
 
-        if (!context.isDiscardCommitted() && isAuthorizationRequired() && userSessionSource.getUserSession().hasConstraints()) {
-            security.applyConstraints(res);
+        if (!context.isDiscardCommitted() && isAuthorizationRequired(context) && userSessionSource.getUserSession().hasConstraints()) {
+            security.applyConstraints(saved);
         }
 
         if (!context.isDiscardCommitted()) {
-            for (Entity entity : res) {
-                if (!persisted.contains(entity)) {
-                    attributeSecurity.afterCommit(entity);
+            if (isAuthorizationRequired(context)) {
+                for (Entity entity : saved) {
+                    if (!persisted.contains(entity)) {
+                        attributeSecurity.afterCommit(entity);
+                    }
                 }
             }
-            updateReferences(persisted, res);
+            updateReferences(persisted, saved);
         }
 
-        return res;
+        return context.isDiscardCommitted() ? Collections.emptySet() : saved;
     }
 
     @Override
@@ -466,25 +519,26 @@ public class RdbmsStore implements DataStore {
         ValueLoadContext.Query contextQuery = context.getQuery();
 
         if (log.isDebugEnabled())
-            log.debug("query: " + (DataServiceQueryBuilder.printQuery(contextQuery.getQueryString()))
+            log.debug("query: " + (RdbmsQueryBuilder.printQuery(contextQuery.getQueryString()))
                     + (contextQuery.getFirstResult() == 0 ? "" : ", first=" + contextQuery.getFirstResult())
                     + (contextQuery.getMaxResults() == 0 ? "" : ", max=" + contextQuery.getMaxResults()));
 
         QueryParser queryParser = queryTransformerFactory.parser(contextQuery.getQueryString());
-        if (!checkValueQueryPermissions(queryParser)) {
+        if (isAuthorizationRequired(context) && !checkValueQueryPermissions(queryParser)) {
             return Collections.emptyList();
         }
 
         List<KeyValueEntity> entities = new ArrayList<>();
 
-        try (Transaction tx = createLoadTransaction()) {
+        try (Transaction tx = getLoadTransaction(context.isJoinTransaction())) {
             EntityManager em = persistence.getEntityManager(storeName);
             em.setSoftDeletion(context.isSoftDeletion());
 
             List<String> keys = context.getProperties();
 
-            DataServiceQueryBuilder queryBuilder = AppBeans.get(DataServiceQueryBuilder.NAME);
-            queryBuilder.init(contextQuery.getQueryString(), contextQuery.getParameters(), contextQuery.getNoConversionParams(),
+            RdbmsQueryBuilder queryBuilder = AppBeans.get(RdbmsQueryBuilder.NAME);
+            queryBuilder.init(contextQuery.getQueryString(), contextQuery.getCondition(), contextQuery.getSort(),
+                    contextQuery.getParameters(), contextQuery.getNoConversionParams(),
                     null, metadata.getClassNN(KeyValueEntity.class).getName());
             Query query = queryBuilder.getQuery(em);
 
@@ -494,7 +548,8 @@ public class RdbmsStore implements DataStore {
                 query.setMaxResults(contextQuery.getMaxResults());
 
             List resultList = query.getResultList();
-            List<Integer> notPermittedSelectIndexes = getNotPermittedSelectIndexes(queryParser);
+            List<Integer> notPermittedSelectIndexes = isAuthorizationRequired(context) ?
+                    getNotPermittedSelectIndexes(queryParser) : Collections.emptyList();
             for (Object item : resultList) {
                 KeyValueEntity entity = new KeyValueEntity();
                 entity.setIdName(context.getIdName());
@@ -532,7 +587,7 @@ public class RdbmsStore implements DataStore {
         if (view == null) {
             view = viewRepository.getView(entity.getClass(), View.LOCAL);
         }
-        return attributeSecurity.createRestrictedView(view);
+        return isAuthorizationRequired(context) ? attributeSecurity.createRestrictedView(view) : view;
     }
 
     @Nullable
@@ -541,12 +596,11 @@ public class RdbmsStore implements DataStore {
         if (view == null) {
             return null;
         }
-        return attributeSecurity.createRestrictedView(view);
+        return isAuthorizationRequired(context) ? attributeSecurity.createRestrictedView(view) : view;
     }
 
     protected void checkOperationPermitted(Entity entity, ConstraintOperationType operationType) {
-        if (isAuthorizationRequired()
-                && userSessionSource.getUserSession().hasConstraints()
+        if (userSessionSource.getUserSession().hasConstraints()
                 && security.hasConstraints(entity.getMetaClass())
                 && !security.isPermitted(entity, operationType)) {
             throw new RowLevelSecurityException(
@@ -561,13 +615,11 @@ public class RdbmsStore implements DataStore {
 
     protected Query createQuery(EntityManager em, LoadContext context, boolean singleResult) {
         LoadContext.Query contextQuery = context.getQuery();
-        if ((contextQuery == null || isBlank(contextQuery.getQueryString()))
-                && context.getId() == null)
-            throw new IllegalArgumentException("Query string or ID needed");
-
-        DataServiceQueryBuilder queryBuilder = AppBeans.get(DataServiceQueryBuilder.NAME);
+        RdbmsQueryBuilder queryBuilder = AppBeans.get(RdbmsQueryBuilder.NAME);
         queryBuilder.init(
                 contextQuery == null ? null : contextQuery.getQueryString(),
+                contextQuery == null ? null : contextQuery.getCondition(),
+                contextQuery == null ? null : contextQuery.getSort(),
                 contextQuery == null ? null : contextQuery.getParameters(),
                 contextQuery == null ? null : contextQuery.getNoConversionParams(),
                 context.getId(), context.getMetaClass()
@@ -597,9 +649,10 @@ public class RdbmsStore implements DataStore {
     protected View createRestrictedView(LoadContext context) {
         View view = context.getView() != null ? context.getView() :
                 viewRepository.getView(metadata.getClassNN(context.getMetaClass()), View.LOCAL);
-        View copy = View.copy(attributeSecurity.createRestrictedView(view));
+        View copy = View.copy(isAuthorizationRequired(context) ? attributeSecurity.createRestrictedView(view) : view);
         if (context.isLoadPartialEntities()
                 && !needToApplyInMemoryReadConstraints(context)
+                && !needToFilterByInMemoryReadConstraints(context)
                 && !needToApplyAttributeAccess(context)) {
             copy.setLoadPartialEntities(true);
         }
@@ -613,9 +666,9 @@ public class RdbmsStore implements DataStore {
         if (initialSize == 0) {
             return list;
         }
-        boolean needApplyConstraints = needToApplyInMemoryReadConstraints(context);
+        boolean needToFilterByInMemoryReadConstraints = needToFilterByInMemoryReadConstraints(context);
         boolean filteredByConstraints = false;
-        if (needApplyConstraints) {
+        if (needToFilterByInMemoryReadConstraints) {
             filteredByConstraints = security.filterByConstraints((Collection<Entity>) list);
         }
         if (!ensureDistinct) {
@@ -630,13 +683,13 @@ public class RdbmsStore implements DataStore {
         }
         // In case of not first chunk, even if there where no duplicates, start filling the set from zero
         // to ensure correct paging
-        return getResultListIteratively(context, query, set, initialSize, needApplyConstraints);
+        return getResultListIteratively(context, query, set, initialSize, needToFilterByInMemoryReadConstraints);
     }
 
     @SuppressWarnings("unchecked")
     protected <E extends Entity> List<E> getResultListIteratively(LoadContext<E> context, Query query,
                                                                   Collection<E> filteredCollection,
-                                                                  int initialSize, boolean needApplyConstraints) {
+                                                                  int initialSize, boolean needToFilterByInMemoryReadConstraints) {
         int requestedFirst = context.getQuery().getFirstResult();
         int requestedMax = context.getQuery().getMaxResults();
 
@@ -665,7 +718,7 @@ public class RdbmsStore implements DataStore {
             if (list.size() == 0) {
                 break;
             }
-            if (needApplyConstraints) {
+            if (needToFilterByInMemoryReadConstraints) {
                 security.filterByConstraints((Collection<Entity>) list);
             }
             filteredCollection.addAll(list);
@@ -715,6 +768,9 @@ public class RdbmsStore implements DataStore {
     }
 
     protected void checkPermissions(CommitContext context) {
+        if (!isAuthorizationRequired(context))
+            return;
+
         Set<MetaClass> checkedCreateRights = new HashSet<>();
         Set<MetaClass> checkedUpdateRights = new HashSet<>();
         Set<MetaClass> checkedDeleteRights = new HashSet<>();
@@ -723,7 +779,7 @@ public class RdbmsStore implements DataStore {
             if (entity == null)
                 continue;
 
-            if (PersistenceHelper.isNew(entity)) {
+            if (entityStates.isNew(entity)) {
                 checkPermission(checkedCreateRights, entity.getMetaClass(), EntityOp.CREATE);
             } else {
                 checkPermission(checkedUpdateRights, entity.getMetaClass(), EntityOp.UPDATE);
@@ -747,51 +803,49 @@ public class RdbmsStore implements DataStore {
 
     protected void checkPermission(MetaClass metaClass, EntityOp operation) {
         if (!isEntityOpPermitted(metaClass, operation))
-            throw new AccessDeniedException(PermissionType.ENTITY_OP, metaClass.getName());
+            throw new AccessDeniedException(PermissionType.ENTITY_OP, operation, metaClass.getName());
     }
 
     protected boolean checkValueQueryPermissions(QueryParser queryParser) {
-        if (isAuthorizationRequired()) {
-            queryParser.getQueryPaths().stream()
-                    .filter(path -> !path.isSelectedPath())
-                    .forEach(path -> {
-                        MetaClass metaClass = metadata.getClassNN(path.getEntityName());
-                        MetaPropertyPath propertyPath = metaClass.getPropertyPath(path.getPropertyPath());
-                        if (propertyPath == null) {
-                            throw new IllegalStateException(String.format("query path '%s' is unresolved", path.getFullPath()));
-                        }
-                        if (!isEntityAttrViewPermitted(propertyPath)) {
-                            throw new AccessDeniedException(PermissionType.ENTITY_ATTR, metaClass + "." + path.getFullPath());
-                        }
-                    });
-            MetaClass metaClass = metadata.getClassNN(queryParser.getEntityName());
-            if (!isEntityOpPermitted(metaClass, EntityOp.READ)) {
-                log.debug("reading of {} not permitted, returning empty list", metaClass);
+        queryParser.getQueryPaths().stream()
+                .filter(path -> !path.isSelectedPath())
+                .forEach(path -> {
+                    MetaClass metaClass = metadata.getClassNN(path.getEntityName());
+                    MetaPropertyPath propertyPath = metaClass.getPropertyPath(path.getPropertyPath());
+                    if (propertyPath == null) {
+                        throw new IllegalStateException(String.format("query path '%s' is unresolved", path.getFullPath()));
+                    }
+                    if (!isEntityAttrViewPermitted(propertyPath)) {
+                        throw new AccessDeniedException(PermissionType.ENTITY_ATTR, metaClass + "." + path.getFullPath());
+                    }
+                });
+        MetaClass metaClass = metadata.getClassNN(queryParser.getEntityName());
+        if (!isEntityOpPermitted(metaClass, EntityOp.READ)) {
+            log.debug("reading of {} not permitted, returning empty list", metaClass);
+            return false;
+        }
+        if (security.hasInMemoryConstraints(metaClass, ConstraintOperationType.READ, ConstraintOperationType.ALL)) {
+            String msg = String.format("%s is not permitted for %s", ConstraintOperationType.READ, metaClass.getName());
+            if (serverConfig.getDisableLoadValuesIfConstraints()) {
+                throw new RowLevelSecurityException(msg, metaClass.getName(), ConstraintOperationType.READ);
+            } else {
+                log.debug(msg);
+            }
+        }
+        Set<String> entityNames = queryParser.getAllEntityNames();
+        entityNames.remove(metaClass.getName());
+        for (String entityName : entityNames) {
+            MetaClass entityMetaClass = metadata.getClassNN(entityName);
+            if (!isEntityOpPermitted(entityMetaClass, EntityOp.READ)) {
+                log.debug("reading of {} not permitted, returning empty list", entityMetaClass);
                 return false;
             }
-            if (security.hasInMemoryConstraints(metaClass, ConstraintOperationType.READ, ConstraintOperationType.ALL)) {
-                String msg = String.format("%s is not permitted for %s", ConstraintOperationType.READ, metaClass.getName());
+            if (security.hasConstraints(entityMetaClass)) {
+                String msg = String.format("%s is not permitted for %s", ConstraintOperationType.READ, entityName);
                 if (serverConfig.getDisableLoadValuesIfConstraints()) {
-                    throw new RowLevelSecurityException(msg, metaClass.getName(), ConstraintOperationType.READ);
+                    throw new RowLevelSecurityException(msg, entityName, ConstraintOperationType.READ);
                 } else {
                     log.debug(msg);
-                }
-            }
-            Set<String> entityNames = queryParser.getAllEntityNames();
-            entityNames.remove(metaClass.getName());
-            for (String entityName : entityNames) {
-                MetaClass entityMetaClass = metadata.getClassNN(entityName);
-                if (!isEntityOpPermitted(entityMetaClass, EntityOp.READ)) {
-                    log.debug("reading of {} not permitted, returning empty list", entityMetaClass);
-                    return false;
-                }
-                if (security.hasConstraints(entityMetaClass)) {
-                    String msg = String.format("%s is not permitted for %s", ConstraintOperationType.READ, entityName);
-                    if (serverConfig.getDisableLoadValuesIfConstraints()) {
-                        throw new RowLevelSecurityException(msg, entityName, ConstraintOperationType.READ);
-                    } else {
-                        log.debug(msg);
-                    }
                 }
             }
         }
@@ -799,7 +853,7 @@ public class RdbmsStore implements DataStore {
     }
 
     protected boolean isEntityOpPermitted(MetaClass metaClass, EntityOp operation) {
-        return !isAuthorizationRequired() || security.isEntityOpPermitted(metaClass, operation);
+        return security.isEntityOpPermitted(metaClass, operation);
     }
 
     protected boolean isEntityAttrViewPermitted(MetaPropertyPath metaPropertyPath) {
@@ -811,23 +865,28 @@ public class RdbmsStore implements DataStore {
         return true;
     }
 
-    protected boolean isAuthorizationRequired() {
-        return serverConfig.getDataManagerChecksSecurityOnMiddleware()
-                || AppContext.getSecurityContextNN().isAuthorizationRequired();
+    protected boolean isAuthorizationRequired(LoadContext context) {
+        return context.isAuthorizationRequired() || serverConfig.getDataManagerChecksSecurityOnMiddleware();
+    }
+
+    protected boolean isAuthorizationRequired(ValueLoadContext context) {
+        return context.isAuthorizationRequired() || serverConfig.getDataManagerChecksSecurityOnMiddleware();
+    }
+
+    protected boolean isAuthorizationRequired(CommitContext context) {
+        return context.isAuthorizationRequired() || serverConfig.getDataManagerChecksSecurityOnMiddleware();
     }
 
     protected List<Integer> getNotPermittedSelectIndexes(QueryParser queryParser) {
         List<Integer> indexes = new ArrayList<>();
-        if (isAuthorizationRequired()) {
-            int index = 0;
-            for (QueryParser.QueryPath path : queryParser.getQueryPaths()) {
-                if (path.isSelectedPath()) {
-                    MetaClass metaClass = metadata.getClassNN(path.getEntityName());
-                    if (!Objects.equals(path.getPropertyPath(), path.getVariableName()) && !isEntityAttrViewPermitted(metaClass.getPropertyPath(path.getPropertyPath()))) {
-                        indexes.add(index);
-                    }
-                    index++;
+        int index = 0;
+        for (QueryParser.QueryPath path : queryParser.getQueryPaths()) {
+            if (path.isSelectedPath()) {
+                MetaClass metaClass = metadata.getClassNN(path.getEntityName());
+                if (!Objects.equals(path.getPropertyPath(), path.getVariableName()) && !isEntityAttrViewPermitted(metaClass.getPropertyPath(path.getPropertyPath()))) {
+                    indexes.add(index);
                 }
+                index++;
             }
         }
         return indexes;
@@ -859,7 +918,7 @@ public class RdbmsStore implements DataStore {
         for (MetaProperty property : entity.getMetaClass().getProperties()) {
             if (!property.getRange().isClass() || !property.getRange().asClass().equals(refEntityMetaClass))
                 continue;
-            if (PersistenceHelper.isLoaded(entity, property.getName())) {
+            if (entityStates.isLoaded(entity, property.getName())) {
                 if (property.getRange().getCardinality().isMany()) {
                     Collection collection = entity.getValue(property.getName());
                     if (collection != null) {
@@ -872,7 +931,7 @@ public class RdbmsStore implements DataStore {
                     if (value != null) {
                         if (value.getId().equals(refEntity.getId())) {
                             if (entity instanceof AbstractInstance) {
-                                if (property.isReadOnly() && metadata.getTools().isNotPersistent(property)) {
+                                if (property.isReadOnly() && metadataTools.isNotPersistent(property)) {
                                     continue;
                                 }
                                 ((AbstractInstance) entity).setValue(property.getName(), refEntity, false);
@@ -886,15 +945,17 @@ public class RdbmsStore implements DataStore {
         }
     }
 
-    protected boolean needToApplyInMemoryReadConstraints(LoadContext context) {
-        return isAuthorizationRequired() && userSessionSource.getUserSession().hasConstraints()
-                && needToApplyByPredicate(context,
-                metaClass -> security.hasInMemoryConstraints(metaClass, ConstraintOperationType.READ, ConstraintOperationType.ALL));
+    protected boolean needToFilterByInMemoryReadConstraints(LoadContext context) {
+        return userSessionSource.getUserSession().hasConstraints()
+                && security.hasInMemoryConstraints(metadata.getClassNN(context.getMetaClass()),
+                ConstraintOperationType.READ, ConstraintOperationType.ALL);
     }
 
-    protected boolean needToApplyByPredicate(LoadContext context) {
-        return isAuthorizationRequired() && userSessionSource.getUserSession().hasConstraints()
-                && needToApplyByPredicate(context, metaClass -> security.hasConstraints(metaClass));
+    protected boolean needToApplyInMemoryReadConstraints(LoadContext context) {
+        return isAuthorizationRequired(context) && userSessionSource.getUserSession().hasConstraints()
+                && needToApplyByPredicate(context,
+                metaClass -> security.hasInMemoryConstraints(metaClass,
+                        ConstraintOperationType.READ, ConstraintOperationType.ALL));
     }
 
     protected boolean needToApplyAttributeAccess(LoadContext context) {
@@ -943,11 +1004,39 @@ public class RdbmsStore implements DataStore {
         return classes;
     }
 
-    protected Transaction createLoadTransaction() {
+    protected Transaction getLoadTransaction(boolean useCurrentTransaction) {
         TransactionParams txParams = new TransactionParams();
         if (serverConfig.getUseReadOnlyTransactionForLoad()) {
             txParams.setReadOnly(true);
         }
-        return persistence.createTransaction(storeName, txParams);
+        return useCurrentTransaction ?
+                persistence.getTransaction(storeName) : persistence.createTransaction(storeName, txParams);
+    }
+
+    protected Transaction getSaveTransaction(String storeName, boolean useCurrentTransaction) {
+        return useCurrentTransaction ?
+                persistence.getTransaction(storeName) : persistence.createTransaction(storeName);
+    }
+
+    protected <E extends Entity> void detachEntity(EntityManager em, @Nullable E rootEntity, View view) {
+        if (rootEntity == null)
+            return;
+        em.detach(rootEntity);
+        metadataTools.traverseAttributesByView(view, rootEntity, (entity, property) -> {
+            if (property.getRange().isClass()) {
+                Object value = entity.getValue(property.getName());
+                if (value != null) {
+                    if (property.getRange().getCardinality().isMany()) {
+                        @SuppressWarnings("unchecked")
+                        Collection<Entity> collection = (Collection<Entity>) value;
+                        for (Entity element : collection) {
+                            em.detach(element);
+                        }
+                    } else {
+                        em.detach((Entity) value);
+                    }
+                }
+            }
+        });
     }
 }

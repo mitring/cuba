@@ -133,7 +133,7 @@ public class AppPropertiesLocator {
         Map<Method, Object> propertyMethods = new HashMap<>();
         for (Class configInterface : configInterfaces) {
             if (configInterface.getClassLoader() != getClass().getClassLoader()) {
-                // happens when deployed to single WAR with separate classloaders for core and web
+                // happens when deployed to single WAR with separate class loaders for core and web
                 continue;
             }
             Config config = configuration.getConfig(configInterface);
@@ -218,7 +218,7 @@ public class AppPropertiesLocator {
             Stringify stringifyAnn = method.getAnnotation(Stringify.class);
             if (stringifyAnn != null) {
                 if ("".equals(stringifyAnn.method())) {
-                    return stringifyAnn.stringify().newInstance();
+                    return stringifyAnn.stringify().getDeclaredConstructor().newInstance();
                 } else {
                     String methodName = stringifyAnn.method();
                     return new MethodTypeStringify(method.getReturnType().getMethod(methodName));
@@ -332,11 +332,11 @@ public class AppPropertiesLocator {
             if (enumStoreAnn != null && enumStoreAnn.value() == EnumStoreMode.ID) {
                 //noinspection unchecked
                 Class<EnumClass> enumeration = (Class<EnumClass>) returnType;
-                entity.setEnumValues(Arrays.asList(enumeration.getEnumConstants()).stream()
+                entity.setEnumValues(Arrays.stream(enumeration.getEnumConstants())
                         .map(ec -> String.valueOf(ec.getId()))
                         .collect(Collectors.joining(",")));
             } else {
-                entity.setEnumValues(Arrays.asList(returnType.getEnumConstants()).stream()
+                entity.setEnumValues(Arrays.stream(returnType.getEnumConstants())
                         .map(Object::toString)
                         .collect(Collectors.joining(",")));
             }

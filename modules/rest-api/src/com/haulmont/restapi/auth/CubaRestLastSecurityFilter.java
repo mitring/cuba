@@ -22,6 +22,7 @@ import com.haulmont.cuba.core.sys.AppContext;
 import com.haulmont.cuba.core.sys.SecurityContext;
 import com.haulmont.cuba.core.sys.UserInvocationContext;
 import com.haulmont.restapi.common.RestAuthUtils;
+import com.haulmont.restapi.common.RestTokenMasker;
 import com.haulmont.restapi.events.AfterRestInvocationEvent;
 import com.haulmont.restapi.events.BeforeRestInvocationEvent;
 import org.slf4j.Logger;
@@ -62,6 +63,9 @@ public class CubaRestLastSecurityFilter implements Filter {
     @Inject
     protected RestAuthUtils restAuthUtils;
 
+    @Inject
+    protected RestTokenMasker restTokenMasker;
+
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
         // do nothing
@@ -74,9 +78,8 @@ public class CubaRestLastSecurityFilter implements Filter {
         parseRequestLocale(request);
 
         try {
-            if (events != null) {
-                Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            if (events != null && authentication != null) {
                 BeforeRestInvocationEvent beforeInvocationEvent = new BeforeRestInvocationEvent(authentication, request, response);
                 events.publish(beforeInvocationEvent);
 
@@ -115,7 +118,7 @@ public class CubaRestLastSecurityFilter implements Filter {
                     tokenValue = ((OAuth2AuthenticationDetails) authentication.getDetails()).getTokenValue();
                 }
                 log.debug("REST API request [{}] {} {} {}",
-                        tokenValue,
+                        restTokenMasker.maskToken(tokenValue),
                         ((HttpServletRequest) request).getMethod(),
                         getRequestURL((HttpServletRequest) request),
                         request.getRemoteAddr());

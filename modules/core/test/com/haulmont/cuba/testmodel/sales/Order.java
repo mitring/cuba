@@ -20,6 +20,7 @@ import com.haulmont.chile.core.annotations.Composition;
 import com.haulmont.chile.core.annotations.NamePattern;
 import com.haulmont.cuba.core.entity.StandardEntity;
 import com.haulmont.cuba.core.entity.annotation.OnDelete;
+import com.haulmont.cuba.core.entity.annotation.PublishEntityChangedEvents;
 import com.haulmont.cuba.core.global.DeletePolicy;
 import com.haulmont.cuba.security.entity.User;
 
@@ -27,6 +28,7 @@ import javax.persistence.*;
 import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 @Entity(name = "test$Order")
 @Table(name = "TEST_ORDER")
@@ -54,6 +56,11 @@ public class Order extends StandardEntity {
     @OnDelete(DeletePolicy.CASCADE)
     @OneToMany(mappedBy = "order")
     protected List<OrderLine> orderLines;
+
+    @Composition
+    @OnDelete(DeletePolicy.CASCADE)
+    @OneToMany(mappedBy = "order")
+    protected Set<OrderLine> lineSet;
 
     public String getNumber() {
         return number;
@@ -101,5 +108,13 @@ public class Order extends StandardEntity {
 
     public void setOrderLines(List<OrderLine> orderLines) {
         this.orderLines = orderLines;
+    }
+
+    public Set<OrderLine> getLineSet() {
+        return lineSet;
+    }
+
+    public void setLineSet(Set<OrderLine> lineSet) {
+        this.lineSet = lineSet;
     }
 }

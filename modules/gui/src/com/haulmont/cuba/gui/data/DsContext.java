@@ -71,6 +71,13 @@ public interface DsContext {
     Collection<Datasource> getAll();
 
     /**
+     * Add alias for datasource.
+     * @param aliasDatasourceId     additional datasource id
+     * @param originalDatasourceId  original datasource id
+     */
+    void addAlias(String aliasDatasourceId, String originalDatasourceId);
+
+    /**
      * @return true if any contained datasource is modified
      */
     boolean isModified();
@@ -162,9 +169,10 @@ public interface DsContext {
         void beforeCommit(CommitContext context);
 
         /**
-         * Called after a succesfull commit to the middleware.
-         * @param context   commit context
-         * @param result    set of committed entities returning from the middleware service
+         * Called after a successful commit to the middleware.
+         *
+         * @param context commit context
+         * @param result  set of committed entities returning from the middleware service
          */
         void afterCommit(CommitContext context, Set<Entity> result);
     }
@@ -203,9 +211,10 @@ public interface DsContext {
     interface AfterCommitListener {
 
         /**
-         * Called after a succesfull commit to the middleware.
-         * @param context   commit context
-         * @param result    set of committed entities returning from the middleware service
+         * Called after a successful commit to the middleware.
+         *
+         * @param context commit context
+         * @param result  set of committed entities returning from the middleware service
          */
         void afterCommit(CommitContext context, Set<Entity> result);
     }

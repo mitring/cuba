@@ -16,13 +16,16 @@
  */
 package com.haulmont.cuba.web.gui.components;
 
+import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.cuba.core.global.AppBeans;
 import com.haulmont.cuba.gui.components.*;
 import com.haulmont.cuba.gui.components.compatibility.ComponentExpandCollapseListenerWrapper;
 import com.haulmont.cuba.gui.components.filter.FilterDelegate;
 import com.haulmont.cuba.gui.data.CollectionDatasource;
+import com.haulmont.cuba.gui.model.CollectionLoader;
 import com.haulmont.cuba.security.entity.FilterEntity;
 import com.haulmont.cuba.web.widgets.CubaCssActionsLayout;
+import com.vaadin.server.Sizeable;
 import com.vaadin.shared.ui.MarginInfo;
 import org.dom4j.Element;
 import org.slf4j.LoggerFactory;
@@ -50,7 +53,7 @@ public class WebFilter extends WebAbstractComponent<CubaCssActionsLayout> implem
         ComponentContainer layout = delegate.getLayout();
         com.vaadin.ui.Component unwrap = layout.unwrapComposition(com.vaadin.ui.Component.class);
         component.addComponent(unwrap);
-        component.setWidth("100%");
+        component.setWidth(100, Sizeable.Unit.PERCENTAGE);
         component.setPrimaryStyleName(FILTER_STYLENAME);
 
         delegate.addExpandedStateChangeListener(e -> fireExpandStateChange(e.isExpanded()));
@@ -380,6 +383,26 @@ public class WebFilter extends WebAbstractComponent<CubaCssActionsLayout> implem
     @Override
     public void setAfterFilterAppliedHandler(AfterFilterAppliedHandler afterFilterAppliedHandler) {
         delegate.setAfterFilterAppliedHandler(afterFilterAppliedHandler);
+    }
+
+    @Override
+    public MetaClass getEntityMetaClass() {
+        return delegate.getEntityMetaClass();
+    }
+
+    @Override
+    public String getEntityAlias() {
+        return delegate.getEntityAlias();
+    }
+
+    @Override
+    public CollectionLoader getDataLoader() {
+        return delegate.getDataLoader();
+    }
+
+    @Override
+    public void setDataLoader(CollectionLoader loader) {
+        delegate.setDataLoader(loader);
     }
 
     @Override

@@ -41,8 +41,8 @@ import org.dom4j.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.Constructor;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 
@@ -242,7 +242,7 @@ public abstract class AbstractTableLoader<T extends Table> extends ActionsHolder
     protected List<Table.Column> loadColumns(Table component, Element columnsElement, CollectionDatasource ds) {
         List<Table.Column> columns = new ArrayList<>();
         //noinspection unchecked
-        for (Element columnElement : (Collection<Element>) columnsElement.elements("column")) {
+        for (Element columnElement : columnsElement.elements("column")) {
             String visible = columnElement.attributeValue("visible");
             if (StringUtils.isEmpty(visible) || Boolean.parseBoolean(visible)) {
                 columns.add(loadColumn(columnElement, ds));
@@ -453,7 +453,8 @@ public abstract class AbstractTableLoader<T extends Table> extends ActionsHolder
                 }
 
                 try {
-                    AggregationStrategy customStrategy = (AggregationStrategy) aggregationClass.newInstance();
+                    Constructor<?> constructor = aggregationClass.getDeclaredConstructor();
+                    AggregationStrategy customStrategy = (AggregationStrategy) constructor.newInstance();
                     aggregation.setStrategy(customStrategy);
                 } catch (Exception e) {
                     throw new RuntimeException("Unable to instantiate strategy for aggregation", e);

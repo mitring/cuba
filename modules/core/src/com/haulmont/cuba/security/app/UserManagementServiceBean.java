@@ -91,6 +91,9 @@ public class UserManagementServiceBean implements UserManagementService {
     @Inject
     protected Messages messages;
 
+    @Inject
+    private DataManager dataManager;
+
     protected void checkUpdatePermission(Class entityClass) {
         checkPermission(entityClass, EntityOp.UPDATE);
     }
@@ -331,7 +334,7 @@ public class UserManagementServiceBean implements UserManagementService {
 
             tx.commit();
         } finally {
-          tx.end();
+            tx.end();
         }
 
         return token;
@@ -445,6 +448,29 @@ public class UserManagementServiceBean implements UserManagementService {
         } finally {
             tx.end();
         }
+    }
+
+    @Override
+    public void changeGroupParent(UUID groupId, UUID newParentId) {
+        checkUpdatePermission(Group.class);
+
+        DataManager dataManager = this.dataManager.secure();
+
+        Group group = dataManager.load(LoadContext.create(Group.class)
+                .setId(groupId)
+                .setView(GROUP_COPY_VIEW));
+
+        LoadContext<Group> context = LoadContext.create(Group.class)
+                .setId(newParentId)
+                .setView(GROUP_COPY_VIEW);
+
+        Group newParent = newParentId != null ? dataManager.load(context) : null;
+
+        if (group != null) {
+            group.setParent(newParent);
+        }
+
+        dataManager.commit(group);
     }
 
     protected EmailTemplate getResetPasswordTemplate(User user,

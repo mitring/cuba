@@ -16,6 +16,7 @@
  */
 package com.haulmont.cuba.web.gui.components;
 
+import com.google.common.collect.Lists;
 import com.haulmont.chile.core.model.Instance;
 import com.haulmont.chile.core.model.MetaPropertyPath;
 import com.haulmont.cuba.core.app.dynamicattributes.DynamicAttributesUtils;
@@ -177,8 +178,7 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
     }
 
     protected Object[] getNewColumnOrder(Object[] newGroupProperties) {
-        //noinspection unchecked
-        List<Object> allProps = new ArrayList<>(component.getContainerDataSource().getContainerPropertyIds());
+        List<Object> allProps = Lists.newArrayList(component.getVisibleColumns()); // mutable list required
         List<Object> newGroupProps = Arrays.asList(newGroupProperties);
 
         allProps.removeAll(newGroupProps);
@@ -216,6 +216,10 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
         checkNotNullArgument(properties);
         validateProperties(properties);
 
+        if (uselessGrouping(properties)) {
+            return;
+        }
+
         component.groupBy(properties);
         component.setColumnOrder(getNewColumnOrder(properties));
     }
@@ -224,12 +228,20 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
     public void groupByColumns(String... columnIds) {
         checkNotNullArgument(columnIds);
 
+        if (uselessGrouping(columnIds)) {
+            return;
+        }
+
         groupBy(collectPropertiesByColumns(columnIds).toArray());
     }
 
     @Override
     public void ungroupByColumns(String... columnIds) {
         checkNotNullArgument(columnIds);
+
+        if (uselessGrouping(columnIds)) {
+            return;
+        }
 
         Object[] remainingGroups = CollectionUtils
                 .removeAll(component.getGroupProperties(), collectPropertiesByColumns(columnIds))
@@ -241,6 +253,11 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
     @Override
     public void ungroup() {
         groupBy(new Object[]{});
+    }
+
+    protected boolean uselessGrouping(Object[] newGroupProperties) {
+        return (newGroupProperties == null || newGroupProperties.length == 0) &&
+                component.getGroupProperties().isEmpty();
     }
 
     @Override
@@ -383,6 +400,44 @@ public class WebGroupTable<E extends Entity> extends WebAbstractTable<CubaGroupT
     @Override
     public Map<Object, Object> getAggregationResults(GroupInfo info) {
         return component.aggregate(new GroupAggregationContext(component, info));
+    }
+
+    @Override
+    public void selectAll() {
+        if (isMultiSelect()) {
+            if (getTableSource() instanceof GroupTableSource) {
+                GroupTableSource<E> tableSource = (GroupTableSource<E>) getTableSource();
+                Collection<?> itemIds = tableSource.hasGroups()
+                        ? getAllItemIds(tableSource)
+                        : tableSource.getItemIds();
+                component.setValue(itemIds);
+                return;
+            }
+        }
+        super.selectAll();
+    }
+
+    protected LinkedList<Object> getAllItemIds(GroupTableSource<E> tableSource) {
+        List<GroupInfo> roots = tableSource.rootGroups();
+        final LinkedList<Object> result = new LinkedList<>();
+        for (final GroupInfo root : roots) {
+            result.add(root);
+            collectItemIds(root, result);
+        }
+        return result;
+    }
+
+    protected void collectItemIds(GroupInfo groupId, final List<Object> itemIds) {
+        GroupTableSource<E> groupTableSource = (GroupTableSource<E>) getTableSource();
+        if (groupTableSource.hasChildren(groupId)) {
+            final List<GroupInfo> children = groupTableSource.getChildren(groupId);
+            for (final GroupInfo child : children) {
+                itemIds.add(child);
+                collectItemIds(child, itemIds);
+            }
+        } else {
+            itemIds.addAll(groupTableSource.getGroupItemIds(groupId));
+        }
     }
 
     protected String formatAggregatableGroupPropertyValue(GroupInfo<MetaPropertyPath> groupId, @Nullable Object value) {

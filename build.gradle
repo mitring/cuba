@@ -138,7 +138,8 @@ configure([sharedLibModule, globalModule, coreModule, clientModule, guiModule,
     test {
         maxHeapSize = '256m'
         systemProperties = [
-                'jdk.attach.allowAttachSelf' : 'true'
+                'jdk.attach.allowAttachSelf' : 'true',
+                'logback.configurationFile': System.getProperty('logback.configurationFile')
         ]
     }
 
@@ -206,9 +207,9 @@ configure([sharedLibModule, globalModule, coreModule, clientModule, guiModule,
             'Generates a HTML report after executing PMD checks.') {
         doLast {
             ant.xslt(
-                    in: "${project.buildDir}/reports/pmd/main.xml",
-                    style: "${rootDir}/findbugs/pmd-nicerhtml.xsl",
-                    out: "${project.buildDir}/reports/pmd/main.html")
+                    'in': "${project.buildDir}/reports/pmd/main.xml",
+                    'style': "${rootDir}/findbugs/pmd-nicerhtml.xsl",
+                    'out': "${project.buildDir}/reports/pmd/main.html")
         }
     }
 
@@ -280,7 +281,9 @@ configure(sharedLibModule) {
 
 configure(globalModule) {
     dependencies {
-        compile(bom['org.codehaus.groovy:groovy-all'])
+        compile(bom['org.codehaus.groovy:groovy'])
+        compile(bom['org.codehaus.groovy:groovy-templates'])
+        compile(bom['org.codehaus.groovy:groovy-sql'])
 
         compile(bom['org.apache.commons:commons-lang3']) // simplify version management with reports and bpm
         compile(bom['org.apache.commons:commons-collections4'])
@@ -327,7 +330,7 @@ configure(globalModule) {
         compile(bom['org.hibernate:hibernate-validator'])
         compile(bom['org.glassfish.web:javax.el'])
 
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
     }
 
     task generateReleaseTimestamp(type: CubaReleaseTimeStamp) {
@@ -417,13 +420,15 @@ configure(coreModule) {
 
         compile(bom['org.jsoup:jsoup']) // simplify version management for fts
 
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
 
         jdbc(bom['org.postgresql:postgresql'])
         jdbc(bom['org.hsqldb:hsqldb'])
 
         testCompile(coreTestsModule)
         testCompile(bom['org.hsqldb:hsqldb'])
+
+        testCompile(bom['org.codehaus.groovy:groovy-json'])
     }
 
     entitiesEnhancing {
@@ -445,7 +450,18 @@ configure(coreModule) {
     task testEntityCache(type: Test) {
         scanForTestClasses = false
         includes = ['com/haulmont/cuba/entity_cache/EntityCacheTestSuite.class']
+
+        systemProperties = [
+                'logback.configurationFile': System.getProperty('logback.configurationFile')
+        ]
     }
+
+    task testJoinedComposition(type: Test) {
+        scanForTestClasses = false
+        includes = ['spec/cuba/core/composition/joined_composition/JoinedCompositionTestClass.class']
+    }
+
+    test.finalizedBy testJoinedComposition
 
     assembleDbScripts {
         moduleAlias = '10-cuba'
@@ -578,7 +594,7 @@ configure(guiModule) {
 
 configure(webWidgetsModule) {
     dependencies {
-        provided(bom['org.apache.tomcat:tomcat-servlet-api'])
+        compileOnly(bom['org.apache.tomcat:tomcat-servlet-api'])
 
         compile(bom['org.apache.commons:commons-lang3'])
         compile(bom['com.google.guava:guava'])
@@ -646,7 +662,7 @@ configure(webModule) {
 
         compile(bom['com.haulmont.cuba-resources:cuba-png-icons'])
 
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
 
         themes(bom['com.vaadin:vaadin-themes'])
 
@@ -669,7 +685,7 @@ configure(webModule) {
     task enhanceTestModel(type: CubaTestEnhancing)
 
     task buildScssThemes(type: CubaWebScssThemeCreation) {
-        themes = ['halo'
+        themes = ['halo', 'hover'
                   /* vaadin8 , 'havana'*/]
 //        compress = true
 //        sprites = true
@@ -677,6 +693,19 @@ configure(webModule) {
     }
 
     task deployThemes(type: CubaDeployThemeTask, dependsOn: buildScssThemes) {
+    }
+
+    task buildHover(type: CubaWebScssThemeCreation) {
+        themes = ['hover']
+//        compress = true
+//        sprites = true
+//        cleanup = true
+    }
+
+    task deployHover(type: Copy, dependsOn: buildHover) {
+        from file("$webModule.buildDir/web/VAADIN/themes/hover")
+        into "${cuba.tomcat.dir}/webapps/cuba/VAADIN/themes/hover"
+        exclude '**/web.xml'
     }
 
     task buildHalo(type: CubaWebScssThemeCreation) {
@@ -887,7 +916,7 @@ configure(restApiModule) {
 
         compile(bom['io.swagger:swagger-models'])
 
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
 
         testCompile(clientTestsModule)
     }
@@ -915,7 +944,7 @@ configure(portalModule) {
         compile(bom['org.thymeleaf:thymeleaf-spring4'])
         compile(bom['org.thymeleaf.extras:thymeleaf-extras-springsecurity4'])
 
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
 
         testCompile(clientTestsModule)
     }
@@ -950,7 +979,7 @@ configure(idpModule) {
 
         testCompile(clientTestsModule)
 
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
     }
 
     task webArchive(type: Zip) {
@@ -1006,7 +1035,7 @@ configure(frontModule) {
     dependencies {
         compile(bom['org.springframework:spring-webmvc'])
         compile(bom['org.springframework:spring-context-support'])
-        provided(bom['javax.servlet:javax.servlet-api'])
+        compileOnly(bom['javax.servlet:javax.servlet-api'])
     }
 }
 

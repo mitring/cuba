@@ -31,7 +31,6 @@ import org.springframework.core.Ordered;
 import org.springframework.orm.jpa.EntityManagerFactoryUtils;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationAdapter;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
@@ -44,6 +43,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -51,6 +51,11 @@ import java.util.function.Consumer;
 public class PersistenceImpl implements Persistence {
 
     public static final String RUN_BEFORE_COMMIT_ATTR = "cuba.runBeforeCommit";
+
+    /**
+     * DEPRECATED. Use {@link TransactionSynchronizationManager#registerSynchronization}.
+     */
+    @Deprecated
     public static final String RUN_AFTER_COMPLETION_ATTR = "cuba.runAfterCompletion";
 
     private static final Logger log = LoggerFactory.getLogger(PersistenceImpl.class);
@@ -70,8 +75,8 @@ public class PersistenceImpl implements Persistence {
 
     protected EntityManagerFactory jpaEmf;
 
-    @Inject @Named("transactionManager")
-    protected PlatformTransactionManager transactionManager;
+    @Inject
+    protected Transactions transactions;
 
     @Inject
     protected MiddlewareStatisticsAccumulator statisticsAccumulator;
@@ -118,32 +123,32 @@ public class PersistenceImpl implements Persistence {
 
     @Override
     public Transaction createTransaction(TransactionParams params) {
-        return new TransactionImpl(transactionManager, this, false, params, Stores.MAIN);
+        return transactions.create(params);
     }
 
     @Override
     public Transaction createTransaction(String store, TransactionParams params) {
-        return new TransactionImpl(getTransactionManager(store), this, false, params, store);
+        return transactions.create(store, params);
     }
 
     @Override
     public Transaction createTransaction() {
-        return new TransactionImpl(transactionManager, this, false, null, Stores.MAIN);
+        return transactions.create();
     }
 
     @Override
     public Transaction createTransaction(String store) {
-        return new TransactionImpl(getTransactionManager(store), this, false, null, store);
+        return transactions.create(store);
     }
 
     @Override
     public Transaction getTransaction() {
-        return new TransactionImpl(transactionManager, this, true, null, Stores.MAIN);
+        return transactions.get();
     }
 
     @Override
     public Transaction getTransaction(String store) {
-        return new TransactionImpl(getTransactionManager(store), this, true, null, store);
+        return transactions.get(store);
     }
 
     @Override
@@ -261,6 +266,20 @@ public class PersistenceImpl implements Persistence {
         return new EntityManagerContextSynchronization(store);
     }
 
+    /**
+     * INTERNAL.
+     * Adds an action to be executed before commit of the current transaction.
+     * Can be invoked from {@link TransactionSynchronization#beforeCommit(boolean)} code.
+     */
+    public void addBeforeCommitAction(Runnable action) {
+        List<Runnable> list = getEntityManagerContext().getAttribute(PersistenceImpl.RUN_BEFORE_COMMIT_ATTR);
+        if (list == null) {
+            list = new ArrayList<>();
+            getEntityManagerContext().setAttribute(PersistenceImpl.RUN_BEFORE_COMMIT_ATTR, list);
+        }
+        list.add(action);
+    }
+
     protected class EntityManagerContextSynchronization implements TransactionSynchronization, Ordered {
 
         protected final boolean prevSoftDeletion;
@@ -346,15 +365,6 @@ public class PersistenceImpl implements Persistence {
             return jpaEmf;
         else
             return beanLocator.get("entityManagerFactory_" + store);
-    }
-
-    protected PlatformTransactionManager getTransactionManager(String store) {
-        PlatformTransactionManager tm;
-        if (Stores.isMain(store))
-            tm = this.transactionManager;
-        else
-            tm = beanLocator.get("transactionManager_" + store, PlatformTransactionManager.class);
-        return tm;
     }
 
     protected class EntityManagerInvocationHandler implements InvocationHandler {

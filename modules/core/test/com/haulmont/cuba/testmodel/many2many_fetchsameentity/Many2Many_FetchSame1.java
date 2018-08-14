@@ -18,6 +18,7 @@ package com.haulmont.cuba.testmodel.many2many_fetchsameentity;
 
 import com.haulmont.chile.core.annotations.NamePattern;
 import com.haulmont.cuba.core.entity.StandardEntity;
+import com.haulmont.cuba.testmodel.selfinherited.RootEntityDetail;
 
 import javax.persistence.*;
 import java.util.List;
@@ -37,6 +38,9 @@ public class Many2Many_FetchSame1 extends StandardEntity {
     @ManyToMany
     protected List<Many2Many_FetchSame2> many2;
 
+    @OneToMany(mappedBy = "manyToOne1")
+    protected List<Many2Many_FetchSame2> oneToMany2;
+
     public void setMany2(List<Many2Many_FetchSame2> many2) {
         this.many2 = many2;
     }
@@ -53,5 +57,11 @@ public class Many2Many_FetchSame1 extends StandardEntity {
         return name;
     }
 
+    public List<Many2Many_FetchSame2> getOneToMany2() {
+        return oneToMany2;
+    }
 
+    public void setOneToMany2(List<Many2Many_FetchSame2> oneToMany2) {
+        this.oneToMany2 = oneToMany2;
+    }
 }

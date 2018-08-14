@@ -35,6 +35,7 @@
 @import "components/calendar/calendar";
 @import "components/checkbox/checkbox";
 @import "components/datagrid/datagrid";
+@import "components/treedatagrid/treedatagrid";
 @import "components/groupbox/groupbox";
 @import "components/tabsheet/tabsheet";
 @import "components/managedtabsheet/managedtabsheet";
@@ -102,12 +103,15 @@
 @import "app/report-parameters";
 @import "app/report-templates";
 @import "app/localized-frame";
+@import "app/entity-inspector-browse";
+@import "app/fts-search-window";
 
 // Add-ons
 @import "addons/aceeditor/ace-gwt";
 @import "addons/aceeditor/suggestionpopup";
 @import "addons/popupbutton/popupbutton";
 @import "addons/dragdroplayouts/dragdroplayouts";
+@import "addons/googlemap/googlemap";
 
 @mixin halo {
   @include valo;
@@ -117,6 +121,7 @@
   @include addon-aceeditor-suggestpopup;
   @include addon-popupbutton;
   @include addon-dragdroplayouts;
+  @include addon-googlemap;
 
   @include halo-common;
 
@@ -131,6 +136,7 @@
   @include halo-calendar;
   @include halo-checkbox;
   @include halo-datagrid;
+  @include halo-treedatagrid;
   @include halo-tabsheet;
   @include managed-tabsheet;
   @include halo-datefield;
@@ -203,4 +209,6 @@
   @include cuba-report-parameters;
   @include cuba-report-templates;
   @include cuba-localized-frame;
+  @include cuba-entity-inspector-browse;
+  @include fts-search-window;
 }

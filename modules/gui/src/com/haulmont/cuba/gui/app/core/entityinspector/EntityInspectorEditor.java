@@ -20,6 +20,9 @@ package com.haulmont.cuba.gui.app.core.entityinspector;
 import com.haulmont.bali.util.ParamsMap;
 import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.chile.core.model.MetaProperty;
+import com.haulmont.chile.core.model.MetaPropertyPath;
+import com.haulmont.chile.core.model.Range;
+import com.haulmont.chile.core.model.utils.InstanceUtils;
 import com.haulmont.cuba.client.ClientConfig;
 import com.haulmont.cuba.core.entity.Categorized;
 import com.haulmont.cuba.core.entity.Category;
@@ -158,8 +161,13 @@ public class EntityInspectorEditor extends AbstractWindow {
             setParentField(item, parentProperty, parent);
         } else {
             //edit request
-            if (!isNew)
-                item = loadSingleItem(meta, item.getId(), view);
+            Object itemId = item.getId();
+            if (!isNew) {
+                item = loadSingleItem(meta, itemId, view);
+            }
+            if (item == null) {
+                throw new EntityAccessException(meta, itemId);
+            }
         }
         createEmbeddedFields(meta, item);
 
@@ -358,6 +366,13 @@ public class EntityInspectorEditor extends AbstractWindow {
                     if (includeId && !isNew) {
                         isReadonly = true;
                     }
+
+                    Range range = metaProperty.getRange();
+                    if (range.isDatatype() && range.asDatatype().getJavaClass().equals(Boolean.class)) {
+                        addBooleanCustomField(metaClass, metaProperty, item, fieldGroup, isRequired, isReadonly);
+                        break;
+                    }
+
                     addField(metaClass, metaProperty, item, fieldGroup, isRequired, false, isReadonly, customFields);
                     break;
                 case COMPOSITION:
@@ -593,6 +608,46 @@ public class EntityInspectorEditor extends AbstractWindow {
         fieldGroup.addField(field);
         if (custom)
             customFields.add(field);
+    }
+
+    /**
+     * Adds LookupField with boolean values instead of CheckBox that can't display null value.
+     *
+     * @param metaClass    meta property of the item's property which field is creating
+     * @param metaProperty meta property of the item's property which field is creating
+     * @param item         entity instance containing given property
+     * @param fieldGroup   field group to which created field will be added
+     * @param required     true if the field is required
+     * @param readOnly     false if field should be editable
+     */
+    protected void addBooleanCustomField(MetaClass metaClass, MetaProperty metaProperty, Entity item,
+                                         FieldGroup fieldGroup, boolean required, boolean readOnly) {
+        if (!attrViewPermitted(metaClass, metaProperty)) {
+            return;
+        }
+
+        LookupField field = componentsFactory.createComponent(LookupField.class);
+        String caption = getPropertyCaption(datasource.getMetaClass(), metaProperty);
+        field.setCaption(caption);
+        field.setEditable(!readOnly);
+        field.setRequired(required);
+        field.setDatasource(datasource, metaProperty.getName());
+        field.setOptionsMap(ParamsMap.of(
+                messages.getMainMessage("trueString"), Boolean.TRUE,
+                messages.getMainMessage("falseString"), Boolean.FALSE));
+        field.setTextInputAllowed(false);
+
+        if (!PersistenceHelper.isNew(item)) {
+            MetaPropertyPath metaPropertyPath = metaClass.getPropertyPath(metaProperty.getName());
+            Object value = InstanceUtils.getValueEx(item, metaPropertyPath.getPath());
+            field.setValue(value);
+        }
+
+        FieldGroup.FieldConfig fieldConfig = fieldGroup.createField(metaProperty.getName());
+        fieldConfig.setWidth("400px");
+        fieldConfig.setComponent(field);
+
+        fieldGroup.addField(fieldConfig);
     }
 
     /**
@@ -976,7 +1031,7 @@ public class EntityInspectorEditor extends AbstractWindow {
     protected class CommitAction extends AbstractAction {
 
         protected CommitAction() {
-            super("commit");
+            super("commit", Status.PRIMARY);
         }
 
         @Override

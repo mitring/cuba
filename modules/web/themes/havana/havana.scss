@@ -104,11 +104,18 @@
 @import "app/report-templates";
 @import "app/diff-viewer";
 @import "app/localized-frame";
+@import "app/entity-inspector-browse";
+
+// Add-ons
+@import "addons/googlemap/googlemap";
 
 @mixin havana {
   @include base;
 
   @include havana-common;
+
+  // Add-ons
+  @include addon-googlemap;
 
   @include havana-tree;
   @include havana-label;
@@ -190,4 +197,5 @@
   @include cuba-report-templates;
   @include cuba-diff-viewer;
   @include cuba-localized-frame;
+  @include cuba-entity-inspector-browse;
 }

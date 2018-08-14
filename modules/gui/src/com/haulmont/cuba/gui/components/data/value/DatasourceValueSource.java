@@ -16,7 +16,7 @@
 
 package com.haulmont.cuba.gui.components.data.value;
 
-import com.haulmont.bali.events.EventPublisher;
+import com.haulmont.bali.events.EventHub;
 import com.haulmont.bali.events.Subscription;
 import com.haulmont.chile.core.model.MetaClass;
 import com.haulmont.chile.core.model.MetaPropertyPath;
@@ -26,6 +26,7 @@ import com.haulmont.cuba.core.global.MetadataTools;
 import com.haulmont.cuba.gui.components.data.BindingState;
 import com.haulmont.cuba.gui.components.data.EntityValueSource;
 import com.haulmont.cuba.gui.data.Datasource;
+import com.haulmont.cuba.gui.data.impl.DatasourceImplementation;
 
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -38,7 +39,7 @@ public class DatasourceValueSource<E extends Entity, V> implements EntityValueSo
 
     protected BindingState state = BindingState.INACTIVE;
 
-    protected EventPublisher events = new EventPublisher();
+    protected EventHub events = new EventHub();
 
     @SuppressWarnings("unchecked")
     public DatasourceValueSource(Datasource<E> datasource, String property) {
@@ -134,6 +135,14 @@ public class DatasourceValueSource<E extends Entity, V> implements EntityValueSo
         }
 
         return BindingState.INACTIVE;
+    }
+
+    public boolean isModified() {
+        return datasource.isModified();
+    }
+
+    public void setModified(boolean modified) {
+        ((DatasourceImplementation) datasource).setModified(modified);
     }
 
     @SuppressWarnings("unchecked")
